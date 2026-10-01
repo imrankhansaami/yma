@@ -1,0 +1,71 @@
+import { NextRequest, NextResponse } from "next/server";
+
+type Redirect = {
+  fromPath: string;
+  toPath: string;
+  statusCode: 301 | 302;
+};
+
+let cachedRedirects: Redirect[] = [];
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 60_000; // 60 seconds
+
+async function getActiveRedirects(): Promise<Redirect[]> {
+  const now = Date.now();
+  if (cachedRedirects.length > 0 && now - cacheTimestamp < CACHE_TTL_MS) {
+    return cachedRedirects;
+  }
+
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URI;
+    if (!baseUrl) return cachedRedirects;
+
+    const res = await fetch(`${baseUrl}/api/v1/redirects/active`, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!res.ok) return cachedRedirects;
+
+    const json = (await res.json()) as {
+      status: string;
+      data: Redirect[];
+    };
+
+    if (json.status === "success" && Array.isArray(json.data)) {
+      cachedRedirects = json.data;
+      cacheTimestamp = now;
+    }
+  } catch {
+    // On fetch failure, continue using stale cache (or empty list)
+  }
+
+  return cachedRedirects;
+}
+
+export async function middleware(request: NextRequest) {
+  const redirects = await getActiveRedirects();
+  const { pathname } = request.nextUrl;
+
+  const match = redirects.find((r) => r.fromPath === pathname);
+  if (match) {
+    const url = request.nextUrl.clone();
+    url.pathname = match.toPath;
+    return NextResponse.redirect(url, match.statusCode);
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization)
+     * - favicon.ico, sitemap.xml, robots.txt
+     * - api routes
+     * - static assets (images, fonts, etc.)
+     */
+    "/((?!_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot)$).*)",
+  ],
+};

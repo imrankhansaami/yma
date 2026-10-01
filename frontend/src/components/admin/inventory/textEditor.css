@@ -1,0 +1,95 @@
+/* Tiptap Editor Custom Styles */
+.tiptap-editor .ProseMirror {
+  outline: none;
+}
+
+.tiptap-editor .ProseMirror h1 {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--c-18181B);
+  margin: 0;
+}
+
+.tiptap-editor .ProseMirror h2 {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--c-18181B);
+  margin: 0;
+}
+
+.tiptap-editor .ProseMirror h3 {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--c-18181B);
+  margin: 0;
+}
+
+.tiptap-editor .ProseMirror h4 {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--c-18181B);
+  margin: 0;
+}
+
+.tiptap-editor .ProseMirror p {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--c-18181B);
+  margin: 0;
+}
+
+.tiptap-editor .ProseMirror blockquote {
+  border-left: 3px solid var(--c-E4E4E7);
+  padding-left: 12px;
+  margin: 8px 0;
+  color: var(--c-71717A);
+}
+
+.tiptap-editor .ProseMirror ul,
+.tiptap-editor .ProseMirror ol {
+  list-style-position: outside;
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.tiptap-editor .ProseMirror ul {
+  list-style-type: disc;
+}
+
+.tiptap-editor .ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.tiptap-editor .ProseMirror li {
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--c-18181B);
+}
+
+.tiptap-editor .ProseMirror a {
+  color: var(--c-3B82F6);
+  text-decoration: underline;
+}
+
+.tiptap-editor .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--c-A1A1AA);
+  pointer-events: none;
+  height: 0;
+}
+
+.tiptap-editor .ProseMirror:focus {
+  outline: none;
+}

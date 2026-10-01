@@ -1,0 +1,29 @@
+name: Premium Wooden Blocks
+price: 1500
+stock: 50
+active: true
+categories[0]: 6978e9c89d5968017fa85ca5
+dimensions.length: 10
+dimensions.width: 5
+dimensions.height: 5
+ageRange.min: 3
+ageRange.max: 12
+ageRange.unit: years (always fixed)
+location.country: Bangladesh
+location.state: Dhaka
+safetyFeatures[0]: Non-toxic paint
+safetyFeatures[1]: Rounded edges
+qualityAssurance.isCertified: true
+qualityAssurance.certification: ISO-9001
+qualityAssurance.warrantyPeriod: 1 year
+qualityAssurance.warrantyDetails: `form sensitiveDetails value will be this this field`
+availableFrom: 2026-02-02T10:00:00Z
+availableUntil: 2027-02-02T10:00:00Z
+deliveryTimeFee: 50
+collectionTimeFee: 0
+imageCover: image to add image 
+images: product multiple images array
+difficulty: "easy" | "medium" | "difficult"
+vendor: YMA (fixed)
+warehouse: yma 
+

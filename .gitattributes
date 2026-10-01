@@ -1,0 +1,28 @@
+# Normalise text files to LF in the repository AND on checkout.
+# This matters on the server: a shell script with CRLF line endings
+# fails under bash with "bad interpreter" / stray \r errors.
+* text=auto eol=lf
+
+# Shell scripts must always be LF.
+*.sh text eol=lf
+
+# Windows-only helpers keep their native endings.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets: never touch.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.avif binary
+*.svg text
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
+*.zip binary

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Confirmed - <%= order.orderNumber %></title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        background: #f5f5f5;
+        padding: 20px;
+      }
+      .email-container {
+        max-width: 700px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        text-align: center;
+      }
+      .company-name {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .confirmation-text {
+        font-size: 20px;
+        margin-bottom: 20px;
+      }
+      .order-number {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 10px 20px;
+        border-radius: 25px;
+        display: inline-block;
+        font-weight: 600;
+      }
+      .content {
+        padding: 40px;
+      }
+      .greeting {
+        font-size: 18px;
+        margin-bottom: 30px;
+        color: #333;
+      }
+      .order-summary {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+      }
+      .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+      }
+      .summary-item:last-child {
+        border-bottom: none;
+      }
+      .invoice-section {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 2px solid #7c3aed;
+      }
+      .invoice-title {
+        color: #7c3aed;
+        margin-bottom: 20px;
+        font-size: 20px;
+      }
+      .footer {
+        text-align: center;
+        padding: 30px;
+        background: #f8f9fa;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="header">
+        <div class="company-name">YMA Bouncy Castle</div>
+        <div class="confirmation-text">🎉 Order Confirmed!</div>
+        <div class="order-number">#<%= order.orderNumber %></div>
+      </div>
+
+      <div class="content">
+        <div class="greeting">
+          Hello
+          <strong
+            ><%= order.shippingAddress.firstName %> <%=
+            order.shippingAddress.lastName %></strong
+          >,
+        </div>
+
+        <p>
+          Thank you for your order! We're excited to help make your event
+          amazing.
+        </p>
+
+        <div class="order-summary">
+          <div style="color: #7c3aed; font-weight: 600; margin-bottom: 15px">
+            Order Summary
+          </div>
+          <div class="summary-item">
+            <span>Order Date:</span>
+            <span
+              ><strong
+                ><%= order.createdAt.toLocaleDateString() %></strong
+              ></span
+            >
+          </div>
+          <div class="summary-item">
+            <span>Estimated Delivery:</span>
+            <span
+              ><strong
+                ><%= order.estimatedDeliveryDate.toLocaleDateString() %></strong
+              ></span
+            >
+          </div>
+          <div class="summary-item">
+            <span>Payment Method:</span>
+            <span
+              ><strong
+                ><%= order.paymentMethod.replace('_', ' ').toUpperCase()
+                %></strong
+              ></span
+            >
+          </div>
+          <div class="summary-item">
+            <span>Total Amount:</span>
+            <span><strong>£<%= order.totalAmount.toFixed(2) %></strong></span>
+          </div>
+        </div>
+
+        <div class="invoice-section">
+          <div class="invoice-title">📄 Invoice</div>
+          <!-- Invoice content will be injected here -->
+          <%= invoiceHtml %>
+        </div>
+
+        <div
+          style="
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 10px;
+          "
+        >
+          <strong>📞 Need Help?</strong><br />
+          Contact us at info@ymabouncycastle.com or call +44 (0) 1234 567890
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Thank you for choosing YMA Bouncy Castle!</div>
+        <p style="margin-top: 15px; font-size: 14px">
+          &copy; <%= new Date().getFullYear() %> YMA Bouncy Castle. All rights
+          reserved.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

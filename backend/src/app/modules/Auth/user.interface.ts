@@ -1,0 +1,60 @@
+import mongoose from "mongoose";
+
+export type UserRole =
+  | "customer"
+  | "user"
+  | "admin"
+  | "superadmin"
+  | "editor"
+  | "delivery";
+
+export interface IUser extends mongoose.Document {
+  _id: mongoose.Types.ObjectId;
+  id?: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  photo?: string;
+  role: UserRole;
+  googleId?: string;
+  password?: string;
+  passwordChangedAt?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
+  refreshTokenHash?: string;
+  refreshTokenExpiresAt?: Date;
+  active?: boolean;
+  lastLogoutAt?: Date;
+  phone?: string;
+  // NEW FIELDS for email verification
+  isEmailVerified: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
+  verificationAttempts: number;
+  lastVerificationAttempt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+  // methods
+  correctPassword(candidate: string, hashed: string): Promise<boolean>;
+  changedPasswordAfter(JWTTimestamp: number): boolean;
+  signAccessToken(): string;
+  signRefreshToken(): string;
+  setRefreshToken(refreshToken: string): Promise<void>;
+  createPasswordResetToken(): string;
+  createEmailVerificationToken(): string;
+  generateAuthToken(): string;
+}
+
+export interface IUserMethods {
+  correctPassword(candidate: string, hashed: string): Promise<boolean>;
+  changedPasswordAfter(JWTTimestamp: number): boolean;
+  signAccessToken(): string;
+  signRefreshToken(): string;
+  setRefreshToken(refreshToken: string): Promise<void>;
+  createPasswordResetToken(): string;
+  createEmailVerificationToken(): string; // NEW METHOD
+  generateAuthToken(): string;
+}
+
+export interface IUserModel extends mongoose.Model<IUser, {}, IUserMethods> {}
