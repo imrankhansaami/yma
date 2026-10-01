@@ -67,20 +67,20 @@ At your registrar, point the domain at the droplet:
 
 | Type | Host  | Value            | TTL |
 |------|-------|------------------|-----|
-| A    | `@`   | `159.223.13.152` | 300 |
-| A    | `www` | `159.223.13.152` | 300 |
+| A    | `@`   | `<DROPLET_IP>` | 300 |
+| A    | `www` | `<DROPLET_IP>` | 300 |
 
 Confirm propagation **before** requesting SSL, or certificate issuance fails:
 
 ```powershell
-nslookup ymabouncycastles.uk
+nslookup example.com
 ```
 
 ---
 
 ## 2. Allow the droplet into MongoDB Atlas
 
-Atlas -> **Network Access -> Add IP Address -> `159.223.13.152`**.
+Atlas -> **Network Access -> Add IP Address -> `<DROPLET_IP>`**.
 
 Until this is done, the backend will start but every database query will hang and time out.
 
@@ -118,7 +118,7 @@ intentionally committed; the filled-in files are not.
 ## 4. First-time server setup
 
 ```bash
-ssh root@159.223.13.152
+ssh root@<DROPLET_IP>
 git clone https://github.com/<you>/yma-website.git /var/www/yma
 cd /var/www/yma
 bash deploy/setup-server.sh
@@ -194,8 +194,8 @@ That means the droplet is still too small.
 In the ServerAvatar panel:
 
 1. **Applications -> Add -> Node.js** (or create a site for the domain). Let ServerAvatar
-   issue the Let's Encrypt certificate for **both** `ymabouncycastles.uk` and
-   `www.ymabouncycastles.uk`, with auto-renewal on.
+   issue the Let's Encrypt certificate for **both** `example.com` and
+   `www.example.com`, with auto-renewal on.
 2. Open the application's **Nginx configuration** editor and replace the generated vhost
    with the contents of `deploy/nginx-yma.conf`, updating the `ssl_certificate` paths to
    the ones ServerAvatar shows on the SSL tab.
@@ -227,8 +227,8 @@ needed. Google just has to know about it:
 
 Google Cloud Console -> **APIs & Services -> Credentials** -> your OAuth 2.0 Client ID:
 
-* **Authorized JavaScript origins**: `https://ymabouncycastles.uk`
-* **Authorized redirect URIs**: `https://ymabouncycastles.uk/api/v1/auth/google/callback`
+* **Authorized JavaScript origins**: `https://example.com`
+* **Authorized redirect URIs**: `https://example.com/api/v1/auth/google/callback`
 
 ---
 
@@ -257,7 +257,7 @@ Then in a browser, check each of these:
 ## 10. Deploying updates
 
 ```bash
-ssh root@159.223.13.152
+ssh root@<DROPLET_IP>
 cd /var/www/yma
 bash deploy/deploy.sh
 ```

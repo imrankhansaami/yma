@@ -7,7 +7,7 @@
 # ============================================================
 set -uo pipefail
 
-DOMAIN="${DOMAIN:-https://ymabouncycastles.uk}"
+DOMAIN="${DOMAIN:-https://example.com}"
 fail=0
 
 check() {
