@@ -11,6 +11,7 @@ import {
 import { deleteFromCloudinary } from "../../utils/cloudinary.util";
 import Booking from "../../modules/Bookings/booking.model";
 import Order from "../../modules/Order/order.model";
+import { LocationModel as Location } from "../../modules/Location/location.model";
 import { normalizeSlug } from "../../utils/slug";
 
 const getAvailableProductFilter = (referenceDate: Date = new Date()) => ({
@@ -543,27 +544,45 @@ export const getAllProducts = async (
 
   // 4. Location & FIXED Category Filter
   //
-  // A single location term must match EITHER the product's city OR its state.
   // Products keep the human area name in `location.city` (e.g. "Romford",
   // "Barnet") and the region in `location.state` ("London", "Greater London",
-  // "Essex"). The storefront sends the same term for both `city` and `state`,
-  // so the previous code — which ANDed `location.city` with `location.state` —
-  // could never match anything.
+  // "Essex").
+  //
+  // Matching the selected area name alone left most locations empty: only ~16 of
+  // 45 products have a city set, so choosing "Barking" or "Ilford" returned
+  // nothing even though the business covers those areas. The Location record for
+  // each area knows its region, so we resolve that and also accept products whose
+  // state matches it. Selecting "Barking" therefore returns the Greater London
+  // stock instead of an empty grid.
   const locationTerm = (city || state || "").trim();
   if (locationTerm) {
-    const locationRegex = {
-      $regex: escapeRegex(locationTerm),
+    const asRegex = (value: string) => ({
+      $regex: escapeRegex(value),
       $options: "i",
-    };
-    query.$and = [
-      ...(query.$and || []),
-      {
-        $or: [
-          { "location.city": locationRegex },
-          { "location.state": locationRegex },
-        ],
-      },
+    });
+
+    const orConditions: Record<string, unknown>[] = [
+      { "location.city": asRegex(locationTerm) },
+      { "location.state": asRegex(locationTerm) },
     ];
+
+    // Look up the area's region so products tagged only by region are included.
+    try {
+      const locationDoc = await Location.findOne({
+        name: { $regex: `^${escapeRegex(locationTerm)}$`, $options: "i" },
+      })
+        .select("state")
+        .lean();
+
+      const region = String((locationDoc as any)?.state || "").trim();
+      if (region && region.toLowerCase() !== locationTerm.toLowerCase()) {
+        orConditions.push({ "location.state": asRegex(region) });
+      }
+    } catch {
+      // Region lookup is best-effort: fall back to name matching alone.
+    }
+
+    query.$and = [...(query.$and || []), { $or: orConditions }];
   }
 
   // FIX: Query the array directly since categories are stored as ObjectIds
