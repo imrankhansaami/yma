@@ -24,6 +24,7 @@ import {
 import { Checkbox } from "../../ui/checkbox";
 import { SuccessModal } from "../../ui/success-modal";
 import ImageUpload from "./ImageUpload";
+import LocationCombobox from "./LocationCombobox";
 import TextEditor from "./TextEditor";
 
 interface AddProductFormProps {
@@ -768,28 +769,21 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
               control={control}
               name="location.city"
               render={({ field }) => (
-                <Select
+                <LocationCombobox
                   value={field.value ? String(field.value) : ""}
-                  onValueChange={(v) => field.onChange(v)}
-                >
-                  <SelectTrigger className="w-full h-[38px]">
-                    <SelectValue placeholder="Select the area this product serves" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(locations as any[]).map((loc, i) => {
-                      const name = loc.name?.trim() || `Location ${i + 1}`;
-                      return (
-                        <SelectItem key={loc.id ?? i} value={name}>
-                          {name}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                  onChange={(name) => field.onChange(name)}
+                  locations={(locations as any[]).map((loc, i) => ({
+                    id: loc.id ?? String(i),
+                    name: loc.name ?? "",
+                    state: loc.state ?? "",
+                  }))}
+                  placeholder="Search for an area..."
+                />
               )}
             />
             <p className="text-[12px] text-brand-gray-500">
-              Customers filtering by this area will see the product.
+              Customers filtering by this area will see the product. Search, or
+              create a new area if it is missing.
             </p>
             {errors.location?.city && (
               <p className="text-red-500 text-xs">

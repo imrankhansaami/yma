@@ -8,6 +8,9 @@ export type LocationOption = {
   fullAddress?: string | null;
   children?: LocationOption[];
   city: string;
+  /** Region, e.g. "Greater London" — used by the location picker for context. */
+  state?: string;
+  postcode?: string;
   deliveryAreas?: { name?: string }[];
 };
 
@@ -51,6 +54,8 @@ export async function fetchLocations(params?: {
       ? loc.slugAliases.map((s: any) => String(s || "").trim()).filter(Boolean)
       : [],
     city: loc.city, // Ensure city is captured
+    state: loc.state,
+    postcode: loc.postcode,
     fullAddress: loc.fullAddress ?? loc.description ?? "",
     deliveryAreas: Array.isArray(loc.deliveryAreas) ? loc.deliveryAreas : [],
     children: Array.isArray(loc.children)
