@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import connectDB from "../app/config/db";
 import Blog from "../app/modules/Blog/blog.model";
 import { uploadToCloudinary } from "../app/utils/cloudinary.util";
+import { normalizeSlug } from "../app/utils/slug";
 
 /**
  * Import blog posts from a WordPress (WXR) export.
@@ -138,7 +139,7 @@ async function run() {
 
   // Only published posts are imported; the single draft is a duplicate.
   const wanted = posts.filter((p) => p.status === "publish" && p.slug);
-  const existing = await Blog.find().select("slug title description images slugAliases").lean();
+  const existing = await Blog.find().select("slug title description images slugAliases createdAt").lean();
   const existingBySlug = new Map(existing.map((b: any) => [b.slug, b]));
 
   // Some posts are already on the site under a longer, title-derived slug
@@ -238,18 +239,62 @@ async function run() {
       metaDescription: p.metaDescription,
     } as any);
 
+    // The model always derives a slug from the title on create. Prefer the
+    // export's canonical slug and keep the derived one as an alias.
+    const canonical = normalizeSlug(p.slug);
+    if (canonical && canonical !== created.slug) {
+      await Blog.updateOne(
+        { _id: created._id },
+        {
+          $set: {
+            slug: canonical,
+            slugAliases: [created.slug, ...(created.slugAliases || [])].filter(
+              (s, i, arr) => s && s !== canonical && arr.indexOf(s) === i,
+            ),
+          },
+        },
+      );
+      (created as any).slug = canonical;
+    }
+
     console.log(`  created "${created.title}" (slug=${(created as any).slug}) images=${images.length}`);
   }
 
   // ---- alias the canonical slugs of posts that were already imported -------
   for (const { post, match } of duplicates) {
     const aliases = Array.isArray(match.slugAliases) ? match.slugAliases : [];
-    if (aliases.includes(post.slug)) continue;
+    const canonical = normalizeSlug(post.slug);
+    if (!canonical) continue;
+
+    // If the current slug is simply the auto-derived title slug and the export
+    // has a cleaner canonical one, promote it and keep the derived slug as an
+    // alias. Only for posts created moments ago by this import - posts that have
+    // been live with a derived slug are left untouched so their URLs keep working.
+    const derived = normalizeSlug(match.title);
+    const justCreated =
+      match.createdAt && Date.now() - new Date(match.createdAt).getTime() < 24 * 3600 * 1000;
+    if (canonical !== match.slug && match.slug === derived && justCreated) {
+      await Blog.updateOne(
+        { _id: match._id },
+        {
+          $set: {
+            slug: canonical,
+            slugAliases: [match.slug, ...aliases].filter(
+              (s, i, arr) => s && s !== canonical && arr.indexOf(s) === i,
+            ),
+          },
+        },
+      );
+      console.log(`  promoted slug ${match.slug} -> ${canonical}`);
+      continue;
+    }
+
+    if (canonical === match.slug || aliases.includes(canonical)) continue;
     await Blog.updateOne(
       { _id: match._id },
-      { $set: { slugAliases: [...aliases, post.slug].filter(Boolean) } },
+      { $set: { slugAliases: [...aliases, canonical].filter(Boolean) } },
     );
-    console.log(`  aliased ${post.slug} -> ${match.slug}`);
+    console.log(`  aliased ${canonical} -> ${match.slug}`);
   }
 
   // ---- repoint old images in existing posts --------------------------------
