@@ -570,19 +570,28 @@ export const getAllProducts = async (
     const orConditions: Record<string, unknown>[] = [
       { "location.city": asRegex(locationTerm) },
       { "location.state": asRegex(locationTerm) },
+      // Products now list the postcode districts they cover.
+      { "location.postcodes": asRegex(locationTerm) },
     ];
 
-    // Look up the area's region so products tagged only by region are included.
+    // Look up the area's region and postcode so products tagged by either are
+    // included: products store the postcode districts they cover in
+    // location.postcodes, while the area itself carries the postcode.
     try {
       const locationDoc = await Location.findOne({
         name: { $regex: `^${escapeRegex(locationTerm)}$`, $options: "i" },
       })
-        .select("state")
+        .select("state city")
         .lean();
 
       const region = String((locationDoc as any)?.state || "").trim();
       if (region && region.toLowerCase() !== locationTerm.toLowerCase()) {
         orConditions.push({ "location.state": asRegex(region) });
+      }
+
+      const postcode = String((locationDoc as any)?.city || "").trim();
+      if (postcode && postcode.toLowerCase() !== locationTerm.toLowerCase()) {
+        orConditions.push({ "location.postcodes": asRegex(postcode) });
       }
     } catch {
       // Region lookup is best-effort: fall back to name matching alone.

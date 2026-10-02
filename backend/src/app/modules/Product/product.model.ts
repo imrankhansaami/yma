@@ -245,6 +245,15 @@ const productSchema: Schema = new Schema(
         type: String,
         trim: false,
       },
+      /**
+       * Postcode districts this product covers, e.g. ["RM9", "RM10"].
+       * Selected on the admin product form from the managed location list;
+       * the storefront location filter matches against these.
+       */
+      postcodes: {
+        type: [String],
+        default: [],
+      },
     },
 
     availableFrom: {

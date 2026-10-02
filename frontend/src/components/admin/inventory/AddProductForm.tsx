@@ -24,7 +24,7 @@ import {
 import { Checkbox } from "../../ui/checkbox";
 import { SuccessModal } from "../../ui/success-modal";
 import ImageUpload from "./ImageUpload";
-import LocationCombobox from "./LocationCombobox";
+import LocationPostcodePicker from "./LocationPostcodePicker";
 import TextEditor from "./TextEditor";
 
 interface AddProductFormProps {
@@ -154,9 +154,10 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         unit: "years",
       },
       location: {
-        country: "England",
-        state: "London",
+        country: "United Kingdom",
+        state: "Greater London",
         city: "",
+        postcodes: [],
       },
       dimensions: {
         length: 10,
@@ -284,10 +285,19 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     formData.append("ageRange[unit]", "years");
 
     // Location
-    formData.append("location[country]", data.location.country);
-    formData.append("location[state]", data.location.state);
-    // Served area — required, drives the storefront location filter.
-    formData.append("location[city]", data.location.city);
+    formData.append("location[country]", data.location.country || "United Kingdom");
+    formData.append("location[state]", data.location.state || "Greater London");
+    // Postcode districts this product covers, sent as an indexed array so the
+    // backend's bracketed-field expander turns them into a real array.
+    (data.location.postcodes || []).forEach((code, index) => {
+      if (String(code).trim()) {
+        formData.append(`location[postcodes][${index}]`, String(code).trim());
+      }
+    });
+    // Keep the legacy single-value field populated with the first postcode so
+    // older readers of location.city still resolve something sensible.
+    const primaryPostcode = (data.location.postcodes || [])[0];
+    if (primaryPostcode) formData.append("location[city]", String(primaryPostcode));
 
     // Organization — a product may belong to several categories.
     (data.categories || []).forEach((categoryId, index) => {
@@ -740,56 +750,39 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         {/* Location */}
         <div className="bg-white p-[16px] rounded-[8px] shadow-sm flex flex-col gap-[16px]">
           <p className="text-[16px] font-medium text-brand-black-950">Product Location</p>
-          <div className="flex gap-[8px]">
-             <div className="flex-1 flex flex-col gap-[6px]">
-                <label className="text-[14px] font-medium text-brand-black-950">Country</label>
-                <input
-                    {...register("location.country")}
-                    type="text"
-                    className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] focus:outline-none focus:border-brand-orange-500"
-                />
-             </div>
-             <div className="flex-1 flex flex-col gap-[6px]">
-                <label className="text-[14px] font-medium text-brand-black-950">State/City</label>
-                <input
-                    {...register("location.state")}
-                    type="text"
-                    className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] focus:outline-none focus:border-brand-orange-500"
-                />
-             </div>
-          </div>
 
-          {/* Served area — required: this is what the storefront's location
-              filter matches on, so a product without it cannot be found by area. */}
+          {/* Single control: the postcode districts this product covers.
+              Country/state are no longer shown; they are submitted as defaults
+              so a location created here still has a region. */}
           <div className="flex flex-col gap-[6px]">
             <label className="text-[14px] font-medium text-brand-black-950">
               Location <span className="text-red-500">*</span>
             </label>
             <Controller
               control={control}
-              name="location.city"
+              name="location.postcodes"
               render={({ field }) => (
-                <LocationCombobox
-                  value={field.value ? String(field.value) : ""}
-                  onChange={(name) => field.onChange(name)}
+                <LocationPostcodePicker
+                  values={Array.isArray(field.value) ? field.value : []}
+                  onChange={(next) => field.onChange(next)}
                   locations={(locations as any[]).map((loc, i) => ({
                     id: loc.id ?? String(i),
                     name: loc.name ?? "",
+                    postcode: loc.city ?? "",
                     state: loc.state ?? "",
                   }))}
                   country={watch("location.country")}
                   state={watch("location.state")}
-                  placeholder="Search for an area..."
                 />
               )}
             />
             <p className="text-[12px] text-brand-gray-500">
-              Customers filtering by this area will see the product. Search, or
-              create a new area if it is missing.
+              Tick every postcode this product covers. Use the search box to
+              filter, create a new one, or delete one with the bin icon.
             </p>
-            {errors.location?.city && (
+            {errors.location?.postcodes && (
               <p className="text-red-500 text-xs">
-                {errors.location.city.message as string}
+                {errors.location.postcodes.message as string}
               </p>
             )}
           </div>

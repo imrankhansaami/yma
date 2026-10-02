@@ -45,13 +45,18 @@ export const addProductSchema = yup.object().shape({
   }),
 
   // Location
-  // `city` holds the served area name (for example "Barking") and is what the
-  // storefront's location filter matches on, so it is mandatory: without it a
-  // product cannot be found by area.
+  // The form exposes a single multi-select of postcodes. Country/state are not
+  // shown but are still submitted, because the locations API requires them when
+  // creating an area inline.
   location: yup.object().shape({
-    country: yup.string().required("Country is required"),
-    state: yup.string().required("State is required"),
-    city: yup.string().required("Location is required"),
+    country: yup.string().default("United Kingdom"),
+    state: yup.string().default("Greater London"),
+    city: yup.string().default(""),
+    postcodes: yup
+      .array()
+      .of(yup.string().required())
+      .min(1, "Select at least one location")
+      .default([]),
   }),
 
   // Organization

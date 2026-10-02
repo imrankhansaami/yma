@@ -29,6 +29,7 @@ export interface IProduct {
     country: "England";
     state: string;
     city?: string;
+    postcodes?: string[];
   };
   dimensions: {
     length: number;
@@ -109,6 +110,7 @@ export interface CreateProductData {
   location: {
     state: string;
     city?: string;
+    postcodes?: string[];
   };
   dimensions: {
     length: number;
@@ -198,6 +200,7 @@ export type UpdateProductData = DeepPartial<{
     country: "England";
     state: string;
     city?: string;
+    postcodes?: string[];
   };
 
   dimensions: {

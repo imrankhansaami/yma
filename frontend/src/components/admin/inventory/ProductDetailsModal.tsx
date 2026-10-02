@@ -99,9 +99,10 @@ export default function ProductDetailsModal({
       },
 
       location: {
-        country: location.country || "England",
-        state: location.state || "London",
+        country: location.country || "United Kingdom",
+        state: location.state || "Greater London",
         city: location.city || "",
+        postcodes: Array.isArray(location.postcodes) ? location.postcodes : [],
       },
 
       categories: categoryIds,

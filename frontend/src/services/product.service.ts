@@ -8,6 +8,8 @@ export interface ApiLocation {
   country?: string;
   state?: string;
   city?: string;
+  /** Postcode districts this product covers, e.g. ["RM9", "RM10"]. */
+  postcodes?: string[];
   fullAddress?: string;
   description?: string | null;
   id?: string;
