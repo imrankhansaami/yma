@@ -101,6 +101,7 @@ export default function ProductDetailsModal({
       location: {
         country: location.country || "England",
         state: location.state || "London",
+        city: location.city || "",
       },
 
       categories: categoryIds,

@@ -5,13 +5,14 @@ import {
   addProductSchema,
 } from "@/lib/validation/addProductSchema";
 import { fetchCategories } from "@/services/category.service";
+import { fetchLocations } from "@/services/location.service";
 import { createProduct, updateProduct } from "@/services/product.service";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Euro, Plus, X, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useAdminToast } from "../../ui/admin-toast";
 import {
   Select,
@@ -154,6 +155,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       location: {
         country: "England",
         state: "London",
+        city: "",
       },
       dimensions: {
         length: 10,
@@ -173,6 +175,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     formState: { errors },
     setValue,
     watch,
+    control,
     reset,
   } = useForm<AddProductFormData>({
     resolver: yupResolver(addProductSchema),
@@ -193,6 +196,11 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   const safetyFeatures = watch("safetyFeatures") || [];
   const watchedImageAltTexts = watch("imageAltTexts");
   const watchedName = watch("name");
+
+  const { data: locations = [] } = useQuery({
+    queryKey: ["locations"],
+    queryFn: () => fetchLocations({ page: 1, limit: 100 }),
+  });
 
   // --- Internal size ---------------------------------------------------------
   // Kept in L/W/H text form so the admin can adjust it by hand. Auto-filled from
@@ -277,6 +285,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     // Location
     formData.append("location[country]", data.location.country);
     formData.append("location[state]", data.location.state);
+    // Served area — required, drives the storefront location filter.
+    formData.append("location[city]", data.location.city);
 
     // Organization — a product may belong to several categories.
     (data.categories || []).forEach((categoryId, index) => {
@@ -746,6 +756,46 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                     className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] focus:outline-none focus:border-brand-orange-500"
                 />
              </div>
+          </div>
+
+          {/* Served area — required: this is what the storefront's location
+              filter matches on, so a product without it cannot be found by area. */}
+          <div className="flex flex-col gap-[6px]">
+            <label className="text-[14px] font-medium text-brand-black-950">
+              Location <span className="text-red-500">*</span>
+            </label>
+            <Controller
+              control={control}
+              name="location.city"
+              render={({ field }) => (
+                <Select
+                  value={field.value ? String(field.value) : ""}
+                  onValueChange={(v) => field.onChange(v)}
+                >
+                  <SelectTrigger className="w-full h-[38px]">
+                    <SelectValue placeholder="Select the area this product serves" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(locations as any[]).map((loc, i) => {
+                      const name = loc.name?.trim() || `Location ${i + 1}`;
+                      return (
+                        <SelectItem key={loc.id ?? i} value={name}>
+                          {name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <p className="text-[12px] text-brand-gray-500">
+              Customers filtering by this area will see the product.
+            </p>
+            {errors.location?.city && (
+              <p className="text-red-500 text-xs">
+                {errors.location.city.message as string}
+              </p>
+            )}
           </div>
         </div>
 

@@ -45,9 +45,13 @@ export const addProductSchema = yup.object().shape({
   }),
 
   // Location
+  // `city` holds the served area name (for example "Barking") and is what the
+  // storefront's location filter matches on, so it is mandatory: without it a
+  // product cannot be found by area.
   location: yup.object().shape({
     country: yup.string().required("Country is required"),
     state: yup.string().required("State is required"),
+    city: yup.string().required("Location is required"),
   }),
 
   // Organization

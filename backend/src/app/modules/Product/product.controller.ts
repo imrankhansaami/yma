@@ -8,6 +8,7 @@ import { uploadToCloudinary } from "../../utils/cloudinary.util";
 import Product from "./product.model";
 import sharp from "sharp";
 import { revalidatePaths } from "../../utils/revalidate";
+import { expandBracketedFields } from "../../utils/expandFormFields";
 
 // Add these functions to your existing product.controller.ts
 
@@ -349,7 +350,10 @@ export const createProduct = asyncHandler(
     const files = req.files as
       | { [fieldname: string]: Express.Multer.File[] }
       | undefined;
-    const productData = { ...req.body };
+    // Expand `location[city]`, `dimensions[length]`, ... into nested objects.
+    // Without this the strict schema drops them (multer delivers the bracketed
+    // names literally) and the product saves with no dimensions or location.
+    const productData = expandBracketedFields(req.body);
 
     // Collapse `categories[0]`, `categories[1]`, ... into an array.
     const categoryIds = collectCategories(req.body);
@@ -415,7 +419,9 @@ export const updateProduct = asyncHandler(
     const files = req.files as
       | { [fieldname: string]: Express.Multer.File[] }
       | undefined;
-    const updateData = { ...req.body };
+    // Expand `location[city]`, `dimensions[length]`, ... into nested objects
+    // (see the create handler for why).
+    const updateData = expandBracketedFields(req.body);
 
     // Collapse `categories[0]`, `categories[1]`, ... into an array so the
     // update replaces the whole category set.
