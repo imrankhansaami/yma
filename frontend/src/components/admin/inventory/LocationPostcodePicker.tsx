@@ -55,6 +55,13 @@ export default function LocationPostcodePicker({
     [values],
   );
 
+  // Mirrors `selected` but updated inside `toggle`, so several ticks in one
+  // React batch build on each other instead of each reading the same stale list.
+  const selectedRef = useRef<string[]>(selected);
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
+
   useEffect(() => {
     if (open) {
       setQuery("");
@@ -109,7 +116,9 @@ export default function LocationPostcodePicker({
     },
     onSuccess: (_res, name) => {
       queryClient.invalidateQueries({ queryKey: ["locations"] });
-      onChange([...selected, name]);
+      const next = [...selectedRef.current, name];
+      selectedRef.current = next;
+      onChange(next);
       setQuery("");
       notify({
         title: "Location created",
@@ -137,7 +146,11 @@ export default function LocationPostcodePicker({
       const removed = options.find((o) => o.id === id);
       const label = removed ? labelOf(removed) : "";
       queryClient.invalidateQueries({ queryKey: ["locations"] });
-      if (label) onChange(selected.filter((s) => s !== label));
+      if (label) {
+        const next = selectedRef.current.filter((s) => s !== label);
+        selectedRef.current = next;
+        onChange(next);
+      }
       notify({
         title: "Location deleted",
         message: label ? `"${label}" was removed.` : "Location removed.",
@@ -154,11 +167,12 @@ export default function LocationPostcodePicker({
   });
 
   const toggle = (label: string) => {
-    if (selected.includes(label)) {
-      onChange(selected.filter((s) => s !== label));
-    } else {
-      onChange([...selected, label]);
-    }
+    const current = selectedRef.current;
+    const next = current.includes(label)
+      ? current.filter((s) => s !== label)
+      : [...current, label];
+    selectedRef.current = next;
+    onChange(next);
   };
 
   return (
