@@ -39,7 +39,10 @@ type WxrAttachment = { id: string; slug: string; url: string; alt: string };
 
 const cdata = (block: string, tag: string) => {
   const m = block.match(new RegExp(`<${tag}><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`));
-  return m ? m[1] : "";
+  if (m) return m[1];
+  // Some fields (wp:post_id) are written as plain text rather than CDATA.
+  const plain = block.match(new RegExp(`<${tag}>([^<]*)</${tag}>`));
+  return plain ? plain[1].trim() : "";
 };
 const metaValue = (block: string, key: string) => {
   const m = block.match(
