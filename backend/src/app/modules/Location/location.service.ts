@@ -282,13 +282,26 @@ export const updateLocation = async (
   return Location.findByIdAndUpdate(id, updateData, { new: true });
 };
 
-// Delete location (soft delete)
-export const deleteLocation = async (id: string): Promise<ILocation | null> => {
+// Delete location. Soft by default; `hard` removes the document entirely.
+//
+// A hard delete is safe because products store the postcode districts they
+// cover as plain strings in location.postcodes, not as references - so removing
+// a location record never orphans a product. The admin product form uses this
+// when an area is deleted from the postcode picker.
+export const deleteLocation = async (
+  id: string,
+  hard = false,
+): Promise<ILocation | null> => {
   // Check if location exists
   const location = await Location.findById(id);
 
   if (!location) {
     return null;
+  }
+
+  if (hard) {
+    const removed = await Location.findByIdAndDelete(id);
+    return removed;
   }
 
   // Soft delete by setting isActive to false

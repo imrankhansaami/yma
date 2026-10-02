@@ -208,7 +208,10 @@ export const updateLocationHandler = asyncHandler(
 // Delete location
 export const deleteLocationHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const location = await LocationService.deleteLocation(req.params.id);
+    const location = await LocationService.deleteLocation(
+      req.params.id,
+      req.query.hard === "true",
+    );
 
     if (!location) {
       throw new ApiError("Location not found", 404);

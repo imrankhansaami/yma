@@ -16,6 +16,7 @@ export type PostcodeChoice = {
   /** Postcode district, e.g. "RM1". Shown in preference to the name. */
   postcode?: string;
   state?: string;
+  isActive?: boolean;
 };
 
 /** What the row shows and what gets stored on the product. */
@@ -64,12 +65,15 @@ export default function LocationPostcodePicker({
 
   const options = useMemo(() => {
     const cleaned = locations
-      .map((l) => ({
+      .map((l: any) => ({
         id: l.id,
         name: String(l.name || "").trim(),
         postcode: String(l.postcode || "").trim(),
         state: String(l.state || "").trim(),
+        isActive: l.isActive !== false,
       }))
+      // Hide soft-deleted locations so a removed area cannot be re-selected.
+      .filter((l) => l.isActive)
       .filter((l) => l.name || l.postcode);
 
     const term = query.trim().toLowerCase();
@@ -124,7 +128,9 @@ export default function LocationPostcodePicker({
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/locations/${id}`);
+      // Hard delete: the admin is removing the area for good. Products keep the
+      // postcode as a plain string, so nothing is orphaned.
+      await api.delete(`/locations/${id}?hard=true`);
       return id;
     },
     onSuccess: (_id, id) => {
