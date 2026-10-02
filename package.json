@@ -11,7 +11,7 @@
     "dev:backend": "npm run dev --workspace=backend",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build:frontend": "npm run build --workspace=frontend",
-    "build:backend": "npm run build --workspace=backend",
+    "build:backend": "node node_modules/typescript/bin/tsc -p backend",
     "build": "npm run build:frontend && npm run build:backend",
     "start:frontend": "npm run start --workspace=frontend",
     "start:backend": "npm run start --workspace=backend",
