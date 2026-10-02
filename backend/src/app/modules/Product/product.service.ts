@@ -696,7 +696,11 @@ export const getAllProducts = async (
 
   // 6. Execution
   const skip = (page - 1) * limit;
-  const sortOptions = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
+  const sortOptions: Record<string, 1 | -1> = {
+    [sortBy]: sortOrder === "desc" ? -1 : 1,
+  };
+  // Deterministic tiebreaker - see getAllProducts for why this matters.
+  sortOptions._id = sortOrder === "desc" ? -1 : 1;
 
   const productFind = Product.find(query);
   // `certificates` can be hundreds of KB per product (base64 files) and is only
@@ -1258,6 +1262,14 @@ export const adminSearchProducts = async (
 
   const finalSortBy = validSortFields.includes(sortBy) ? sortBy : "createdAt";
   sort[finalSortBy] = sortOrder === "asc" ? 1 : -1;
+
+  // Deterministic tiebreaker. Many products share the same createdAt (and 16
+  // of them have no createdAt at all), so ordering by a single field is not
+  // stable in MongoDB. That made .skip()/.limit() pagination return the same
+  // document on more than one page while omitting others entirely - four live
+  // products were unreachable in the catalog. Adding _id guarantees a total
+  // order so every product appears on exactly one page.
+  sort._id = sortOrder === "asc" ? 1 : -1;
 
   const [products, total] = await Promise.all([
     Product.find(filter)
