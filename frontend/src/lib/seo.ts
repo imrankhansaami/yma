@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/site-url";
 
 const fallbackMeta = {
   siteName: "YMA Bouncy Castles",
@@ -23,7 +24,7 @@ const fallbackMeta = {
     "party rentals",
     "children entertainment",
   ].join(", "),
-  defaultCanonicalBaseUrl: "https://ymabouncycastles.uk",
+  defaultCanonicalBaseUrl: SITE_URL,
   defaultOpenGraphTitle: "YMA Bouncy Castles | Premium Bouncy Castle Hire",
   defaultOpenGraphDescription:
     "Premium bouncy castle hire for parties and events in London, Essex, Enfield, Birmingham & Coventry. Book online today!",

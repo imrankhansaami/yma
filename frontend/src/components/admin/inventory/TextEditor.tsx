@@ -4,6 +4,7 @@ import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { SITE_HOST } from "@/lib/site-url";
 import {
   Bold,
   Image as ImageIcon,
@@ -72,7 +73,7 @@ const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, error }) => {
       const url = prompt("Enter URL:");
       if (url) {
         const isExternal =
-          url.startsWith("http") && !url.includes("ymabouncycastles.uk");
+          url.startsWith("http") && !url.includes(SITE_HOST);
         if (isExternal) {
           editor.chain().focus().setLink({ href: url, target: "_blank", rel: "noopener noreferrer" }).run();
         } else {

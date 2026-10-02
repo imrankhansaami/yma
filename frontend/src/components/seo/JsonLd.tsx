@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { SITE_URL } from "@/lib/site-url";
 
 export interface OrganizationJsonLdProps {
   name?: string;
@@ -15,8 +16,8 @@ export interface OrganizationJsonLdProps {
 
 export function OrganizationJsonLd({
   name = "YMA Bouncy Castles",
-  url = "https://ymabouncycastles.uk",
-  logo = "https://ymabouncycastles.uk/logo.png",
+  url = SITE_URL,
+  logo = `${SITE_URL}/logo.png`,
   contactPoint = {
     telephone: "+44-7951-431111",
     contactType: "customer service",
@@ -77,7 +78,7 @@ export interface LocalBusinessJsonLdProps {
 export function LocalBusinessJsonLd({
   name = "YMA Bouncy Castles",
   description = "Premium bouncy castle hire for parties and events in London, Essex, Enfield, Birmingham & Coventry.",
-  url = "https://ymabouncycastles.uk",
+  url = SITE_URL,
   telephone = "+44-7951-431111",
   email = "info@ymabouncycastles.uk",
   address = {
@@ -265,7 +266,7 @@ export interface WebsiteJsonLdProps {
 
 export function WebsiteJsonLd({
   name = "YMA Bouncy Castles",
-  url = "https://ymabouncycastles.uk",
+  url = SITE_URL,
   description = "Premium bouncy castle hire for parties and events in London, Essex, Enfield, Birmingham & Coventry.",
 }: WebsiteJsonLdProps) {
   const jsonLd = {
@@ -356,7 +357,7 @@ export function BlogPostingJsonLd({
   dateModified,
   url,
   publisherName = "YMA Bouncy Castles",
-  publisherLogo = "https://ymabouncycastles.uk/logo.png",
+  publisherLogo = `${SITE_URL}/logo.png`,
 }: BlogPostingJsonLdProps) {
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",

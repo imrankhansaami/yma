@@ -1,7 +1,8 @@
 import { MetadataRoute } from "next";
 import { CATEGORY_PAGES } from "@/lib/category-pages";
+import { SITE_URL } from "@/lib/site-url";
 
-const BASE_URL = "https://ymabouncycastles.uk";
+const BASE_URL = SITE_URL;
 
 // async function getProducts(): Promise<{ id: string; updatedAt?: string }[]> {
 //   try {

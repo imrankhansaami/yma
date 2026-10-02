@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/site-url";
 
 async function fetchSeoSettings(): Promise<{ robotsTxtCustomRules?: string } | null> {
   try {
@@ -57,7 +58,7 @@ function parseCustomRules(raw: string) {
 }
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
-  const baseUrl = "https://ymabouncycastles.uk";
+  const baseUrl = SITE_URL;
 
   const defaultRules = [
     {

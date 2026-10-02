@@ -1,13 +1,14 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { SITE_HOST } from "@/lib/site-url";
 
 type RichTextProps = {
   html?: string | null;
   className?: string;
 };
 
-const INTERNAL_DOMAINS = ["ymabouncycastles.uk", "localhost"];
+const INTERNAL_DOMAINS = [SITE_HOST, "localhost"];
 
 /**
  * Sanitize link attributes in HTML:
