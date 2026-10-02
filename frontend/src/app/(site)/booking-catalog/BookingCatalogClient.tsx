@@ -38,6 +38,26 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
+/**
+ * Sort choices offered on category pages.
+ *
+ * "default" is not a database sort: the backend alternates a large product with
+ * a small one (footprint = length x width) so a category grid mixes big
+ * inflatables with smaller add-ons instead of clustering the large items.
+ */
+const SORT_OPTIONS = [
+  { value: "default", label: "Default", sortBy: "default", sortOrder: "desc" },
+  { value: "newest", label: "Newest First", sortBy: "createdAt", sortOrder: "desc" },
+  { value: "price-asc", label: "Low Price First", sortBy: "price", sortOrder: "asc" },
+  { value: "price-desc", label: "High Price First", sortBy: "price", sortOrder: "desc" },
+] as const;
+
+const DEFAULT_SORT = "default";
+
+function resolveSort(value: string) {
+  return SORT_OPTIONS.find((o) => o.value === value) ?? SORT_OPTIONS[0];
+}
+
 const LOCATION_POSTCODE_MAP: Record<string, string> = {
   Barking: "IG11",
   "Buckhurst Hill": "IG9",
@@ -71,6 +91,12 @@ function BookingCatalogPageInner({
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // The sort dropdown is a category-page feature. On a category page the default
+  // is the alternating big/small order; on the main catalog the default stays
+  // "newest" so the server-rendered seed (createdAt desc) still matches.
+  const isCategoryPage = Boolean(forcedCategoryName);
+  const contextDefaultSort = isCategoryPage ? DEFAULT_SORT : "newest";
+
   const parseUrlDate = (value: string | null): Date | undefined => {
     if (!value) return undefined;
     const normalized = value.trim();
@@ -90,7 +116,7 @@ function BookingCatalogPageInner({
   const [location, setLocation] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [pageSize, setPageSize] = useState("12");
-  const [sort, setSort] = useState("-createdAt");
+  const [sort, setSort] = useState<string>(contextDefaultSort);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [appliedFilters, setAppliedFilters] = useState<{
@@ -107,7 +133,7 @@ function BookingCatalogPageInner({
     location: "",
     searchTerm: "",
     pageSize: "12",
-    sort: "-createdAt",
+    sort: contextDefaultSort,
     startDateStr: undefined,
     endDateStr: undefined,
     categoryPathSlug: String(forcedCategoryName || "").trim(),
@@ -160,7 +186,7 @@ function BookingCatalogPageInner({
     const rawSort =
       searchParams.get("sortBy")?.trim() ||
       searchParams.get("sort")?.trim() ||
-      "-createdAt";
+      contextDefaultSort;
     const rawLimit = searchParams.get("limit")?.trim() || "12";
     const rawPage = Number(searchParams.get("page") || 1);
 
@@ -205,9 +231,12 @@ function BookingCatalogPageInner({
     const endDateStr = end ? format(end, "yyyy-MM-dd") : startDateStr;
 
     setCategorySelect(nextCategory);
+    // Normalise legacy or unknown sort values to a known option so the dropdown
+    // and the query never disagree.
+    const normalizedSort = resolveSort(rawSort).value;
     setLocation(mappedLocation);
     setSearchTerm(rawSearch);
-    setSort(rawSort);
+    setSort(normalizedSort);
     setPageSize(rawLimit);
     setCurrentPage(Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1);
     setDateRange(start ? { from: start, to: end || start } : undefined);
@@ -216,7 +245,7 @@ function BookingCatalogPageInner({
       location: mappedLocation,
       searchTerm: rawSearch,
       pageSize: rawLimit,
-      sort: rawSort,
+      sort: normalizedSort,
       startDateStr,
       endDateStr,
       categoryPathSlug,
@@ -234,7 +263,7 @@ function BookingCatalogPageInner({
   const isDefaultQuery =
     currentPage === 1 &&
     appliedFilters.pageSize === "12" &&
-    appliedFilters.sort === "-createdAt" &&
+    appliedFilters.sort === contextDefaultSort &&
     !appliedFilters.categorySelect &&
     !appliedFilters.location &&
     !appliedFilters.startDateStr &&
@@ -273,7 +302,8 @@ function BookingCatalogPageInner({
       fetchProducts({
         page: currentPage,
         limit: Number(appliedFilters.pageSize),
-        sort: appliedFilters.sort,
+        sort: resolveSort(appliedFilters.sort).sortBy,
+        sortOrder: resolveSort(appliedFilters.sort).sortOrder,
         // Only send params if they have real values (not " " or empty)
         categoryId:
           appliedFilters.categorySelect &&
@@ -337,7 +367,7 @@ function BookingCatalogPageInner({
       params.set("city", location.trim());
     }
     if (searchTerm?.trim()) params.set("search", searchTerm.trim());
-    if (sort && sort !== "-createdAt") params.set("sortBy", sort);
+    if (sort && sort !== contextDefaultSort) params.set("sortBy", sort);
     if (pageSize && pageSize !== "12") params.set("limit", pageSize);
     if (dateRange?.from) {
       params.set("start", format(dateRange.from, "dd-MM-yyyy"));
@@ -489,6 +519,40 @@ function BookingCatalogPageInner({
           <Search className="mr-2 h-4 w-4" /> Find Availability
         </Button>
       </div>
+
+      {/* Results count + sort (category pages only) */}
+      {isCategoryPage && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-brand-gray-600">
+            Your search results:{" "}
+            <span className="font-semibold text-brand-ink-900">{total}</span>
+          </p>
+          <Select
+            value={sort}
+            onValueChange={(v) => {
+              // Sort applies immediately rather than waiting for
+              // "Find Availability" - matching the reference storefront.
+              setSort(v);
+              setCurrentPage(1);
+              setAppliedFilters((prev) => ({ ...prev, sort: v }));
+            }}
+          >
+            <SelectTrigger
+              aria-label="Sort products"
+              className="w-[200px] h-10"
+            >
+              <SelectValue placeholder="Default" />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">

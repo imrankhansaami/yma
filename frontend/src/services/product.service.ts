@@ -110,6 +110,8 @@ export type FetchProductsParams = {
   page?: number;
   limit?: number;
   sort?: string;
+  /** "asc" | "desc" — pairs with `sort` for the backend's sortBy/sortOrder. */
+  sortOrder?: "asc" | "desc";
 
   // backend filters
   categoryId?: string | null;
@@ -283,6 +285,7 @@ export async function fetchProducts({
   page = 1,
   limit = 12,
   sort = "-createdAt",
+  sortOrder,
   categoryId = null,
   locationId = null,
   minPrice = null,
@@ -302,6 +305,10 @@ export async function fetchProducts({
     limit,
     sortBy: sort,
   };
+
+  // The backend treats sortBy and sortOrder as separate inputs; without this a
+  // "-price" style value silently falls back to sorting by createdAt.
+  if (sortOrder) params.sortOrder = sortOrder;
 
   if (categoryId) params.category = categoryId;
   if (locationId) params.location = locationId;

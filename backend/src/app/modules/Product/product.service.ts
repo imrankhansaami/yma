@@ -696,6 +696,57 @@ export const getAllProducts = async (
 
   // 6. Execution
   const skip = (page - 1) * limit;
+
+  // "default" ordering alternates a large product with a small one so category
+  // grids mix big inflatables with smaller add-ons instead of clustering all the
+  // large items together. Footprint is length x width from product dimensions.
+  //
+  // This cannot be expressed as a MongoDB sort, so the matching products are
+  // ordered in memory and the requested page sliced out. The catalogue is small
+  // (tens of products) and this branch only runs when explicitly requested.
+  if (String(sortBy).toLowerCase() === "default") {
+    const alternatingFind = Product.find(query).populate(
+      "categories",
+      "name description slug",
+    );
+    if (!includeCertificates) {
+      alternatingFind.select("-certificates");
+    }
+
+    const allMatching = await alternatingFind.lean();
+
+    const footprint = (product: any) => {
+      const length = Number(product?.dimensions?.length) || 0;
+      const width = Number(product?.dimensions?.width) || 0;
+      return length * width;
+    };
+
+    // Smallest first; _id keeps ties deterministic.
+    const bySizeAsc = [...allMatching].sort((a: any, b: any) => {
+      const diff = footprint(a) - footprint(b);
+      if (diff !== 0) return diff;
+      return String(a._id).localeCompare(String(b._id));
+    });
+
+    // Interleave: largest, smallest, second largest, second smallest, ...
+    const alternating: any[] = [];
+    let low = 0;
+    let high = bySizeAsc.length - 1;
+    let takeLarge = true;
+    while (low <= high) {
+      alternating.push(takeLarge ? bySizeAsc[high--] : bySizeAsc[low++]);
+      takeLarge = !takeLarge;
+    }
+
+    const matched = alternating.length;
+
+    return {
+      products: alternating.slice(skip, skip + limit),
+      total: matched,
+      pages: Math.ceil(matched / limit),
+    };
+  }
+
   const sortOptions: Record<string, 1 | -1> = {
     [sortBy]: sortOrder === "desc" ? -1 : 1,
   };
