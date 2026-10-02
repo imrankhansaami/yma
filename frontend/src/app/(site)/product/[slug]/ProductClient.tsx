@@ -23,6 +23,7 @@ import type { DateRange } from "react-day-picker";
 
 import BookingInfoStrip from "@/components/catalog/BookingInfoStrip";
 import { RichText } from "@/components/common/RichText";
+import ProductReviews from "@/components/product/ProductReviews";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -788,6 +789,13 @@ export default function ProductClient({
                 })}
               </div>
             </section>
+          ) : null}
+
+          {product && (product._id || product.id) ? (
+            <ProductReviews
+              productId={String(product._id || product.id)}
+              productName={product.name}
+            />
           ) : null}
         </div>
 

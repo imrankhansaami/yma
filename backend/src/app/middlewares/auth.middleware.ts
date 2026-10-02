@@ -77,3 +77,35 @@ export const protectRoute = asyncHandler(
     }
   },
 );
+
+/**
+ * Attach the signed-in user when a valid token is present, but never reject.
+ * Used by routes that accept both guests and customers, such as posting a
+ * review.
+ */
+export const optionalAuth = asyncHandler(
+  async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      let token: string | undefined;
+      if (req.cookies?.accessToken) {
+        token = req.cookies.accessToken;
+      } else if (req.headers.authorization?.startsWith("Bearer")) {
+        token = req.headers.authorization.split(" ")[1];
+      }
+
+      if (token) token = token.replace(/['"]+/g, "").trim();
+
+      if (token && token !== "undefined" && token !== "null") {
+        const secret = process.env.JWT_SECRET;
+        if (secret) {
+          const decoded = jwt.verify(token, secret) as { id: string };
+          const user = await User.findById(decoded.id);
+          if (user) (req as AuthenticatedRequest).user = user;
+        }
+      }
+    } catch {
+      // A bad or expired token simply means we treat the caller as a guest.
+    }
+    next();
+  },
+);

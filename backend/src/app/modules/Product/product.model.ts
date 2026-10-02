@@ -278,6 +278,22 @@ const productSchema: Schema = new Schema(
       default: 0,
       index: true,
     },
+    /**
+     * Denormalised review stats, recomputed by the Review module whenever a
+     * review is approved, unpublished or deleted. Mirrors WooCommerce's
+     * `_wc_average_rating` / `_wc_review_count`.
+     */
+    ratingsAverage: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    ratingsQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     active: {
       type: Boolean,
       default: true,

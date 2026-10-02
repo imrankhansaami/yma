@@ -28,6 +28,7 @@ import customerRoutes from "./app/modules/customer/customer.routes";
 import seoSettingsRoutes from "./app/modules/SeoSettings/seo.routes";
 import redirectRoutes from "./app/modules/Redirect/redirect.routes";
 import pageContentRoutes from "./app/modules/PageContent/pageContent.routes";
+import reviewRoutes from "./app/modules/Review/review.routes";
 import uploadRoutes from "./app/modules/Upload/upload.routes";
 import { requestPerformance } from "./app/middlewares/performance.middleware";
 import { globalCache } from "./app/middlewares/globalCache";
@@ -93,6 +94,7 @@ app.use("/api/v1/customers", customerRoutes);
 app.use("/api/v1/seo-settings", seoSettingsRoutes);
 app.use("/api/v1/redirects", redirectRoutes);
 app.use("/api/v1/page-content", pageContentRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/upload", uploadRoutes);
 
 // app.use(compression());

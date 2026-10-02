@@ -10,6 +10,7 @@ import {
   CornerUpRight,
   Search,
   Settings,
+  Star,
   Store,
   TicketPercent,
   User,
@@ -48,6 +49,11 @@ const mainLinks = [
     label: "Blogs Management",
     href: "/admin/blogs",
     icon: PanelsTopLeft,
+  },
+  {
+    label: "Reviews",
+    href: "/admin/reviews",
+    icon: Star,
   },
   {
     label: "Pages",

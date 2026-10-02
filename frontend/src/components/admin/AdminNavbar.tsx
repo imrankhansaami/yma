@@ -13,6 +13,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith("/admin/customers")) return "Customer Management";
   if (pathname.startsWith("/admin/promo-codes")) return "Promo Codes";
   if (pathname.startsWith("/admin/blogs")) return "Blogs Management";
+    if (pathname.startsWith("/admin/reviews")) return "Reviews & Ratings";
   if (pathname.startsWith("/admin/seo")) return "SEO Settings";
   if (pathname.startsWith("/admin/settings")) return "Settings";
   return "Dashboard";
