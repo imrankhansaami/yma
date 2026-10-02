@@ -112,6 +112,11 @@ async function fetchCatalogProducts(searchParams: SearchParams) {
     params.set("category", categoryId);
   }
 
+  const sizeBand = getStringParam(searchParams.size).trim();
+  if (sizeBand) {
+    params.set("sizeBand", sizeBand);
+  }
+
   const location =
     (typeof searchParams.pickup === "string" && searchParams.pickup) ||
     (typeof searchParams.city === "string" && searchParams.city) ||
@@ -330,6 +335,7 @@ export default async function BookingCatalogPage({
     "limit",
     "sort",
     "sortBy",
+    "size",
   ];
   const hasFilterParams = seedKeys.some(
     (key) => getStringParam(resolvedSearchParams[key]).trim().length > 0,

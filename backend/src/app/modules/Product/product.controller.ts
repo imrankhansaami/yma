@@ -512,6 +512,7 @@ export const getAllProducts = async (req: Request, res: Response) => {
       showAll,
       productId,
       includeCertificates,
+      sizeBand,
     } = req.query;
 
     const result = await productService.getAllProducts(
@@ -531,6 +532,7 @@ export const getAllProducts = async (req: Request, res: Response) => {
       showAll === "true",
       productId as string,
       includeCertificates === "true",
+      sizeBand as string,
     );
 
     return res.status(200).json({

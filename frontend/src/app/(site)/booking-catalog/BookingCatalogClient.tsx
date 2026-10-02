@@ -54,6 +54,19 @@ const SORT_OPTIONS = [
 
 const DEFAULT_SORT = "default";
 
+/**
+ * Size filter options. These bucket products by their internal `sizeFootprint`
+ * (length x width). The raw size string is never displayed to customers.
+ */
+const SIZE_OPTIONS = [
+  { value: "", label: "Any Size" },
+  { value: "xs", label: "Extra Small (up to 5ft x 8ft)" },
+  { value: "s", label: "Small (up to 12ft x 10ft)" },
+  { value: "m", label: "Medium (up to 15ft x 11ft)" },
+  { value: "l", label: "Large (up to 18ft x 15ft)" },
+  { value: "xl", label: "Extra Large (20ft and above)" },
+] as const;
+
 function resolveSort(value: string) {
   return SORT_OPTIONS.find((o) => o.value === value) ?? SORT_OPTIONS[0];
 }
@@ -116,6 +129,7 @@ function BookingCatalogPageInner({
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [pageSize, setPageSize] = useState("12");
   const [sort, setSort] = useState<string>(contextDefaultSort);
+  const [sizeBand, setSizeBand] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [appliedFilters, setAppliedFilters] = useState<{
@@ -124,6 +138,7 @@ function BookingCatalogPageInner({
     searchTerm: string;
     pageSize: string;
     sort: string;
+    sizeBand: string;
     startDateStr?: string;
     endDateStr?: string;
     categoryPathSlug: string;
@@ -133,6 +148,7 @@ function BookingCatalogPageInner({
     searchTerm: "",
     pageSize: "12",
     sort: contextDefaultSort,
+    sizeBand: "",
     startDateStr: undefined,
     endDateStr: undefined,
     categoryPathSlug: String(forcedCategoryName || "").trim(),
@@ -187,6 +203,7 @@ function BookingCatalogPageInner({
       searchParams.get("sort")?.trim() ||
       contextDefaultSort;
     const rawLimit = searchParams.get("limit")?.trim() || "12";
+    const rawSizeBand = searchParams.get("size")?.trim() || "";
     const rawPage = Number(searchParams.get("page") || 1);
 
     const start = parseUrlDate(
@@ -236,6 +253,7 @@ function BookingCatalogPageInner({
     setLocation(mappedLocation);
     setSearchTerm(rawSearch);
     setSort(normalizedSort);
+    setSizeBand(rawSizeBand);
     setPageSize(rawLimit);
     setCurrentPage(Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1);
     setDateRange(start ? { from: start, to: end || start } : undefined);
@@ -245,6 +263,7 @@ function BookingCatalogPageInner({
       searchTerm: rawSearch,
       pageSize: rawLimit,
       sort: normalizedSort,
+      sizeBand: rawSizeBand,
       startDateStr,
       endDateStr,
       categoryPathSlug,
@@ -265,6 +284,7 @@ function BookingCatalogPageInner({
     appliedFilters.sort === contextDefaultSort &&
     !appliedFilters.categorySelect &&
     !appliedFilters.location &&
+    !appliedFilters.sizeBand &&
     !appliedFilters.startDateStr &&
     !appliedFilters.endDateStr &&
     !appliedFilters.searchTerm;
@@ -293,6 +313,7 @@ function BookingCatalogPageInner({
       appliedFilters.sort,
       appliedFilters.categorySelect,
       appliedFilters.location,
+      appliedFilters.sizeBand,
       appliedFilters.startDateStr,
       appliedFilters.endDateStr,
       appliedFilters.searchTerm,
@@ -313,6 +334,7 @@ function BookingCatalogPageInner({
           appliedFilters.location && appliedFilters.location.trim().length > 1
             ? appliedFilters.location
             : "",
+        sizeBand: appliedFilters.sizeBand || null,
         availableFrom: appliedFilters.startDateStr,
         availableUntil: appliedFilters.endDateStr,
         search: appliedFilters.searchTerm || undefined,
@@ -351,6 +373,7 @@ function BookingCatalogPageInner({
       searchTerm,
       pageSize,
       sort,
+      sizeBand,
       startDateStr,
       endDateStr,
       categoryPathSlug,
@@ -365,6 +388,7 @@ function BookingCatalogPageInner({
       // so the backend can match it (a postcode would never match).
       params.set("city", location.trim());
     }
+    if (sizeBand?.trim()) params.set("size", sizeBand.trim());
     if (searchTerm?.trim()) params.set("search", searchTerm.trim());
     if (sort && sort !== contextDefaultSort) params.set("sortBy", sort);
     if (pageSize && pageSize !== "12") params.set("limit", pageSize);
@@ -473,6 +497,34 @@ function BookingCatalogPageInner({
                   </SelectItem>
                 );
               })}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Size Select — internal size band, never shows the raw size string */}
+        <div className="flex-1 min-w-[200px] space-y-1">
+          <label className="text-xs font-semibold text-gray-500 uppercase ml-1">
+            Size
+          </label>
+          <Select
+            value={sizeBand || " "}
+            onValueChange={(v) => {
+              setSizeBand(v === " " ? "" : v);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger aria-label="Filter by size" className="w-full h-11">
+              <SelectValue placeholder="Any Size" />
+            </SelectTrigger>
+            <SelectContent>
+              {SIZE_OPTIONS.map((option) => (
+                <SelectItem
+                  key={option.value || "any"}
+                  value={option.value || " "}
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

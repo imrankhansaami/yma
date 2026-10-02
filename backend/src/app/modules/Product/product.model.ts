@@ -2,6 +2,7 @@ import mongoose, { Schema, Model } from "mongoose";
 import { IProduct } from "./product.interface";
 import { sanitizeSeoMetaTitle } from "../../utils/seoTitle";
 import { normalizeSlug, normalizeSlugList } from "../../utils/slug";
+import { footprintFor } from "../../utils/productSize";
 
 // The raw document shape. Do NOT intersect with `mongoose.Document` — it makes
 // every `.lean()` result uncastable, since lean queries return plain objects.
@@ -257,6 +258,16 @@ const productSchema: Schema = new Schema(
     size: {
       type: String,
       trim: true,
+    },
+    /**
+     * Internal numeric size (length x width in feet), derived from `size` or
+     * `dimensions`. Never displayed — it powers the catalogue's big/small
+     * DEFAULT ordering and the Size filter.
+     */
+    sizeFootprint: {
+      type: Number,
+      default: 0,
+      index: true,
     },
     active: {
       type: Boolean,
@@ -544,6 +555,13 @@ productSchema.pre("save", async function (next) {
     ...aliases,
     shouldRegenerate ? previousSlug : undefined,
   ]).filter((item) => item !== doc.slug);
+
+  // Keep the internal numeric size in step with the typed size / dimensions.
+  doc.sizeFootprint = footprintFor({
+    size: doc.size,
+    dimensions: doc.dimensions,
+  });
+
   return next();
 });
 
@@ -556,7 +574,24 @@ productSchema.pre("findOneAndUpdate", async function (next) {
     update.$set.metaTitle = sanitizeSeoMetaTitle(update.$set.metaTitle);
   }
 
-  const current = await this.model.findOne(this.getQuery()).select("slug slugAliases");
+  const current = await this.model
+    .findOne(this.getQuery())
+    .select("slug slugAliases size dimensions sizeFootprint");
+
+  // Keep the internal numeric size in step with the typed size / dimensions.
+  // Done before the slug branches below, which return early.
+  {
+    const nextSize = update?.size ?? update?.$set?.size ?? (current as any)?.size;
+    const nextDimensions =
+      update?.dimensions ?? update?.$set?.dimensions ?? (current as any)?.dimensions;
+    const footprint = footprintFor({ size: nextSize, dimensions: nextDimensions });
+    if (update?.$set) {
+      update.$set.sizeFootprint = footprint;
+    } else {
+      update.sizeFootprint = footprint;
+    }
+  }
+
   const currentSlug = normalizeSlug((current as any)?.slug);
   const currentAliases = Array.isArray((current as any)?.slugAliases)
     ? (current as any).slugAliases

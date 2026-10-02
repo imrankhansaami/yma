@@ -29,6 +29,14 @@ export const addProductSchema = yup.object().shape({
     height: yup.number().typeError("Height must be a number").required("Height is required"),
   }),
 
+  // Internal size (never shown to customers). Free text in L/W/H order, e.g.
+  // "27ft x 9.5ft x 11ft". Pre-filled from the dimensions above but editable.
+  // Drives the catalogue's big/small ordering and the Size filter.
+  size: yup
+    .string()
+    .max(120, "Size cannot exceed 120 characters")
+    .default(""),
+
   // Age Range
   ageRange: yup.object().shape({
     min: yup.number().typeError("Min age must be a number").required("Min age is required"),

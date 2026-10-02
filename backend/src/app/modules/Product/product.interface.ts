@@ -38,6 +38,8 @@ export interface IProduct {
   availableFrom: Date;
   availableUntil: Date;
   size?: string;
+  /** Internal numeric size (length x width in feet). Not shown to customers. */
+  sizeFootprint?: number;
   active: boolean;
   stock: number;
   isSensitive: boolean;
@@ -116,6 +118,8 @@ export interface CreateProductData {
   availableFrom: Date | string;
   availableUntil: Date | string;
   size?: string;
+  /** Internal numeric size (length x width in feet). Not shown to customers. */
+  sizeFootprint?: number;
   active?: boolean;
   stock: number;
   isSensitive: boolean;
@@ -205,6 +209,8 @@ export type UpdateProductData = DeepPartial<{
   availableFrom: Date;
   availableUntil: Date;
   size?: string;
+  /** Internal numeric size (length x width in feet). Not shown to customers. */
+  sizeFootprint?: number;
   active: boolean;
   stock: number;
   isSensitive: boolean;

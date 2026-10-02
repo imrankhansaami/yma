@@ -193,6 +193,30 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   const safetyFeatures = watch("safetyFeatures") || [];
   const watchedImageAltTexts = watch("imageAltTexts");
   const watchedName = watch("name");
+
+  // --- Internal size ---------------------------------------------------------
+  // Kept in L/W/H text form so the admin can adjust it by hand. Auto-filled from
+  // the structured dimensions, but only while the admin has not customised it:
+  // once the value differs from the last generated one it is left alone.
+  const watchedSize = watch("size") || "";
+  const watchedLength = watch("dimensions.length");
+  const watchedWidth = watch("dimensions.width");
+  const watchedHeight = watch("dimensions.height");
+  const autoSizeRef = React.useRef("");
+
+  useEffect(() => {
+    const length = Number(watchedLength);
+    const width = Number(watchedWidth);
+    const height = Number(watchedHeight);
+    if (!(length > 0 && width > 0 && height > 0)) return;
+
+    const generated = `${length}ft x ${width}ft x ${height}ft`;
+    const current = String(watchedSize || "").trim();
+    if (!current || current === autoSizeRef.current) {
+      autoSizeRef.current = generated;
+      setValue("size", generated, { shouldDirty: true });
+    }
+  }, [watchedLength, watchedWidth, watchedHeight, watchedSize, setValue]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const watchedSlug = watch("slug");
 
@@ -241,6 +265,9 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     formData.append("dimensions[length]", String(data.dimensions.length));
     formData.append("dimensions[width]", String(data.dimensions.width));
     formData.append("dimensions[height]", String(data.dimensions.height));
+
+    // Internal size (L/W/H text). Drives big/small ordering and the Size filter.
+    if (data.size) formData.append("size", String(data.size));
 
     // Age Range - Try brackets for safer nesting
     formData.append("ageRange[min]", String(data.ageRange.min));
@@ -508,6 +535,27 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             </div>
            </div>
            {errors.dimensions && <p className="text-red-500 text-xs">All dimensions are required</p>}
+
+           {/* Internal size — not shown to customers */}
+           <div className="flex flex-col gap-[6px]">
+             <label className="text-[14px] font-medium text-brand-black-950">
+               Size (internal)
+             </label>
+             <input
+               {...register("size")}
+               type="text"
+               placeholder="e.g. 27ft x 9.5ft x 11ft"
+               className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] focus:outline-none focus:border-brand-orange-500"
+             />
+             <p className="text-[12px] text-brand-gray-500">
+               Length x Width x Height. Not displayed to customers — it is used to
+               order products (large/small) and to power the Size filter. Filled in
+               automatically from the dimensions above.
+             </p>
+             {errors.size && (
+               <p className="text-red-500 text-xs">{errors.size.message as string}</p>
+             )}
+           </div>
 
 
           {/* Sensitive Product Checkbox */}

@@ -14,6 +14,7 @@
     "order:id:backfill": "ts-node src/scripts/backfillOrderNumbersToSixDigits.ts",
     "quantity:normalize": "ts-node src/scripts/normalizeProductQuantityToOne.ts",
     "categories:fix": "ts-node src/scripts/fixProductCategories.ts",
+    "sizes:backfill": "ts-node src/scripts/backfillProductSizes.ts",
     "seed:demo-admin": "ts-node src/scripts/seedDemoAdmin.ts",
     "test": "jest",
     "test:watch": "jest --watch",

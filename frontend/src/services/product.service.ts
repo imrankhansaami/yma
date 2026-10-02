@@ -112,6 +112,8 @@ export type FetchProductsParams = {
   sort?: string;
   /** "asc" | "desc" — pairs with `sort` for the backend's sortBy/sortOrder. */
   sortOrder?: "asc" | "desc";
+  /** Internal size band: xs | s | m | l | xl */
+  sizeBand?: string | null;
 
   // backend filters
   categoryId?: string | null;
@@ -297,6 +299,7 @@ export async function fetchProducts({
   availableUntil = null,
   availableOn = null,
   city,
+  sizeBand = null,
   signal,
   includeCertificates = false,
 }: FetchProductsParams): Promise<FetchProductsResponse> {
@@ -325,6 +328,7 @@ export async function fetchProducts({
   if (availableFrom) params.startDate = availableFrom;
   if (availableUntil) params.endDate = availableUntil;
   if (availableOn) params.availableOn = availableOn;
+  if (sizeBand) params.sizeBand = sizeBand;
   if (city) {
     // Single term: the backend matches it against the product's location.city
     // OR location.state. (Previously this also set `state`, which the backend

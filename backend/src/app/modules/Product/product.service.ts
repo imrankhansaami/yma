@@ -13,6 +13,11 @@ import Booking from "../../modules/Bookings/booking.model";
 import Order from "../../modules/Order/order.model";
 import { LocationModel as Location } from "../../modules/Location/location.model";
 import { normalizeSlug } from "../../utils/slug";
+import {
+  footprintFor,
+  rangeForBand,
+  type SizeBand,
+} from "../../utils/productSize";
 
 const getAvailableProductFilter = (referenceDate: Date = new Date()) => ({
   isActive: true,
@@ -511,6 +516,7 @@ export const getAllProducts = async (
   showAll: boolean = false,
   productId?: string,
   includeCertificates: boolean = false,
+  sizeBand?: string,
 ) => {
   const query: any = {};
   let effectiveStartDate: Date | undefined;
@@ -595,6 +601,15 @@ export const getAllProducts = async (
     query.price = {};
     if (minPrice !== undefined) query.price.$gte = minPrice;
     if (maxPrice !== undefined) query.price.$lte = maxPrice;
+  }
+
+  // Internal size band (xs/s/m/l/xl) -> numeric footprint range. Size is never
+  // shown to customers; it only drives ordering and filtering.
+  if (sizeBand) {
+    const range = rangeForBand(String(sizeBand).toLowerCase() as SizeBand);
+    if (range) {
+      query.sizeFootprint = range;
+    }
   }
 
   if (availableOn || startDate || endDate) {
@@ -734,11 +749,7 @@ export const getAllProducts = async (
 
     const allMatching = await alternatingFind.lean();
 
-    const footprint = (product: any) => {
-      const length = Number(product?.dimensions?.length) || 0;
-      const width = Number(product?.dimensions?.width) || 0;
-      return length * width;
-    };
+    const footprint = (product: any) => footprintFor(product);
 
     // Smallest first; _id keeps ties deterministic.
     const bySizeAsc = [...allMatching].sort((a: any, b: any) => {
