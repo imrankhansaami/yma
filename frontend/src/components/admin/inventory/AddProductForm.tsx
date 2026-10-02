@@ -777,6 +777,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                     name: loc.name ?? "",
                     state: loc.state ?? "",
                   }))}
+                  country={watch("location.country")}
+                  state={watch("location.state")}
                   placeholder="Search for an area..."
                 />
               )}

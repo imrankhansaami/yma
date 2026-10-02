@@ -26,11 +26,16 @@ export default function LocationCombobox({
   value,
   onChange,
   locations,
+  country,
+  state,
   placeholder = "Search for an area...",
 }: {
   value: string;
   onChange: (name: string) => void;
   locations: LocationChoice[];
+  /** Taken from the product's own country/state fields when creating an area. */
+  country?: string;
+  state?: string;
   placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -76,8 +81,11 @@ export default function LocationCombobox({
     mutationFn: async (name: string) => {
       const { data } = await api.post("/locations", {
         name,
-        // The service requires a type; these are flat service areas.
+        // The controller requires all four; the product's own country/state
+        // supply the region so a new area lands in the right place.
         type: "area",
+        country: String(country || "").trim(),
+        state: String(state || "").trim(),
         isActive: true,
       });
       return data?.data ?? data;
