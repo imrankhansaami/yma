@@ -83,12 +83,23 @@ async function fetchCatalogProducts(searchParams: SearchParams) {
   const params = new URLSearchParams();
   params.set("page", "1");
   params.set("limit", "12");
-  params.set("sortBy", "-createdAt");
 
-  const sort = searchParams.sort;
-  if (typeof sort === "string" && sort) {
-    params.set("sortBy", sort === "price-asc" ? "price" : "-price");
-  }
+  // Mirrors the client's SORT_OPTIONS so the server-rendered seed matches the
+  // order the client shows on first paint (no reorder flash). "default" is the
+  // backend's alternating big/small order.
+  const SORT_MAP: Record<string, { sortBy: string; sortOrder: string }> = {
+    default: { sortBy: "default", sortOrder: "desc" },
+    newest: { sortBy: "createdAt", sortOrder: "desc" },
+    "price-asc": { sortBy: "price", sortOrder: "asc" },
+    "price-desc": { sortBy: "price", sortOrder: "desc" },
+  };
+  const rawSort =
+    getStringParam(searchParams.sortBy).trim() ||
+    getStringParam(searchParams.sort).trim() ||
+    "default";
+  const sortChoice = SORT_MAP[rawSort] ?? SORT_MAP.default;
+  params.set("sortBy", sortChoice.sortBy);
+  params.set("sortOrder", sortChoice.sortOrder);
 
   const search = searchParams.search;
   if (typeof search === "string" && search.trim()) {

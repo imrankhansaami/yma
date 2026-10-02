@@ -91,11 +91,10 @@ function BookingCatalogPageInner({
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // The sort dropdown is a category-page feature. On a category page the default
-  // is the alternating big/small order; on the main catalog the default stays
-  // "newest" so the server-rendered seed (createdAt desc) still matches.
-  const isCategoryPage = Boolean(forcedCategoryName);
-  const contextDefaultSort = isCategoryPage ? DEFAULT_SORT : "newest";
+  // The sort dropdown appears on the main catalog and on category pages, with
+  // the same default (alternating big/small) in both. The server-rendered seed
+  // is fetched with sortBy=default so the first paint matches this order.
+  const contextDefaultSort = DEFAULT_SORT;
 
   const parseUrlDate = (value: string | null): Date | undefined => {
     if (!value) return undefined;
@@ -520,39 +519,34 @@ function BookingCatalogPageInner({
         </Button>
       </div>
 
-      {/* Results count + sort (category pages only) */}
-      {isCategoryPage && (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-brand-gray-600">
-            Your search results:{" "}
-            <span className="font-semibold text-brand-ink-900">{total}</span>
-          </p>
-          <Select
-            value={sort}
-            onValueChange={(v) => {
-              // Sort applies immediately rather than waiting for
-              // "Find Availability" - matching the reference storefront.
-              setSort(v);
-              setCurrentPage(1);
-              setAppliedFilters((prev) => ({ ...prev, sort: v }));
-            }}
-          >
-            <SelectTrigger
-              aria-label="Sort products"
-              className="w-[200px] h-10"
-            >
-              <SelectValue placeholder="Default" />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      {/* Results count + sort */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-brand-gray-600">
+          Your search results:{" "}
+          <span className="font-semibold text-brand-ink-900">{total}</span>
+        </p>
+        <Select
+          value={sort}
+          onValueChange={(v) => {
+            // Sort applies immediately rather than waiting for
+            // "Find Availability" - matching the reference storefront.
+            setSort(v);
+            setCurrentPage(1);
+            setAppliedFilters((prev) => ({ ...prev, sort: v }));
+          }}
+        >
+          <SelectTrigger aria-label="Sort products" className="w-[200px] h-10">
+            <SelectValue placeholder="Default" />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
