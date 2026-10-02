@@ -36,3 +36,6 @@ Thumbs.db
 # misc
 *.tgz
 *.log
+
+# local screenshots from the agent browser
+.openchamber/
