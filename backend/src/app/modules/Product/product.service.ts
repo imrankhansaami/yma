@@ -577,6 +577,13 @@ export const getAllProducts = async (
     // Look up the area's region and postcode so products tagged by either are
     // included: products store the postcode districts they cover in
     // location.postcodes, while the area itself carries the postcode.
+    //
+    // The regional fallback is skipped when the term is itself a postcode
+    // district (RM11, CM20 ...). Otherwise picking a postcode would also drag
+    // in every product tagged with its region, which defeats postcode-level
+    // filtering. Area-name locations (Romford) keep the fallback.
+    const looksLikePostcode = /^[A-Z]{1,2}\d{1,2}[A-Z]?$/i.test(locationTerm);
+
     try {
       const locationDoc = await Location.findOne({
         name: { $regex: `^${escapeRegex(locationTerm)}$`, $options: "i" },
@@ -585,7 +592,11 @@ export const getAllProducts = async (
         .lean();
 
       const region = String((locationDoc as any)?.state || "").trim();
-      if (region && region.toLowerCase() !== locationTerm.toLowerCase()) {
+      if (
+        !looksLikePostcode &&
+        region &&
+        region.toLowerCase() !== locationTerm.toLowerCase()
+      ) {
         orConditions.push({ "location.state": asRegex(region) });
       }
 
