@@ -492,8 +492,15 @@ export default function HeroSection() {
                                   loc.city?.trim() ||
                                   LOCATION_POSTCODE_MAP[name] ||
                                   "";
-                                const displayToUser = postcode
-                                  ? `${name} (${postcode})`
+                                // Locations are postcode districts now, so the
+                                // code is already the name — don't repeat it.
+                                const secondary =
+                                  postcode &&
+                                  postcode.toUpperCase() !== name.toUpperCase()
+                                    ? postcode
+                                    : "";
+                                const displayToUser = secondary
+                                  ? `${name} (${secondary})`
                                   : name;
 
                                 return (

@@ -491,10 +491,16 @@ function BookingCatalogPageInner({
                 const name = loc.name?.trim() || `Location ${i + 1}`;
                 const postcode =
                   loc.city?.trim() || LOCATION_POSTCODE_MAP[name] || "";
+                // Locations are postcode districts now, so the code is the name
+                // and repeating it reads as "CM17 (CM17)".
+                const secondary =
+                  postcode && postcode.toUpperCase() !== name.toUpperCase()
+                    ? postcode
+                    : "";
 
                 return (
                   <SelectItem key={i} value={name}>
-                    {postcode ? `${name} (${postcode})` : name}
+                    {secondary ? `${name} (${secondary})` : name}
                   </SelectItem>
                 );
               })}
