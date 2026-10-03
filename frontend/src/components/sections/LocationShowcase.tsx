@@ -27,7 +27,6 @@ export default function LocationShowcase({
   intro,
   areas,
   ctaHref,
-  ctaLabel,
   imageSrc,
   imageLeft = false,
 }: LocationShowcaseProps) {

@@ -36,14 +36,6 @@ async function fetchBlogHighlights() {
   }
 }
 
-function stripHtml(value?: string | null) {
-  if (!value) return "";
-  return value
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 export async function generateMetadata(): Promise<Metadata> {
   const { items, image } = await fetchBlogHighlights();
   const defaults = await getSeoDefaults();
@@ -51,11 +43,9 @@ export async function generateMetadata(): Promise<Metadata> {
     .map((b) => b?.title)
     .filter((t): t is string => Boolean(t))
     .slice(0, 4);
-  const highlighted = titles.length ? titles.join(", ") : "latest articles";
-  const description =
-    stripHtml(items?.[0]?.subtitle) ||
-    stripHtml(items?.[0]?.description) ||
-    `Discover expert advice, safety guidelines, and creative inspiration, including ${highlighted}.`;
+  // The blog index must have its own description. Reusing the first post's
+  // subtitle produced a duplicate meta description with that post.
+  const description = `Party planning ideas, hiring guides and inflatable safety advice from ${defaults.siteName} — birthdays, school events and celebrations across London and Essex.`;
 
   const title = "Blog";
   const seoTitle = buildSeoTitle(title, defaults.siteName);

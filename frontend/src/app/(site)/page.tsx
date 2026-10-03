@@ -62,6 +62,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = cms?.metaTitle || DEFAULT_TITLE;
   const description = cms?.metaDescription || DEFAULT_DESCRIPTION;
 
+  // Always emit a canonical. Returning `undefined` here clobbered the root
+  // layout's canonical and left the homepage with none.
+  const canonical =
+    typeof cms?.canonicalUrl === "string" && cms.canonicalUrl.trim().startsWith("/")
+      ? cms.canonicalUrl.trim()
+      : "/";
+
   return {
     title,
     description,
@@ -82,7 +89,7 @@ export async function generateMetadata(): Promise<Metadata> {
     applicationName: SEO_STATIC.SITE_NAME,
     category: "Party Rentals",
     referrer: "origin-when-cross-origin",
-    alternates: cms?.canonicalUrl ? { canonical: cms.canonicalUrl } : undefined,
+    alternates: { canonical },
     openGraph: {
       title: cms?.metaTitle || "YMA Bouncy Castles | Premium Party Hire",
       description,

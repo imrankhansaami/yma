@@ -457,7 +457,7 @@ export function OrderDetailsModal({
       if (!orderProp?._id) throw new Error("Missing order ID");
       return orderServices.updateOrder(orderProp._id, data);
     },
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       notify({
         title: "Order updated",
         message: "Order details saved successfully",

@@ -66,7 +66,12 @@ function slugify(value: string) {
 }
 
 function buildTocAndAnchoredHtml(html?: string | null) {
-  const source = String(html || "");
+  // Imported article bodies often begin with their own <h1>, which would give
+  // the page two H1s. Demote body H1s to H2 so the page title stays the only H1.
+  const source = String(html || "").replace(
+    /<h1(\b[^>]*)>([\s\S]*?)<\/h1>/gi,
+    "<h2$1>$2</h2>",
+  );
   const toc: Array<{ id: string; text: string; level: 2 | 3 }> = [];
   const used = new Map<string, number>();
 

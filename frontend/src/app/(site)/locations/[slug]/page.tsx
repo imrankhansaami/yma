@@ -54,6 +54,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const routeSlug = normalizeCanonicalSlug(decodeURIComponent(slug || ""));
   const resolvedLocation = await fetchLocationBySlug(routeSlug);
+  if (!resolvedLocation) notFound();
   const canonicalSlug = normalizeCanonicalSlug(resolvedLocation?.slug || routeSlug);
   if (canonicalSlug && canonicalSlug !== routeSlug) {
     permanentRedirect(joinCanonicalPath(["locations", canonicalSlug]));
@@ -121,13 +122,19 @@ export default async function LocationDetailPage({
   const { slug } = await params;
   const routeSlug = normalizeCanonicalSlug(decodeURIComponent(slug || ""));
   const resolvedLocation = await fetchLocationBySlug(routeSlug);
+
+  // Unknown slug must be a real 404, not a 200 with a made-up heading.
+  if (!resolvedLocation) {
+    notFound();
+  }
+
   const canonicalSlug = normalizeCanonicalSlug(resolvedLocation?.slug || routeSlug);
   if (canonicalSlug && canonicalSlug !== routeSlug) {
     permanentRedirect(joinCanonicalPath(["locations", canonicalSlug]));
   }
 
   // A location toggled off in the admin must not be publicly reachable.
-  if (resolvedLocation && resolvedLocation.isActive === false) {
+  if (resolvedLocation.isActive === false) {
     notFound();
   }
 
