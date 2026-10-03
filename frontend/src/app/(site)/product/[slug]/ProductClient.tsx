@@ -24,6 +24,7 @@ import type { DateRange } from "react-day-picker";
 import BookingInfoStrip from "@/components/catalog/BookingInfoStrip";
 import { RichText } from "@/components/common/RichText";
 import ProductReviews from "@/components/product/ProductReviews";
+import { SHOW_PRODUCT_REVIEWS } from "@/lib/features";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -476,7 +477,7 @@ export default function ProductClient({
                 </h1>
               ) : null}
 
-              {hasRating ? (
+              {SHOW_PRODUCT_REVIEWS && hasRating ? (
                 <div className="mt-2 flex items-center gap-2 text-brand-gray-700 text-[14px]">
                   <Star className="h-4 w-4 fill-brand-ink-900 text-brand-ink-900" />
                   {ratingValue != null ? (
@@ -791,7 +792,7 @@ export default function ProductClient({
             </section>
           ) : null}
 
-          {product && (product._id || product.id) ? (
+          {SHOW_PRODUCT_REVIEWS && product && (product._id || product.id) ? (
             <ProductReviews
               productId={String(product._id || product.id)}
               productName={product.name}

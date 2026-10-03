@@ -1,6 +1,7 @@
 "use client";
 import SampleImage from "@/assets/images/bg1.png";
 import { fetchTopPicks, type ApiProduct } from "@/services/product.service";
+import { SHOW_PRODUCT_REVIEWS } from "@/lib/features";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -53,8 +54,8 @@ export default function TopPicksSection() {
         priceCurrent,
         priceSuffix: "per day",
         discountPercent,
-        ratingValue: p.ratingsAverage ?? undefined,
-        ratingCount: p.ratingsQuantity ?? undefined,
+        ratingValue: SHOW_PRODUCT_REVIEWS ? p.ratingsAverage ?? undefined : undefined,
+        ratingCount: SHOW_PRODUCT_REVIEWS ? p.ratingsQuantity ?? undefined : undefined,
         slug: slug || undefined,
         onBook: () => (slug ? router.push(`/product/${slug}`) : undefined),
         onAddToCart: () => (slug ? router.push(`/product/${slug}`) : undefined),

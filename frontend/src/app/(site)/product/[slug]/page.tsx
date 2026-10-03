@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BreadcrumbJsonLd, ProductJsonLd } from "@/components/seo/JsonLd";
 import { buildSeoTitle, getSeoDefaults, mergeKeywords } from "@/lib/seo";
 import { joinCanonicalPath, normalizeCanonicalSlug } from "@/lib/canonical";
+import { SHOW_PRODUCT_REVIEWS } from "@/lib/features";
 import type { ApiProduct } from "@/services/product.service";
 import { notFound, permanentRedirect } from "next/navigation";
 import ProductClient from "./ProductClient";
@@ -175,8 +176,8 @@ export default async function ProductDetailsPage({
             price={productPrice}
             availability={(Number(product?.availability?.availableStock ?? product?.stock ?? 0) > 0 ? "InStock" : "OutOfStock")}
             url={productUrl}
-            ratingValue={product.ratingsAverage}
-            ratingCount={product.ratingsQuantity}
+            ratingValue={SHOW_PRODUCT_REVIEWS ? product.ratingsAverage : undefined}
+            ratingCount={SHOW_PRODUCT_REVIEWS ? product.ratingsQuantity : undefined}
           />
           {product.customJsonLd ? (
             <script

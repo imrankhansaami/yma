@@ -30,6 +30,7 @@ import {
   fetchCategories,
 } from "@/services/category.service";
 import { fetchLocations } from "@/services/location.service";
+import { SHOW_PRODUCT_REVIEWS } from "@/lib/features";
 import {
   fetchProducts,
   type ApiProduct,
@@ -423,8 +424,8 @@ function BookingCatalogPageInner({
         priceOriginal: p?.priceDiscount
           ? p?.perDayPrice || p?.price || null
           : null,
-        ratingValue: p?.ratingsAverage,
-        ratingCount: p?.ratingsQuantity,
+        ratingValue: SHOW_PRODUCT_REVIEWS ? p?.ratingsAverage : undefined,
+        ratingCount: SHOW_PRODUCT_REVIEWS ? p?.ratingsQuantity : undefined,
       };
     })
     .filter(Boolean) as Array<{
