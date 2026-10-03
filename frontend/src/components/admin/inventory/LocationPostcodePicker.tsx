@@ -175,6 +175,24 @@ export default function LocationPostcodePicker({
     onChange(next);
   };
 
+  // "Select all" acts on whatever the search is currently showing, so an admin
+  // can narrow to a prefix and tick the lot.
+  const allLabels = useMemo(
+    () => Array.from(new Set(options.map((o) => labelOf(o)).filter(Boolean))),
+    [options],
+  );
+  const allSelected =
+    allLabels.length > 0 && allLabels.every((l) => selected.includes(l));
+
+  const toggleAll = () => {
+    const current = selectedRef.current;
+    const next = allSelected
+      ? current.filter((s) => !allLabels.includes(s))
+      : [...current, ...allLabels.filter((l) => !current.includes(l))];
+    selectedRef.current = next;
+    onChange(next);
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -222,6 +240,32 @@ export default function LocationPostcodePicker({
             placeholder="Search or type a new postcode..."
             className="w-full px-2 py-2 text-[14px] bg-transparent focus:outline-none"
           />
+        </div>
+
+        <div className="flex items-center justify-between gap-2 border-b border-brand-gray-125 px-3 py-2">
+          <button
+            type="button"
+            onClick={toggleAll}
+            disabled={allLabels.length === 0}
+            className="flex items-center gap-2 text-[13px] font-medium text-brand-ink-950 disabled:opacity-40"
+          >
+            <span
+              className={cn(
+                "h-4 w-4 shrink-0 rounded-[3px] border flex items-center justify-center",
+                allSelected
+                  ? "bg-brand-orange-500 border-brand-orange-500"
+                  : "border-brand-gray-260 bg-white",
+              )}
+            >
+              {allSelected ? <Check className="h-3 w-3 text-white" /> : null}
+            </span>
+            {allSelected
+              ? "Clear all"
+              : `Select all${query.trim() ? " shown" : ""} (${allLabels.length})`}
+          </button>
+          <span className="text-[12px] text-brand-gray-500">
+            {selected.length} selected
+          </span>
         </div>
 
         <div className="max-h-[280px] overflow-y-auto py-1">
