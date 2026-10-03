@@ -338,8 +338,13 @@ export const getLocations = async (
   if (filters.hasDeliveryAreas === "false")
     query["deliveryAreas.0"] = { $exists: false };
 
-  if (filters.isActive !== undefined)
+  if (filters.isActive !== undefined) {
     query.isActive = filters.isActive === "true";
+  } else if (filters.includeInactive !== "true") {
+    // Retired locations must never reach the storefront (nav, filters, maps).
+    // Pass includeInactive=true to see everything.
+    query.isActive = { $ne: false };
+  }
 
   if (filters.search) {
     query.$or = [

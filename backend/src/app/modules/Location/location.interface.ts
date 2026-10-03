@@ -90,6 +90,8 @@ export interface ILocationFilters {
   parent?: string | null;
   hasDeliveryAreas?: "true" | "false";
   isActive?: "true" | "false";
+  /** Set to "true" to include retired locations (storefront hides them). */
+  includeInactive?: "true" | "false";
 }
 
 export interface IDeliveryCheckResult {
