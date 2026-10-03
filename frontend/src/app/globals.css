@@ -123,20 +123,22 @@
   --color-brand-orange-75: var(--c-FFF4EB);
   --color-brand-orange-400: var(--c-FF692E);
   --color-brand-orange-50: var(--c-FFF7ED);
-  --color-brand-green-500: var(--c-22C55E);
-  --color-brand-green-600: var(--c-17B26A);
-  --color-brand-green-650: var(--c-068349);
+  --color-brand-green-500: var(--c-068349);
+  --color-brand-green-600: var(--c-046C3A);
+  --color-brand-green-650: var(--c-046C3A);
   --color-brand-green-560: var(--c-08C26B);
   --color-brand-green-550: var(--c-04B25F);
   --color-brand-green-50: var(--c-ECFDF3);
   --color-brand-emerald-700: var(--c-047857);
-  --color-brand-emerald-600: var(--c-079455);
+  --color-brand-emerald-600: var(--c-047857);
   --color-brand-emerald-520: var(--c-0EA57A);
   --color-brand-emerald-400: var(--c-34D399);
-  --color-brand-cyan-600: var(--c-0598B1);
-  --color-brand-cyan-500: var(--c-06B6D4);
-  --color-brand-yellow-500: var(--c-EAB308);
-  --color-brand-yellow-600: var(--c-CA8A04);
+  /* Darkened so white text on these fills passes WCAG AA (4.5:1).
+     Keep --c-06B6D4 / --c-22C55E / --c-079455 for vivid decorative use. */
+  --color-brand-cyan-600: var(--c-155E75);
+  --color-brand-cyan-500: var(--c-0E7490);
+  --color-brand-yellow-500: var(--c-B45309); /* darkened from #eab308 for WCAG AA white text */
+  --color-brand-yellow-600: var(--c-92400E);
   --color-brand-amber-500: var(--c-F59E0B);
   --color-brand-amber-550: var(--c-F5A000);
   --color-brand-purple-500: var(--c-7A5AF8);
@@ -313,7 +315,8 @@
   --c-FFF7ED: #fff7ed;
   --c-22C55E: #22c55e; /* Green/500 */
   --c-17B26A: #17b26a;
-  --c-068349: #068349;
+  --c-068349: #068349; /* Green/650 - accessible green fill (4.83:1 on white) */
+  --c-046C3A: #046c3a; /* Green/800 - accessible green hover (6.54:1) */
   --c-08C26B: #08c26b;
   --c-04B25F: #04b25f;
   --c-ECFDF3: #ecfdf3;
@@ -322,9 +325,13 @@
   --c-0EA57A: #0ea57a;
   --c-34D399: #34d399;
   --c-0598B1: #0598b1;
-  --c-06B6D4: #06b6d4;
+  --c-06B6D4: #06b6d4; /* Cyan/500 - vivid, decorative only (2.43:1 on white) */
+  --c-0E7490: #0e7490; /* Cyan/700 - accessible cyan fill (5.36:1 on white) */
+  --c-155E75: #155e75; /* Cyan/800 - accessible cyan hover (7.27:1) */
   --c-7A5AF8: #7a5af8;
-  --c-EAB308: #eab308; /* Yellow/500 */
+  --c-EAB308: #eab308; /* Yellow/500 - vivid, decorative only (1.92:1 on white) */
+  --c-B45309: #b45309; /* Amber/700 - accessible CTA yellow (5.02:1 on white) */
+  --c-92400E: #92400e; /* Amber/800 - accessible CTA yellow hover (7.09:1) */
   --c-22D3EE: #22d3ee; /* Cyan/400 */
   --c-0EA5E9: #0ea5e9;
   --c-987890: #987890;

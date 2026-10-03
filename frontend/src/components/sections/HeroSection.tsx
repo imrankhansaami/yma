@@ -584,7 +584,7 @@ export default function HeroSection() {
                 onClick={() =>
                   goToBookingCatalog({ categoryLabel: "Bouncy Castle" })
                 }
-                className="w-full rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-yellow-500 hover:bg-brand-yellow-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-yellow-500 border border-white transition-colors duration-300 hover:shadow-brand-yellow-600"
+                className="w-full h-auto rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-yellow-500 hover:bg-brand-yellow-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-yellow-500 border border-white transition-colors duration-300 hover:shadow-brand-yellow-600"
               >
                 Bouncy Castle{" "}
                 <ChevronRight className="ml-2 h-5 w-5 font-bold" />
@@ -595,7 +595,7 @@ export default function HeroSection() {
                 onClick={() =>
                   goToBookingCatalog({ categoryLabel: "Soft Play" })
                 }
-                className="w-full rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-indigo-500 hover:bg-brand-indigo-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-indigo-500 border border-white transition-colors duration-300 hover:shadow-brand-indigo-600"
+                className="w-full h-auto rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-indigo-500 hover:bg-brand-indigo-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-indigo-500 border border-white transition-colors duration-300 hover:shadow-brand-indigo-600"
               >
                 Soft Play <ChevronRight className="ml-2 h-5 w-5 font-bold" />
               </Button>
@@ -605,7 +605,7 @@ export default function HeroSection() {
                 onClick={() =>
                   goToBookingCatalog({ categoryLabel: "Garden Games" })
                 }
-                className="w-full rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-cyan-500 hover:bg-brand-cyan-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-cyan-500 border border-white transition-colors duration-300 hover:shadow-brand-cyan-600"
+                className="w-full h-auto rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-cyan-500 hover:bg-brand-cyan-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-cyan-500 border border-white transition-colors duration-300 hover:shadow-brand-cyan-600"
               >
                 Garden Games <ChevronRight className="ml-2 h-5 w-5 font-bold" />
               </Button>
@@ -616,7 +616,7 @@ export default function HeroSection() {
                     categoryLabel: "Obstacle Course/Slides",
                   })
                 }
-                className="w-full rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-orange-500 hover:bg-brand-orange-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-orange-500 border border-white transition-colors duration-300 hover:shadow-brand-orange-600"
+                className="w-full h-auto rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-orange-500 hover:bg-brand-orange-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-orange-500 border border-white transition-colors duration-300 hover:shadow-brand-orange-600"
               >
                 Obstacle Course/Slides{" "}
                 <ChevronRight className="h-5 w-5 font-bold" />
@@ -627,7 +627,7 @@ export default function HeroSection() {
                 onClick={() =>
                   goToBookingCatalog({ categoryLabel: "Fun Food" })
                 }
-                className="col-span-2 sm:col-span-1 justify-self-center w-full max-w-[210px] sm:max-w-none rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-emerald-600 hover:bg-brand-green-650 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-emerald-600 border border-white transition-colors duration-300 hover:shadow-brand-green-650"
+                className="col-span-2 sm:col-span-1 justify-self-center w-full max-w-[210px] sm:max-w-none h-auto rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-emerald-600 hover:bg-brand-green-650 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-emerald-600 border border-white transition-colors duration-300 hover:shadow-brand-green-650"
               >
                 Fun Food <ChevronRight className="ml-2 h-5 w-5 font-bold" />
               </Button>

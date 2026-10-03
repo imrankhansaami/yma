@@ -27,12 +27,12 @@ const THEME_STYLES: Record<
   }
 > = {
   green: {
-    card: "bg-brand-green-500/[0.1] border-brand-green-500/20 hover:border-brand-green-500 hover:shadow-[0_10px_40px_-10px_rgba(34,197,94,0.3)]",
+    card: "bg-brand-green-500/[0.1] border-brand-green-500/20 hover:border-brand-green-500 hover:shadow-[0_10px_40px_-10px_rgba(6,131,73,0.3)]",
     iconWrapper: "bg-white group-hover:bg-brand-green-500",
     icon: "text-brand-green-500 group-hover:text-white",
   },
   yellow: {
-    card: "bg-brand-yellow-500/[0.1] border-brand-yellow-500/20 hover:border-brand-yellow-500 hover:shadow-[0_10px_40px_-10px_rgba(234,179,8,0.3)]",
+    card: "bg-brand-yellow-500/[0.1] border-brand-yellow-500/20 hover:border-brand-yellow-500 hover:shadow-[0_10px_40px_-10px_rgba(180,83,9,0.3)]",
     iconWrapper: "bg-white group-hover:bg-brand-yellow-500",
     icon: "text-brand-yellow-500 group-hover:text-white",
   },
