@@ -1,6 +1,7 @@
 import fs from "fs";
 import mongoose from "mongoose";
 import connectDB from "../app/config/db";
+import Blog from "../app/modules/Blog/blog.model";
 import PageContent from "../app/modules/PageContent/pageContent.model";
 import { uploadToCloudinary } from "../app/utils/cloudinary.util";
 import { normalizeSlug } from "../app/utils/slug";
@@ -332,6 +333,63 @@ const HAND_WRITTEN: Record<string, { title: string; content: string }[]> = {
 
 // ------------------------------------------------------------------- helpers
 
+/**
+ * The old catalogue lived in its own WordPress post type that is not in any
+ * export, so its slugs cannot be derived. Each one that appears in the page
+ * copy is mapped by hand to the closest item in the current catalogue, or to
+ * the category the item belonged to when we no longer stock it.
+ */
+const PRODUCT_LINKS: Record<string, string> = {
+  "disco-dome": "/product/disco-dome-2",
+  "disco-12ft-x-15ft": "/product/disco-themed-bouncy-castle",
+  "disco-themed-12ft-x-15ft": "/product/disco-themed-bouncy-castle",
+  "white-and-grey-bouncy-castle-and-softplay": "/product/white-and-grey-bouncy-castle-and-softplay-2",
+  "celebration-castle-bounce-house": "/product/celebration-castle-bounce-house-2",
+  "13ft-x-12ft-celebration-castle": "/product/celebration-castle-bounce-house-2",
+  "12ft-x-12ft-party-time-bouncy-castle": "/product/party-time-bouncy-castle",
+  "party-themed-bouncy-castle-red-and-blue-15ft-x-12ft": "/product/party-themed-bouncy-castle-red-and-blue-15ft-x-12ft",
+  "small-bouncy-castle-hire-in-east-london": "/product/small-red-and-blue-bouncer",
+  "small-party-bouncer": "/product/party-bouncer-small",
+  "party-fun-soft-play": "/product/party-fun-soft-play-package",
+  "4ft-x-8ft-inflatable-ball-pool": "/product/inflatable-ball-pool",
+  "party-time-bouncy-castle-with-slide": "/product/pink-party-time-bouncy-castle-with-slide",
+  "adult-bouncy-castle-hire-east-london-and-north-london": "/product/party-bouncer-adult",
+  "my-little-pony-bouncy-castles": "/product/my-little-pony-bouncy-castle-11ft-x-15ft",
+  "jungle-bouncer-small-10ft-x-12ft": "/product/jungle-bouncer-small",
+  "monster-truck-front-slide-12ftw-x-15ftl": "/product/monster-truck-bouncy-castle",
+  "princess-15ft-x-12ft": "/product/princess-bouncy-castle",
+  "pastel-bouncy-castle": "/product/pastle-bouncy-castle-and-softplay",
+  "pink-party-time-bouncy-castle-with-slide": "/product/pink-party-time-bouncy-castle-with-slide",
+  "didi-cars-set-x4": "/product/didi-cars-set-x4",
+  "popcorn-machine": "/product/popcorn-machine",
+  "candy-floss": "/product/candy-floss",
+  // No longer stocked — send readers to the right category instead of a 404.
+  "penalty-shootout-9ftl-x-11-5w": "/garden-games-hire",
+  "nerf-target-shooting": "/garden-games-hire",
+  "connect-4": "/garden-games-hire",
+  "giant-jenga": "/garden-games-hire",
+  "snake-and-ladder-3m-x-3m": "/garden-games-hire",
+  "party-time-fun-run-pink-purple": "/obstacle-course-slides-hire",
+  "party-time-fun-run-red-blue": "/obstacle-course-slides-hire",
+  "super-slide-red-blue": "/obstacle-course-slides-hire",
+  generator: "/booking-catalog",
+};
+
+/** Point every leftover old-style link at somewhere that exists. */
+function fixInternalLinks(html: string, blogSlugs: Set<string>) {
+  return html.replace(/href="\/([^"#?]*)"/g, (full, path: string) => {
+    const clean = String(path).replace(/\/+$/, "");
+    if (!clean) return full;
+    if (clean === "product") return 'href="/booking-catalog"';
+    if (clean.startsWith("product/")) {
+      const old = clean.slice("product/".length);
+      return `href="${PRODUCT_LINKS[old] || "/booking-catalog"}"`;
+    }
+    if (blogSlugs.has(clean)) return `href="/blog/${clean}"`;
+    return full;
+  });
+}
+
 /** Yoast canonicals on a few pages still point at the old domain. */
 function sanitizeCanonical(value: string) {
   const raw = (value || "").trim();
@@ -394,6 +452,15 @@ async function run() {
   }
 
   await connectDB();
+
+  // The copy links to blog posts by their old top-level slug; the site serves
+  // them under /blog/<slug>.
+  const blogSlugs = new Set<string>();
+  const blogDocs: any[] = await Blog.find().select("slug slugAliases").lean();
+  for (const blog of blogDocs) {
+    if (blog.slug) blogSlugs.add(String(blog.slug));
+    for (const alias of blog.slugAliases || []) blogSlugs.add(String(alias));
+  }
 
   const skipped: { slug: string; why: string }[] = [];
   const job: { page: WxrPage; key: string; title: string; active: boolean; note?: string }[] = [];
@@ -468,7 +535,7 @@ async function run() {
     // Anything that could not be migrated is dropped rather than left pointing
     // at a host that is going away.
     out = out.replace(/<img[^>]*src="https?:\/\/[^"]*ymabouncycastles[^"]*"[^>]*>/gi, "");
-    return out;
+    return fixInternalLinks(out, blogSlugs);
   };
 
   // ---- write ---------------------------------------------------------------
