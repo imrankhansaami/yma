@@ -284,11 +284,9 @@ const Navbar = () => {
               aria-label="Open cart"
             >
               <ShoppingCart className="group-hover:text-black transition-colors duration-300" />
-              {count > 0 && (
-                <span className="absolute p-1 -top-2 -right-1 bg-brand-orange-500 text-white border border-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                  {count > 99 ? "99+" : count}
-                </span>
-              )}
+              <span className="absolute p-1 -top-2 -right-1 bg-brand-orange-500 text-white border border-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                {typeof count === "number" ? count : 0}
+              </span>
             </button>
             {!isAuthed ? (
               <Link
@@ -529,11 +527,9 @@ const Navbar = () => {
             aria-label="Open cart"
           >
             <ShoppingCart className="h-6 w-6" />
-            {count > 0 && (
-              <span className="absolute p-1 -top-2 -right-1 bg-brand-orange-500 text-white border border-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                {count > 99 ? "99+" : count}
-              </span>
-            )}
+            <span className="absolute p-1 -top-2 -right-1 bg-brand-orange-500 text-white border border-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+              {typeof count === "number" ? count : 0}
+            </span>
           </button>
 
           {!isAuthed ? (
