@@ -112,6 +112,8 @@ export default async function CmsPage({
   const cms = await fetchPageContent("core", key);
   if (!cms) notFound();
 
+  if (cms.isActive === false) notFound();
+
   const heading = cms.title?.trim() || toTitle(key);
   const showCatalogue = key.startsWith("bouncy-castles-hire");
 
