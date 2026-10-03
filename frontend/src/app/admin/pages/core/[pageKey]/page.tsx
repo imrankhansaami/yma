@@ -35,6 +35,7 @@ export default function EditCorePage() {
 
   const [metaTitle, setMetaTitle] = useState("");
   const [pageTitleValue, setPageTitleValue] = useState("");
+  const [isActive, setIsActive] = useState(true);
   const [metaDescription, setMetaDescription] = useState("");
   const [metaKeywords, setMetaKeywords] = useState("");
   const [canonicalUrl, setCanonicalUrl] = useState("");
@@ -45,6 +46,7 @@ export default function EditCorePage() {
     if (pageContent) {
       setMetaTitle(pageContent.metaTitle || "");
       setPageTitleValue(pageContent.title || "");
+      setIsActive(pageContent.isActive !== false);
       setMetaDescription(pageContent.metaDescription || "");
       setMetaKeywords(pageContent.metaKeywords || "");
       setCanonicalUrl(pageContent.canonicalUrl || "");
@@ -89,7 +91,7 @@ export default function EditCorePage() {
         canonicalUrl,
         customJsonLd,
         sections,
-        isActive: true,
+        isActive,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pageContent"] });
@@ -139,6 +141,23 @@ export default function EditCorePage() {
               e.g. /{pageKey}
             </p>
           </div>
+
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300"
+            />
+            <span>
+              <span className="block text-sm font-medium text-slate-700">
+                Visible on the site
+              </span>
+              <span className="block text-xs text-slate-500">
+                Unticked pages return 404 and are left out of the sitemap.
+              </span>
+            </span>
+          </label>
         </div>
 
         {/* SEO Fields */}
