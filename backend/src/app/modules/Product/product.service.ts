@@ -550,16 +550,15 @@ export const getAllProducts = async (
 
   // 4. Location & FIXED Category Filter
   //
-  // Products keep the human area name in `location.city` (e.g. "Romford",
-  // "Barnet") and the region in `location.state` ("London", "Greater London",
-  // "Essex").
+  // Locations are postcode districts now (CM17, RM9, E1 ...), and every active
+  // product lists the districts it is delivered to in `location.postcodes`.
+  // `location.city` is kept only as a legacy single-value field and
+  // `location.state` holds the region, so all three are matched.
   //
-  // Matching the selected area name alone left most locations empty: only ~16 of
-  // 45 products have a city set, so choosing "Barking" or "Ilford" returned
-  // nothing even though the business covers those areas. The Location record for
-  // each area knows its region, so we resolve that and also accept products whose
-  // state matches it. Selecting "Barking" therefore returns the Greater London
-  // stock instead of an empty grid.
+  // The regional fallback is skipped when the term is itself a postcode
+  // district: otherwise picking "RM11" would also drag in every product tagged
+  // with its region, which defeats postcode-level filtering. Non-postcode terms
+  // (an area name) keep the fallback so they resolve to their region's stock.
   const locationTerm = (city || state || "").trim();
   if (locationTerm) {
     const asRegex = (value: string) => ({
@@ -570,18 +569,14 @@ export const getAllProducts = async (
     const orConditions: Record<string, unknown>[] = [
       { "location.city": asRegex(locationTerm) },
       { "location.state": asRegex(locationTerm) },
-      // Products now list the postcode districts they cover.
+      // Every active product lists the districts it covers here.
       { "location.postcodes": asRegex(locationTerm) },
     ];
 
-    // Look up the area's region and postcode so products tagged by either are
-    // included: products store the postcode districts they cover in
-    // location.postcodes, while the area itself carries the postcode.
-    //
     // The regional fallback is skipped when the term is itself a postcode
     // district (RM11, CM20 ...). Otherwise picking a postcode would also drag
     // in every product tagged with its region, which defeats postcode-level
-    // filtering. Area-name locations (Romford) keep the fallback.
+    // filtering. Non-postcode terms keep the fallback.
     const looksLikePostcode = /^[A-Z]{1,2}\d{1,2}[A-Z]?$/i.test(locationTerm);
 
     try {
@@ -1047,6 +1042,8 @@ export const searchProducts = async (
       { summary: { $regex: query, $options: "i" } },
       { "location.state": { $regex: query, $options: "i" } },
       { "location.city": { $regex: query, $options: "i" } },
+      // Districts live in `postcodes`; `city` no longer holds area names.
+      { "location.postcodes": { $regex: query, $options: "i" } },
     ],
   };
 
@@ -1190,7 +1187,12 @@ export const clientSearchProducts = async (
     filter["location.state"] = { $regex: state, $options: "i" };
   }
   if (city) {
-    filter["location.city"] = { $regex: city, $options: "i" };
+    // `city` accepts a postcode district; `location.city` is empty on current
+    // products, so the districts in `location.postcodes` are what must match.
+    filter.$or = [
+      { "location.city": { $regex: city, $options: "i" } },
+      { "location.postcodes": { $regex: city, $options: "i" } },
+    ];
   }
 
   if (minPrice !== undefined || maxPrice !== undefined) {
@@ -1315,6 +1317,8 @@ export const adminSearchProducts = async (
       { design: searchRegex },
       { "location.state": searchRegex },
       { "location.city": searchRegex },
+      // Districts live in `postcodes`; `city` no longer holds area names.
+      { "location.postcodes": searchRegex },
     ];
   }
 

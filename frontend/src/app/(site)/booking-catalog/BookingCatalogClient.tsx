@@ -72,27 +72,6 @@ function resolveSort(value: string) {
   return SORT_OPTIONS.find((o) => o.value === value) ?? SORT_OPTIONS[0];
 }
 
-const LOCATION_POSTCODE_MAP: Record<string, string> = {
-  Barking: "IG11",
-  "Buckhurst Hill": "IG9",
-  Debden: "IG10",
-  "Forest Road (Loughton)": "IG10",
-  Ilford: "IG1",
-  London: "E/N/NW",
-  "Roding Valley": "IG9",
-  Romford: "RM1",
-};
-
-const POSTCODE_LOCATION_MAP: Record<string, string> = Object.entries(
-  LOCATION_POSTCODE_MAP,
-).reduce(
-  (acc, [locationName, postcode]) => {
-    if (!acc[postcode]) acc[postcode] = locationName;
-    return acc;
-  },
-  {} as Record<string, string>,
-);
-
 function BookingCatalogPageInner({
   forcedCategoryName,
   initialProducts,
@@ -242,8 +221,10 @@ function BookingCatalogPageInner({
       .replace(/^-+|-+$/g, "");
     const categoryPathSlug =
       categoryTokenFromUrl || String(forcedCategoryName || "").trim() || "";
-    const pickupOrCity = rawPickup || rawCity;
-    const mappedLocation = POSTCODE_LOCATION_MAP[pickupOrCity] || pickupOrCity;
+    // Every location is a postcode district now, so the URL value is used
+    // verbatim. It used to be translated through a postcode -> area-name map,
+    // which turned valid districts (IG11) into retired names (Barking).
+    const requestedLocation = rawPickup || rawCity;
     const startDateStr = start ? format(start, "yyyy-MM-dd") : undefined;
     const endDateStr = end ? format(end, "yyyy-MM-dd") : startDateStr;
 
@@ -251,7 +232,7 @@ function BookingCatalogPageInner({
     // Normalise legacy or unknown sort values to a known option so the dropdown
     // and the query never disagree.
     const normalizedSort = resolveSort(rawSort).value;
-    setLocation(mappedLocation);
+    setLocation(requestedLocation);
     setSearchTerm(rawSearch);
     setSort(normalizedSort);
     setSizeBand(rawSizeBand);
@@ -260,7 +241,7 @@ function BookingCatalogPageInner({
     setDateRange(start ? { from: start, to: end || start } : undefined);
     setAppliedFilters({
       categorySelect: nextCategory,
-      location: mappedLocation,
+      location: requestedLocation,
       searchTerm: rawSearch,
       pageSize: rawLimit,
       sort: normalizedSort,
@@ -489,10 +470,9 @@ function BookingCatalogPageInner({
               <SelectItem value=" ">Everywhere</SelectItem>
               {(locationsData as any[])?.map((loc, i) => {
                 const name = loc.name?.trim() || `Location ${i + 1}`;
-                const postcode =
-                  loc.city?.trim() || LOCATION_POSTCODE_MAP[name] || "";
                 // Locations are postcode districts now, so the code is the name
                 // and repeating it reads as "CM17 (CM17)".
+                const postcode = loc.city?.trim() || "";
                 const secondary =
                   postcode && postcode.toUpperCase() !== name.toUpperCase()
                     ? postcode

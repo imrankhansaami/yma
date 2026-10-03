@@ -16,7 +16,8 @@ import { LocationModel } from "../app/modules/Location/location.model";
  */
 
 // ROMFORD (RM) districts are Greater London up to RM14; RM15-RM20 fall in
-// Thurrock, Essex. CM17-CM20 are Harlow, Essex.
+// Thurrock/Brentwood, Essex. CM17-CM20 are Harlow, Essex. RM1-RM3 were
+// abolished in the 2001 reorganisation and no longer exist.
 const POSTCODES: { code: string; state: string }[] = [
   { code: "CM17", state: "Essex" },
   { code: "CM18", state: "Essex" },
@@ -32,6 +33,7 @@ const POSTCODES: { code: string; state: string }[] = [
   { code: "RM15", state: "Essex" },
   { code: "RM16", state: "Essex" },
   { code: "RM17", state: "Essex" },
+  { code: "RM18", state: "Essex" },
   { code: "RM19", state: "Essex" },
   { code: "RM20", state: "Essex" },
 ];

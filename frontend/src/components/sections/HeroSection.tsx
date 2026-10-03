@@ -34,17 +34,6 @@ import Image from "next/image";
 import type { DateRange } from "react-day-picker";
 import WhatsappBtn from "../common/btn/WhatsappBtn";
 
-const LOCATION_POSTCODE_MAP: Record<string, string> = {
-  Barking: "IG11",
-  "Buckhurst Hill": "IG9",
-  Debden: "IG10",
-  "Forest Road (Loughton)": "IG10",
-  Ilford: "IG1",
-  London: "E/N/NW", // General London prefix
-  "Roding Valley": "IG9",
-  Romford: "RM1",
-};
-
 export default function HeroSection() {
   const router = useRouter();
   const [isMobile, setIsMobile] = React.useState(false);
@@ -485,13 +474,10 @@ export default function HeroSection() {
                               (filteredLocations as any[]).map((loc, idx) => {
                                 const name =
                                   loc.name?.trim() || `Location ${idx + 1}`;
-                                // Prefer the location's own city/postcode, else the
-                                // hardcoded map. Displayed for clarity, but the
-                                // Select *value* is the name so filtering works.
-                                const postcode =
-                                  loc.city?.trim() ||
-                                  LOCATION_POSTCODE_MAP[name] ||
-                                  "";
+                                // The Select *value* is the name so filtering
+                                // works; the postcode is shown alongside it only
+                                // when it differs.
+                                const postcode = loc.city?.trim() || "";
                                 // Locations are postcode districts now, so the
                                 // code is already the name — don't repeat it.
                                 const secondary =
