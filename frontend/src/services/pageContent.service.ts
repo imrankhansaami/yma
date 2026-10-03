@@ -11,6 +11,8 @@ export interface PageContent {
   _id: string;
   pageType: "category" | "location" | "core";
   pageKey: string;
+  /** Heading shown at the top of a CMS-rendered page. */
+  title?: string;
   sections: PageSection[];
   metaTitle?: string;
   metaDescription?: string;

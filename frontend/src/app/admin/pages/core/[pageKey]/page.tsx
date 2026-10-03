@@ -34,6 +34,7 @@ export default function EditCorePage() {
   });
 
   const [metaTitle, setMetaTitle] = useState("");
+  const [pageTitleValue, setPageTitleValue] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
   const [metaKeywords, setMetaKeywords] = useState("");
   const [canonicalUrl, setCanonicalUrl] = useState("");
@@ -43,6 +44,7 @@ export default function EditCorePage() {
   useEffect(() => {
     if (pageContent) {
       setMetaTitle(pageContent.metaTitle || "");
+      setPageTitleValue(pageContent.title || "");
       setMetaDescription(pageContent.metaDescription || "");
       setMetaKeywords(pageContent.metaKeywords || "");
       setCanonicalUrl(pageContent.canonicalUrl || "");
@@ -80,6 +82,7 @@ export default function EditCorePage() {
   const mutation = useMutation({
     mutationFn: () =>
       upsertPageContent("core", pageKey, {
+        title: pageTitleValue,
         metaTitle,
         metaDescription,
         metaKeywords,
@@ -97,7 +100,8 @@ export default function EditCorePage() {
     },
   });
 
-  const pageTitle = PAGE_TITLES[pageKey] || pageKey;
+  const pageTitle =
+    pageContent?.title?.trim() || PAGE_TITLES[pageKey] || pageKey;
 
   return (
     <div className="p-6 max-w-4xl">
@@ -113,6 +117,30 @@ export default function EditCorePage() {
       </h1>
 
       <div className="space-y-6">
+        {/* Page heading */}
+        <div className="rounded-lg border border-slate-200 p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-brand-black-950 uppercase tracking-wide">
+            Page
+          </h2>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Page Heading
+            </label>
+            <input
+              type="text"
+              value={pageTitleValue}
+              onChange={(e) => setPageTitleValue(e.target.value)}
+              placeholder={PAGE_TITLES[pageKey] || pageKey}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+              maxLength={200}
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              Shown as the H1 on pages the site renders from this content —
+              e.g. /{pageKey}
+            </p>
+          </div>
+        </div>
+
         {/* SEO Fields */}
         <div className="rounded-lg border border-slate-200 p-5 space-y-4">
           <h2 className="text-sm font-semibold text-brand-black-950 uppercase tracking-wide">

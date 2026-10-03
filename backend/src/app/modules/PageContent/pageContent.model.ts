@@ -49,6 +49,12 @@ const pageContentSchema = new Schema<IPageContentDocument>(
       type: [pageSectionSchema],
       default: [],
     },
+    title: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: [200, "Page title cannot exceed 200 characters"],
+    },
     metaTitle: {
       type: String,
       trim: true,

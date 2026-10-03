@@ -4,11 +4,14 @@
  */
 
 export type PageContentData = {
+  /** Heading for CMS-rendered pages. */
+  title?: string;
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string;
   canonicalUrl?: string;
   customJsonLd?: string;
+  isActive?: boolean;
   sections?: {
     sectionKey: string;
     title: string;
@@ -32,7 +35,10 @@ export async function fetchPageContent(
     const json = await res.json();
     // The API nests the record as `data.pageContent`; fall back to `data`
     // in case the shape is ever flattened.
-    return json?.data?.pageContent ?? json?.data ?? null;
+    const record = json?.data?.pageContent ?? json?.data ?? null;
+    // A page switched off in the admin must not affect the storefront.
+    if (record && record.isActive === false) return null;
+    return record;
   } catch {
     return null;
   }

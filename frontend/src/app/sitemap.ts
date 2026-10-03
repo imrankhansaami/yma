@@ -113,11 +113,57 @@ async function getLocations(): Promise<{ slug: string }[]> {
   }
 }
 /***********Nahuid */
+/** Page keys that already have a hand-built route (listed above). */
+const BUILT_IN_PAGE_KEYS = new Set([
+  "home",
+  "contact",
+  "faqs",
+  "privacy-policy",
+  "terms",
+  "booking-catalog",
+  "locations",
+  "blog",
+  "cart",
+  "checkout",
+  "profile",
+]);
+
+/** Marketing / area pages managed as `core` PageContent records. */
+async function getCorePages(): Promise<{ key: string; updatedAt?: string }[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URI;
+    if (!baseUrl) return [];
+
+    const res = await fetch(`${baseUrl}/api/v1/page-content/type/core`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return [];
+
+    const result = await res.json();
+    const payload = result?.data;
+    const pages = Array.isArray(payload) ? payload : (payload?.pageContents ?? []);
+    return pages
+      .filter(
+        (p: any) =>
+          p?.isActive !== false &&
+          p?.pageKey &&
+          !BUILT_IN_PAGE_KEYS.has(String(p.pageKey)),
+      )
+      .map((p: any) => ({
+        key: String(p.pageKey),
+        updatedAt: p.updatedAt,
+      }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [products, blogs, locations] = await Promise.all([
+  const [products, blogs, locations, corePages] = await Promise.all([
     getProducts(),
     getBlogs(),
     getLocations(),
+    getCorePages(),
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -199,11 +245,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.82,
   }));
 
+  const cmsPages: MetadataRoute.Sitemap = corePages.map((page) => ({
+    url: `${BASE_URL}/${page.key}`,
+    lastModified: page.updatedAt ? new Date(page.updatedAt) : new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
   return [
     ...staticPages,
     ...categoryPages,
     ...productPages,
     ...blogPages,
     ...locationPages,
+    ...cmsPages,
   ];
 }

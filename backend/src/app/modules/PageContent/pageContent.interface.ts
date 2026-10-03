@@ -10,6 +10,8 @@ export interface IPageSection {
 export interface IPageContent {
   pageType: PageType;
   pageKey: string; // unique key e.g. 'home', 'contact', 'bouncy-castle-hire'
+  /** Heading shown at the top of a CMS-rendered page. */
+  title?: string;
   sections: IPageSection[];
   metaTitle?: string;
   metaDescription?: string;
@@ -22,6 +24,7 @@ export interface IPageContent {
 export interface CreatePageContentData {
   pageType: PageType;
   pageKey: string;
+  title?: string;
   sections?: IPageSection[];
   metaTitle?: string;
   metaDescription?: string;
@@ -34,6 +37,7 @@ export interface CreatePageContentData {
 export interface UpdatePageContentData {
   pageType?: PageType;
   pageKey?: string;
+  title?: string;
   sections?: IPageSection[];
   metaTitle?: string;
   metaDescription?: string;
