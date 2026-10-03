@@ -619,7 +619,7 @@ export default function HeroSection() {
                 className="w-full rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-orange-500 hover:bg-brand-orange-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-orange-500 border border-white transition-colors duration-300 hover:shadow-brand-orange-600"
               >
                 Obstacle Slides{" "}
-                <ChevronRight className="ml-2 h-5 w-5 font-bold" />
+                <ChevronRight className="h-5 w-5 font-bold" />
               </Button>
 
               <Button
