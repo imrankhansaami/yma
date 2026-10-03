@@ -51,7 +51,7 @@ export function CmsSections({
           {section.content && String(section.content).trim() ? (
             <RichText
               html={section.content}
-              className="prose prose-gray max-w-none prose-headings:text-brand-ink-900 prose-p:text-brand-gray-650"
+              className="cms-content max-w-none"
             />
           ) : null}
         </section>
