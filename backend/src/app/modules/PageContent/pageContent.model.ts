@@ -12,8 +12,8 @@ const pageSectionSchema = new Schema(
     },
     title: {
       type: String,
-      required: [true, "Section title is required"],
       trim: true,
+      default: "",
     },
     content: {
       type: String,
