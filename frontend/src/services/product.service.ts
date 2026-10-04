@@ -29,6 +29,16 @@ export interface ApiDimensions {
   unit?: string;
 }
 
+/** A selectable add-on offered when booking a product. */
+export interface ApiExtraOption {
+  key: string;
+  label: string;
+  price: number;
+  pricingType: "total" | "per_day" | "per_quantity";
+  max: number;
+  enabled: boolean;
+}
+
 export interface ApiProduct {
   id: string;
   _id?: string;
@@ -68,6 +78,7 @@ export interface ApiProduct {
   defaultCollectionTime?: string | null;
   deliveryTimeFee?: number | null;
   collectionTimeFee?: number | null;
+  extraOptions?: ApiExtraOption[];
   sensitiveDetails?: string | null;
   ageRange?:
   | string

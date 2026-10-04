@@ -45,6 +45,14 @@ export default function ProductDetailsModal({
     imageCover?: string;
     images?: string[];
     certificates?: string[];
+    extraOptions?: Array<{
+      key: string;
+      label: string;
+      price: number;
+      pricingType: "total" | "per_day" | "per_quantity";
+      max: number;
+      enabled: boolean;
+    }>;
   } = useMemo(() => {
     const dimensions = product.dimensions;
     const rawAgeRange = product.ageRange;
@@ -112,6 +120,18 @@ export default function ProductDetailsModal({
       
       deliveryTimeFee: product.deliveryTimeFee || 0,
       collectionTimeFee: product.collectionTimeFee || 0,
+
+      // Selectable add-ons ("Other Options" on the storefront).
+      extraOptions: Array.isArray(product.extraOptions)
+        ? product.extraOptions.map((option: any) => ({
+            key: option.key ?? "",
+            label: option.label ?? "",
+            price: Number(option.price) || 0,
+            pricingType: option.pricingType ?? "total",
+            max: Number(option.max) >= 1 ? Number(option.max) : 1,
+            enabled: option.enabled !== false,
+          }))
+        : [],
       
       isSensitive: !!product.sensitiveDetails,
       sensitiveDetails: product.sensitiveDetails || "",

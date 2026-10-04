@@ -1,5 +1,23 @@
 import { Types } from "mongoose";
 
+/**
+ * A selectable add-on a customer can tick when booking a product
+ * (e.g. "Service stuff (£40 per hour)"). Mirrors the WordPress rental
+ * plugin's "extra options": a label, a price, how that price is applied,
+ * and how many can be added.
+ */
+export interface IExtraOption {
+  /** Stable identifier used to match a selection back to its definition. */
+  key: string;
+  label: string;
+  price: number;
+  /** `total` = charged once, `per_day` = per booked day, `per_quantity` = per unit selected. */
+  pricingType: "total" | "per_day" | "per_quantity";
+  /** Maximum quantity a customer may select. 1 renders as a plain checkbox. */
+  max: number;
+  enabled: boolean;
+}
+
 export interface IProduct {
   _id?: Types.ObjectId;
   slug?: string;
@@ -74,6 +92,8 @@ export interface IProduct {
   defaultCollectionTime?: string; // Default collection time
   deliveryTimeFee?: number; // Default delivery time fee
   collectionTimeFee?: number; // Default collection time fee
+  /** Selectable add-ons offered when booking this product. */
+  extraOptions?: IExtraOption[];
   discount?: number; // Added discount field
   bookedDates?: Array<{
     // Added bookedDates array
@@ -145,6 +165,7 @@ export interface CreateProductData {
   defaultCollectionTime?: string;
   deliveryTimeFee?: number;
   collectionTimeFee?: number;
+  extraOptions?: IExtraOption[];
   isActive: boolean;
 }
 // Add to your existing interfaces
@@ -253,6 +274,8 @@ export type UpdateProductData = DeepPartial<{
   defaultCollectionTime?: string;
   deliveryTimeFee?: number;
   collectionTimeFee?: number;
+
+  extraOptions?: IExtraOption[];
 
   discount?: number;
 

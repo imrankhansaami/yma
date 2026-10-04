@@ -449,6 +449,39 @@ const productSchema: Schema = new Schema(
       default: 0,
       min: [0, "Collection time fee cannot be negative"],
     },
+    /**
+     * Selectable add-ons for this product. Modelled on the WordPress rental
+     * plugin's "extra options": each entry is a tick-box (max 1) or a small
+     * quantity stepper with a price and a pricing basis.
+     */
+    extraOptions: {
+      type: [
+        new Schema(
+          {
+            key: { type: String, required: true, trim: true },
+            label: { type: String, required: true, trim: true },
+            price: {
+              type: Number,
+              default: 0,
+              min: [0, "Extra option price cannot be negative"],
+            },
+            pricingType: {
+              type: String,
+              enum: ["total", "per_day", "per_quantity"],
+              default: "total",
+            },
+            max: {
+              type: Number,
+              default: 1,
+              min: [1, "Extra option max must be at least 1"],
+            },
+            enabled: { type: Boolean, default: true },
+          },
+          { _id: false },
+        ),
+      ],
+      default: [],
+    },
   },
 
   {

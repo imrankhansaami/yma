@@ -269,6 +269,12 @@ export default function CheckoutForm({
           quantity: Math.max(1, item.quantity || 1),
           startDate: startDate || format(new Date(), "yyyy-MM-dd"),
           endDate: endDate || startDate || format(new Date(), "yyyy-MM-dd"),
+          // Selected add-ons. Only the key and quantity are sent — the server
+          // prices them from the product so the total cannot be tampered with.
+          extras: (item.extras ?? []).map((extra) => ({
+            key: extra.key,
+            quantity: extra.quantity,
+          })),
         };
       });
 

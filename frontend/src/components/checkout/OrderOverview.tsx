@@ -2,7 +2,11 @@
 
 import { Separator } from "@/components/ui/separator";
 import { applyPromoCode } from "@/services/promo.service";
-import { useCartStore } from "@/store/useCartStore";
+import {
+  CartExtra,
+  computeExtrasTotal,
+  useCartStore,
+} from "@/store/useCartStore";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -30,6 +34,7 @@ export default function OrderOverview({
       price: 130,
       from: "From: Nov 21 - 21, 2024",
       days: 1,
+      extras: [] as CartExtra[],
     },
     {
       id: "2",
@@ -40,6 +45,7 @@ export default function OrderOverview({
       price: 130,
       from: "From: Nov 21 - 21, 2024",
       days: 1,
+      extras: [] as CartExtra[],
     },
   ];
 
@@ -62,11 +68,16 @@ export default function OrderOverview({
               })}`
             : "From: Nov 21 - 21, 2024",
         days: it.days ?? 1,
+        extras: (it.extras ?? []) as CartExtra[],
       }))
     : fallbackItems;
 
   const computedSubtotal = useMemo(
-    () => items.reduce((s, it) => s + it.price * it.days, 0),
+    () =>
+      items.reduce(
+        (s, it) => s + it.price * it.days + computeExtrasTotal(it.extras, it.days),
+        0
+      ),
     [items],
   );
   const subTotal =
@@ -200,12 +211,17 @@ export default function OrderOverview({
                     <div>
                       <span className="font-medium">Days:</span> {it.days}
                     </div>
+                    {(it.extras ?? []).map((extra) => (
+                      <div key={extra.key} className="text-gray-500">
+                        + {extra.label}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
               <div className="text-right text-ink-900">
                 <span className="font-medium">
-                  £{it.price}
+                  £{it.price * it.days + computeExtrasTotal(it.extras, it.days)}
                 </span>
               </div>
 

@@ -27,6 +27,15 @@ import ImageUpload from "./ImageUpload";
 import LocationPostcodePicker from "./LocationPostcodePicker";
 import TextEditor from "./TextEditor";
 
+interface ExtraOptionDraft {
+  key: string;
+  label: string;
+  price: number;
+  pricingType: "total" | "per_day" | "per_quantity";
+  max: number;
+  enabled: boolean;
+}
+
 interface AddProductFormProps {
   onSubmit?: (data: AddProductFormData) => void;
   initialData?: Partial<AddProductFormData> & {
@@ -34,6 +43,7 @@ interface AddProductFormProps {
     imageCover?: string;
     images?: string[];
     certificates?: string[];
+    extraOptions?: ExtraOptionDraft[];
   };
   isEdit?: boolean;
   onSubmittingChange?: (isSubmitting: boolean) => void;
@@ -71,6 +81,9 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   
   const [newSafetyFeature, setNewSafetyFeature] = useState("");
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  // Selectable add-ons ("Other Options" on the storefront). Managed outside
+  // react-hook-form because the list is dynamic.
+  const [extraOptions, setExtraOptions] = useState<ExtraOptionDraft[]>([]);
 
   // Initialize images from initialData
   useEffect(() => {
@@ -83,6 +96,18 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     if (initialData?.certificates && Array.isArray(initialData.certificates)) {
       setCertificates(initialData.certificates);
     }
+    setExtraOptions(
+      Array.isArray(initialData?.extraOptions)
+        ? initialData.extraOptions.map((option) => ({
+            key: option.key ?? "",
+            label: option.label ?? "",
+            price: Number(option.price) || 0,
+            pricingType: option.pricingType ?? "total",
+            max: Number(option.max) >= 1 ? Number(option.max) : 1,
+            enabled: option.enabled !== false,
+          }))
+        : [],
+    );
     if (isEdit && initialData?.slug) {
       setSlugManuallyEdited(true);
     }
@@ -310,6 +335,19 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     // Fees & Time
     formData.append("deliveryTimeFee", String(data.deliveryTimeFee));
     formData.append("collectionTimeFee", String(data.collectionTimeFee));
+
+    // Selectable add-ons — sent as JSON because the body is multipart.
+    formData.append(
+      "extraOptions",
+      JSON.stringify(
+        extraOptions
+          .map((option) => ({
+            ...option,
+            label: option.label.trim(),
+          }))
+          .filter((option) => option.label),
+      ),
+    );
     
     // Dates
     const fromDate = new Date(data.availableFrom);
@@ -930,6 +968,179 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                 type="number"
                 className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] w-full focus:outline-none focus:border-brand-orange-500"
             />
+          </div>
+
+          {/* Other Options — selectable add-ons shown on the product page */}
+          <div className="border-t border-brand-gray-125 pt-[16px] flex flex-col gap-[12px]">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[14px] font-medium text-brand-black-950">
+                  Other Options
+                </p>
+                <p className="text-[12px] text-brand-zinc-400">
+                  Add-ons a customer can tick when booking this product.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="text-[13px] font-medium text-brand-orange-500 hover:underline"
+                onClick={() =>
+                  setExtraOptions((previous) => [
+                    ...previous,
+                    {
+                      key: "",
+                      label: "",
+                      price: 0,
+                      pricingType: "total",
+                      max: 1,
+                      enabled: true,
+                    },
+                  ])
+                }
+              >
+                + Add option
+              </button>
+            </div>
+
+            {extraOptions.length === 0 ? (
+              <p className="text-[13px] text-brand-zinc-400">
+                No options added.
+              </p>
+            ) : null}
+
+            {extraOptions.map((option, index) => (
+              <div
+                key={index}
+                className="rounded-[8px] border border-brand-gray-125 p-[12px] flex flex-col gap-[10px]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-medium text-brand-black-950">
+                    Option {index + 1}
+                  </span>
+                  <button
+                    type="button"
+                    className="text-[13px] text-red-500 hover:underline"
+                    onClick={() =>
+                      setExtraOptions((previous) =>
+                        previous.filter((_, i) => i !== index),
+                      )
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-[6px]">
+                  <label className="text-[13px] text-brand-black-950">Label</label>
+                  <input
+                    type="text"
+                    value={option.label}
+                    placeholder="e.g. Service stuff (£40 per hour)"
+                    className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] w-full focus:outline-none focus:border-brand-orange-500"
+                    onChange={(event) =>
+                      setExtraOptions((previous) =>
+                        previous.map((item, i) =>
+                          i === index
+                            ? { ...item, label: event.target.value }
+                            : item,
+                        ),
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-[10px]">
+                  <div className="flex flex-col gap-[6px]">
+                    <label className="text-[13px] text-brand-black-950">Price (£)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={option.price}
+                      className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] w-full focus:outline-none focus:border-brand-orange-500"
+                      onChange={(event) =>
+                        setExtraOptions((previous) =>
+                          previous.map((item, i) =>
+                            i === index
+                              ? { ...item, price: Number(event.target.value) || 0 }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-[6px]">
+                    <label className="text-[13px] text-brand-black-950">
+                      Maximum
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={option.max}
+                      className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] w-full focus:outline-none focus:border-brand-orange-500"
+                      onChange={(event) =>
+                        setExtraOptions((previous) =>
+                          previous.map((item, i) =>
+                            i === index
+                              ? {
+                                  ...item,
+                                  max: Math.max(1, Number(event.target.value) || 1),
+                                }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-[6px]">
+                  <label className="text-[13px] text-brand-black-950">
+                    Charged
+                  </label>
+                  <select
+                    value={option.pricingType}
+                    className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] w-full focus:outline-none focus:border-brand-orange-500"
+                    onChange={(event) =>
+                      setExtraOptions((previous) =>
+                        previous.map((item, i) =>
+                          i === index
+                            ? {
+                                ...item,
+                                pricingType: event.target
+                                  .value as ExtraOptionDraft["pricingType"],
+                              }
+                            : item,
+                        ),
+                      )
+                    }
+                  >
+                    <option value="total">Once per booking</option>
+                    <option value="per_day">Per day</option>
+                    <option value="per_quantity">Per unit selected</option>
+                  </select>
+                </div>
+
+                <label className="flex items-center gap-[8px] text-[13px] text-brand-black-950">
+                  <input
+                    type="checkbox"
+                    checked={option.enabled}
+                    className="h-[16px] w-[16px]"
+                    onChange={(event) =>
+                      setExtraOptions((previous) =>
+                        previous.map((item, i) =>
+                          i === index
+                            ? { ...item, enabled: event.target.checked }
+                            : item,
+                        ),
+                      )
+                    }
+                  />
+                  Shown to customers
+                </label>
+              </div>
+            ))}
           </div>
         </div>
         

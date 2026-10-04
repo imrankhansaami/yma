@@ -36,7 +36,11 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { useCartStore } from "@/store/useCartStore";
+import {
+  CartExtra,
+  computeExtrasTotal,
+  useCartStore,
+} from "@/store/useCartStore";
 
 import { ApiProduct, fetchProductBySlug } from "@/services/product.service";
 import { useQuery } from "@tanstack/react-query";
@@ -220,6 +224,10 @@ export default function ProductClient({
   // avoid hydration mismatches.
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
+  // Add-ons the customer has ticked, keyed by option key -> quantity.
+  const [selectedExtras, setSelectedExtras] = React.useState<
+    Record<string, number>
+  >({});
   const formattedSidebarDate = dateRange?.from
     ? dateRange?.to
       ? `${format(dateRange.from, "PP")} - ${format(dateRange.to, "PP")}`
@@ -342,6 +350,34 @@ export default function ProductClient({
         (effectiveDays % 7) * pricePerDay
       : 0;
 
+  // Add-ons offered for this product (the WordPress "Other Options" list).
+  const extraOptions = (product?.extraOptions ?? []).filter(
+    (option) => option.enabled !== false,
+  );
+  const chosenExtras: CartExtra[] = extraOptions
+    .map((option) => ({ ...option, quantity: selectedExtras[option.key] ?? 0 }))
+    .filter((option) => option.quantity > 0)
+    .map((option) => ({
+      key: option.key,
+      label: option.label,
+      price: option.price,
+      pricingType: option.pricingType,
+      quantity: option.quantity,
+    }));
+  const extrasTotal = computeExtrasTotal(chosenExtras, effectiveDays);
+  const grandTotal = totalPrice + extrasTotal;
+
+  const setExtraQuantity = (key: string, quantity: number) => {
+    setSelectedExtras((previous) => {
+      if (quantity <= 0) {
+        const next = { ...previous };
+        delete next[key];
+        return next;
+      }
+      return { ...previous, [key]: quantity };
+    });
+  };
+
   const onBook = () => {
     if (!dateRange?.from || !product) return;
     addItem({
@@ -351,6 +387,7 @@ export default function ProductClient({
       dateISO: format(dateRange.from, "yyyy-MM-dd"),
       days: effectiveDays,
       pricePerDay,
+      extras: chosenExtras,
     });
     openCart();
   };
@@ -554,7 +591,7 @@ export default function ProductClient({
                       {hasPrice ? (
                         <>
                           <div className="text-brand-ink-900 text-[28px] font-semibold">
-                            £{dateRange?.from ? totalPrice : pricePerDay}
+                            £{dateRange?.from ? grandTotal : pricePerDay}
                           </div>
                           <div className="text-[12px] text-brand-zinc-400">
                             {dateRange?.from
@@ -563,6 +600,11 @@ export default function ProductClient({
                                 : `For 1 day • ${format(dateRange.from, "MMM d")}`
                               : "Select dates"}
                           </div>
+                          {extrasTotal > 0 ? (
+                            <div className="mt-1 text-[12px] text-brand-zinc-400">
+                              Includes £{extrasTotal} in options
+                            </div>
+                          ) : null}
                         </>
                       ) : null}
                     </div>
@@ -584,6 +626,93 @@ export default function ProductClient({
                           <div className="text-[11px] text-brand-zinc-400">
                             Per week
                           </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {extraOptions.length ? (
+                      <div className="mt-4 rounded-lg border border-brand-gray-150 px-3 py-3">
+                        <div className="text-[13px] font-medium text-brand-ink-900">
+                          Other Options:
+                        </div>
+                        <div className="mt-2 space-y-2">
+                          {extraOptions.map((option) => {
+                            const quantity = selectedExtras[option.key] ?? 0;
+                            const isSingle = option.max <= 1;
+                            return (
+                              <div
+                                key={option.key}
+                                className="flex items-start justify-between gap-3"
+                              >
+                                {isSingle ? (
+                                  <label className="flex flex-1 items-start gap-2 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      className="mt-0.5 h-4 w-4 shrink-0 accent-brand-orange-500"
+                                      checked={quantity > 0}
+                                      onChange={(event) =>
+                                        setExtraQuantity(
+                                          option.key,
+                                          event.target.checked ? 1 : 0,
+                                        )
+                                      }
+                                    />
+                                    <span className="text-[13px] leading-5 text-brand-ink-900">
+                                      {option.label}
+                                    </span>
+                                  </label>
+                                ) : (
+                                  <span className="flex flex-1 flex-col gap-1">
+                                    <span className="text-[13px] leading-5 text-brand-ink-900">
+                                      {option.label}
+                                    </span>
+                                    <span className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        aria-label={`Decrease ${option.label}`}
+                                        className="h-6 w-6 rounded border border-brand-gray-150 text-brand-ink-900 disabled:opacity-40"
+                                        disabled={quantity <= 0}
+                                        onClick={() =>
+                                          setExtraQuantity(
+                                            option.key,
+                                            quantity - 1,
+                                          )
+                                        }
+                                      >
+                                        −
+                                      </button>
+                                      <span className="w-6 text-center text-[13px] text-brand-ink-900">
+                                        {quantity}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        aria-label={`Increase ${option.label}`}
+                                        className="h-6 w-6 rounded border border-brand-gray-150 text-brand-ink-900 disabled:opacity-40"
+                                        disabled={quantity >= option.max}
+                                        onClick={() =>
+                                          setExtraQuantity(
+                                            option.key,
+                                            quantity + 1,
+                                          )
+                                        }
+                                      >
+                                        +
+                                      </button>
+                                    </span>
+                                  </span>
+                                )}
+                                <span className="shrink-0 text-[13px] font-medium text-brand-ink-900">
+                                  £{option.price}
+                                  {option.pricingType === "per_day" ? (
+                                    <span className="text-[11px] font-normal text-brand-zinc-400">
+                                      {" "}
+                                      / day
+                                    </span>
+                                  ) : null}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ) : null}

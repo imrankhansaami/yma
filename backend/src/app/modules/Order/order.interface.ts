@@ -70,6 +70,18 @@ export interface ICustomer extends Document {
 // ORDER ITEM
 // ───────────────────────────────────────────────
 
+export interface IOrderItemExtra {
+  key: string;
+  label: string;
+  /** Unit price of the option at the time of the order. */
+  price: number;
+  pricingType: "total" | "per_day" | "per_quantity";
+  /** How many the customer selected. */
+  quantity: number;
+  /** What this option contributed to the order total. */
+  total: number;
+}
+
 export interface IOrderItem {
   product: Types.ObjectId;
   quantity: number;
@@ -82,6 +94,10 @@ export interface IOrderItem {
   promoId?: Types.ObjectId;
   customerName?: string;
   imageCover: string; // Add this line to match checkout.interface
+  /** Add-ons chosen for this item, priced at the time of the order. */
+  extras?: IOrderItemExtra[];
+  /** Sum of every `extras[].total` on this item. */
+  extrasTotal?: number;
 }
 
 export interface IOrderItemDocument extends IOrderItem, Document {}

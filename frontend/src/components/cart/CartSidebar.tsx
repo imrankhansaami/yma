@@ -1,7 +1,7 @@
 "use client";
 
 import EmptyIcons from "@/assets/images/Empty icons.png";
-import { useCartStore } from "@/store/useCartStore";
+import { computeExtraLineTotal, useCartStore } from "@/store/useCartStore";
 import { format, parseISO } from "date-fns";
 import { ArrowRight, Trash2, X } from "lucide-react";
 import Image from "next/image";
@@ -130,9 +130,50 @@ export default function CartSidebar() {
                           {it.days} day x £{it.pricePerDay}
                         </span>
                         <span className="text-ink-900">
-                          £{it.total.toFixed(2)}
+                          £{(it.pricePerDay * (it.days || 1)).toFixed(2)}
                         </span>
                       </div>
+
+                      {/* Selected add-ons */}
+                      {(it.extras ?? []).map((extra) => (
+                        <div
+                          key={extra.key}
+                          className="mt-1 flex items-center justify-between"
+                        >
+                          <span className="text-gray-600 pr-2">
+                            + {extra.label}
+                            {extra.pricingType === "per_day" ? (
+                              <span className="text-gray-400">
+                                {" "}
+                                ({extra.quantity} × {it.days}d)
+                              </span>
+                            ) : extra.quantity > 1 ? (
+                              <span className="text-gray-400">
+                                {" "}
+                                (×{extra.quantity})
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="text-ink-900">
+                            £{computeExtraLineTotal(extra, it.days).toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+
+                      {(it.extrasTotal ?? 0) > 0 ? (
+                        <div className="mt-1 flex items-center justify-between border-t border-subtle pt-1">
+                          <span className="text-ink-900 font-semibold">
+                            Total
+                          </span>
+                          <span className="text-ink-900 font-semibold">
+                            £
+                            {(
+                              it.pricePerDay * (it.days || 1) +
+                              (it.extrasTotal || 0)
+                            ).toFixed(2)}
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>

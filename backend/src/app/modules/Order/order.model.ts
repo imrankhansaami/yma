@@ -28,6 +28,27 @@ const orderItemSchema = new Schema<IOrderItem>(
       enum: HIRE_OCCASION_OPTIONS,
     },
     keepOvernight: { type: Boolean, default: false },
+    extras: {
+      type: [
+        new Schema(
+          {
+            key: { type: String, required: true },
+            label: { type: String, required: true },
+            price: { type: Number, required: true, min: 0 },
+            pricingType: {
+              type: String,
+              enum: ["total", "per_day", "per_quantity"],
+              default: "total",
+            },
+            quantity: { type: Number, required: true, min: 1, default: 1 },
+            total: { type: Number, required: true, min: 0, default: 0 },
+          },
+          { _id: false },
+        ),
+      ],
+      default: [],
+    },
+    extrasTotal: { type: Number, default: 0, min: 0 },
   },
 
   { _id: false },

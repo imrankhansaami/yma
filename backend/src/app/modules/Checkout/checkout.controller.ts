@@ -5,6 +5,7 @@ import mongoose, { Types } from "mongoose";
 import ApiError from "../../utils/apiError";
 import Order from "../../modules/Order/order.model";
 import Product from "../../modules/Product/product.model";
+import type { IOrderItemExtra } from "../../modules/Order/order.interface";
 import User from "../../modules/Auth/user.model";
 import { PromoService } from "../../modules/promos/promos.service";
 import crypto from "crypto";
@@ -785,6 +786,85 @@ export const calculateDeliveryFeeAPI = asyncHandler(
 
 // Quick / Direct Checkout – no cart needed
 
+/**
+ * Resolve the add-ons a customer selected against the product's own option
+ * definitions. Prices always come from the database, never from the request,
+ * so a tampered payload cannot change what is charged. Unknown or disabled
+ * options are dropped rather than rejected, so a stale cart still checks out.
+ */
+const resolveExtras = (
+  product: any,
+  requested: any,
+  startDate: any,
+  endDate: any,
+): { extras: IOrderItemExtra[]; extrasTotal: number } => {
+  const definitions = Array.isArray(product?.extraOptions)
+    ? product.extraOptions
+    : [];
+  if (!definitions.length || !Array.isArray(requested) || !requested.length) {
+    return { extras: [], extrasTotal: 0 };
+  }
+
+  // Booked days, used by `per_day` options. Defaults to a single day.
+  let days = 1;
+  if (startDate) {
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : start;
+    if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+      days = Math.max(
+        1,
+        Math.round((end.getTime() - start.getTime()) / 86400000) + 1,
+      );
+    }
+  }
+
+  const extras: IOrderItemExtra[] = [];
+  let extrasTotal = 0;
+
+  for (const selection of requested) {
+    const key = String(selection?.key ?? "").trim();
+    if (!key) continue;
+
+    const definition = definitions.find(
+      (option: any) => option.key === key && option.enabled !== false,
+    );
+    if (!definition) continue;
+
+    const maxQty = Number(definition.max) > 0 ? Number(definition.max) : 1;
+    const rawQty = Number(selection?.quantity ?? selection?.qty ?? 1);
+    const quantity = Math.min(
+      Math.max(1, Number.isFinite(rawQty) ? Math.floor(rawQty) : 1),
+      maxQty,
+    );
+
+    let lineTotal: number;
+    switch (definition.pricingType) {
+      case "per_day":
+        lineTotal = definition.price * quantity * days;
+        break;
+      case "per_quantity":
+        lineTotal = definition.price * quantity;
+        break;
+      default:
+        lineTotal = definition.price;
+    }
+
+    lineTotal = Math.round(lineTotal * 100) / 100;
+
+    extras.push({
+      key: definition.key,
+      label: definition.label,
+      price: definition.price,
+      pricingType: definition.pricingType || "total",
+      quantity,
+      total: lineTotal,
+    });
+    extrasTotal += lineTotal;
+  }
+
+  return { extras, extrasTotal: Math.round(extrasTotal * 100) / 100 };
+};
+
 export const quickCheckout = asyncHandler(
   async (req: Request, res: Response) => {
     const session = await mongoose.startSession();
@@ -814,6 +894,15 @@ export const quickCheckout = asyncHandler(
           throw new ApiError(`${product.name} out of stock`, 400);
 
         product.stock -= p.quantity;
+
+        // Price any selected add-ons from the product's own definitions.
+        const { extras, extrasTotal } = resolveExtras(
+          product,
+          p.extras,
+          p.startDate,
+          p.endDate,
+        );
+
         orderItems.push({
           product: product._id,
           name: product.name,
@@ -821,8 +910,11 @@ export const quickCheckout = asyncHandler(
           quantity: p.quantity,
           price: product.price,
           startDate: p.startDate ? new Date(p.startDate) : undefined,
+          endDate: p.endDate ? new Date(p.endDate) : undefined,
+          extras,
+          extrasTotal,
         });
-        subtotal += product.price * p.quantity;
+        subtotal += product.price * p.quantity + extrasTotal;
       }
 
       // 2. IDENTITY LOGIC (Detect if new user)

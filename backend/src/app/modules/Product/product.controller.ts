@@ -9,6 +9,7 @@ import Product from "./product.model";
 import sharp from "sharp";
 import { revalidatePaths } from "../../utils/revalidate";
 import { expandBracketedFields } from "../../utils/expandFormFields";
+import type { IExtraOption } from "./product.interface";
 
 // Add these functions to your existing product.controller.ts
 
@@ -309,6 +310,82 @@ const parseExistingCertificates = (body: Record<string, any>): string[] => {
   return [];
 };
 
+/**
+ * Turn a label into a stable, URL-safe key (e.g. "Service stuff (£40 per hour)"
+ * -> "service-stuff-40-per-hour"). Used when the admin form does not supply one.
+ */
+const toExtraOptionKey = (label: string): string => {
+  const slug = label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return slug || `option-${Date.now().toString(36)}`;
+};
+
+const EXTRA_OPTION_PRICING_TYPES: IExtraOption["pricingType"][] = [
+  "total",
+  "per_day",
+  "per_quantity",
+];
+
+/**
+ * Extra options reach us from the admin form as a JSON string, because the
+ * product form is multipart and multipart bodies cannot nest arrays. A real
+ * array (JSON request body) is accepted too. Every row is normalised here so a
+ * malformed entry can never reach the database.
+ */
+const parseExtraOptions = (raw: unknown): IExtraOption[] => {
+  let list: any[] = [];
+
+  if (Array.isArray(raw)) {
+    list = raw;
+  } else if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) list = parsed;
+    } catch {
+      return [];
+    }
+  } else {
+    return [];
+  }
+
+  const seenKeys = new Set<string>();
+
+  return list
+    .map((entry) => {
+      const label = String(entry?.label ?? "").trim();
+      const key =
+        String(entry?.key ?? "").trim() || toExtraOptionKey(label || "option");
+      const price = Number(entry?.price);
+      const max = Number(entry?.max);
+      const pricingType = EXTRA_OPTION_PRICING_TYPES.includes(
+        entry?.pricingType,
+      )
+        ? (entry.pricingType as IExtraOption["pricingType"])
+        : "total";
+
+      return {
+        key,
+        label,
+        price: Number.isFinite(price) && price >= 0 ? price : 0,
+        pricingType,
+        max: Number.isFinite(max) && max >= 1 ? Math.floor(max) : 1,
+        enabled: entry?.enabled === false ? false : true,
+      };
+    })
+    .filter((option) => Boolean(option.label))
+    .filter((option) => {
+      // Last definition with a given key wins; duplicates are dropped.
+      if (seenKeys.has(option.key)) return false;
+      seenKeys.add(option.key);
+      return true;
+    });
+};
+
 /* ---------------- CREATE PRODUCT ---------------- */
 /* ---------------- CREATE PRODUCT ---------------- */
 
@@ -361,6 +438,12 @@ export const createProduct = asyncHandler(
     // Drop the raw indexed keys so they aren't persisted as literal fields.
     for (const key of Object.keys(productData)) {
       if (/^categories\[\d+\]$/.test(key)) delete productData[key];
+    }
+
+    // Selecting add-ons is optional, but when the field is present it must
+    // replace the set wholesale (including clearing it to an empty list).
+    if (Object.prototype.hasOwnProperty.call(req.body, "extraOptions")) {
+      productData.extraOptions = parseExtraOptions(req.body.extraOptions);
     }
 
     // ১. ইমেজ কভার প্রসেসিং (Cloudinary)
@@ -446,6 +529,12 @@ export const updateProduct = asyncHandler(
 
     if (Object.prototype.hasOwnProperty.call(req.body, "existingCertificates")) {
       updateData.certificates = parseExistingCertificates(req.body);
+    }
+
+    // Selecting add-ons is optional, but when the field is present it must
+    // replace the set wholesale (including clearing it to an empty list).
+    if (Object.prototype.hasOwnProperty.call(req.body, "extraOptions")) {
+      updateData.extraOptions = parseExtraOptions(req.body.extraOptions);
     }
 
     // ১. ইমেজ কভার আপডেট (Cloudinary)

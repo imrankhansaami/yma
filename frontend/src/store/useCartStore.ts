@@ -5,6 +5,14 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+export type CartExtra = {
+  key: string;
+  label: string;
+  price: number;
+  pricingType: "total" | "per_day" | "per_quantity";
+  quantity: number;
+};
+
 export type CartItem = {
   id: string;
   title: string;
@@ -17,6 +25,47 @@ export type CartItem = {
   pricePerDay: number;
   quantity: number;
   total: number;
+  /** Add-ons selected for this item. */
+  extras?: CartExtra[];
+  /** Sum of the selected add-ons, kept in step with `days`. */
+  extrasTotal?: number;
+};
+
+/**
+ * What a single selected add-on contributes to a booking.
+ * `total` is charged once, `per_day` per booked day, `per_quantity` per unit.
+ */
+export const computeExtraLineTotal = (
+  extra: Pick<CartExtra, "price" | "quantity" | "pricingType">,
+  days: number
+): number => {
+  const safeDays = Math.max(1, days || 1);
+  const quantity = Math.max(1, extra.quantity || 1);
+  let total: number;
+  if (extra.pricingType === "per_day") {
+    total = extra.price * quantity * safeDays;
+  } else if (extra.pricingType === "per_quantity") {
+    total = extra.price * quantity;
+  } else {
+    total = extra.price;
+  }
+  return Math.round(total * 100) / 100;
+};
+
+/**
+ * What a set of selected add-ons contributes to a booking.
+ * Mirrors `resolveExtras` in the backend so the cart and the invoice agree.
+ */
+export const computeExtrasTotal = (
+  extras: CartExtra[] | undefined,
+  days: number
+): number => {
+  if (!extras || extras.length === 0) return 0;
+  const total = extras.reduce(
+    (sum, extra) => sum + computeExtraLineTotal(extra, days),
+    0
+  );
+  return Math.round(total * 100) / 100;
 };
 
 type CartState = {
@@ -40,6 +89,7 @@ type CartState = {
     days: number;
     pricePerDay: number;
     quantity?: number;
+    extras?: CartExtra[];
   }) => Promise<void>;
   updateItemDays: (
     productId: string,
@@ -84,6 +134,9 @@ export const useCartStore = create<CartState>()(
         const startDate = format(start, "yyyy-MM-dd");
         const endDate = format(end, "yyyy-MM-dd");
 
+        const extras = payload.extras ?? [];
+        const extrasTotal = computeExtrasTotal(extras, days);
+
         const localItem: CartItem = {
           id: payload.id,
           title: payload.title,
@@ -94,7 +147,9 @@ export const useCartStore = create<CartState>()(
           days,
           pricePerDay: payload.pricePerDay,
           quantity,
-          total: payload.pricePerDay * days,
+          extras,
+          extrasTotal,
+          total: payload.pricePerDay * days + extrasTotal,
         };
 
         const existing = get().items.find((it) => it.id === payload.id);
@@ -142,6 +197,7 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           items: state.items.map((it) => {
             if (it.id !== productId) return it;
+            const extrasTotal = computeExtrasTotal(it.extras, safeDays);
             return {
               ...it,
               startDateISO: startStr,
@@ -149,7 +205,8 @@ export const useCartStore = create<CartState>()(
               dateISO: startStr,
               days: safeDays,
               quantity: 1,
-              total: it.pricePerDay * safeDays,
+              extrasTotal,
+              total: it.pricePerDay * safeDays + extrasTotal,
             };
           }),
         }));
@@ -182,8 +239,8 @@ export const useCartStore = create<CartState>()(
         const subtotal = items.reduce(
           (sum, it) =>
             sum +
-            it.pricePerDay *
-              (it.days || 1),
+            it.pricePerDay * (it.days || 1) +
+            (it.extrasTotal || 0),
           0
         );
         const cartIds = Array.from(
