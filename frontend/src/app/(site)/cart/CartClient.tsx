@@ -25,6 +25,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCartStore } from "@/store/useCartStore";
+import {
+  CartExtra,
+  computeExtrasTotal,
+} from "@/store/useCartStore";
 
 import {
   differenceInCalendarDays,
@@ -209,13 +213,17 @@ export default function CartClient() {
         const key = keyFor(it.id, it.dateISO);
         const days = daysLocal[key] ?? it.days ?? 1;
         const perDay = Number(it.pricePerDay ?? 0);
+        const extras = (it.extras ?? []) as CartExtra[];
+        const extrasTotal = computeExtrasTotal(extras, days);
         return {
           ...it,
           key,
           days,
           quantity: 1,
           perDay,
-          total: perDay * days,
+          extras,
+          extrasTotal,
+          total: perDay * days + extrasTotal,
         };
       }),
     [items, daysLocal],
@@ -542,6 +550,14 @@ export default function CartClient() {
                                   row.name ||
                                   "Product"}
                               </p>
+
+                              {(row.extras ?? []).length ? (
+                                <ul className="mt-1 text-[12px] leading-5 text-brand-gray-600">
+                                  {(row.extras as CartExtra[]).map((extra) => (
+                                    <li key={extra.key}>+ {extra.label}</li>
+                                  ))}
+                                </ul>
+                              ) : null}
 
                               <div className="mt-2 text-sm sm:text-[13px]">
                                 <div className="text-brand-ink-900 font-semibold">
