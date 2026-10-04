@@ -567,8 +567,8 @@ export default function CheckoutForm({
               <option value="" disabled>
                 Please Select
               </option>
-              <option>Indoors on Hard Surface (+£10)</option>
-              <option>Outdoors on Artificial Grass</option>
+              <option>Indoors on Hard Surface</option>
+              <option>Outdoors on Artificial Grass (+£10)</option>
               <option>Outdoors on Grass</option>
               <option>Outdoors on Hard Surface (+£10)</option>
             </select>

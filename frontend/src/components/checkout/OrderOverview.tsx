@@ -108,8 +108,12 @@ export default function OrderOverview({
 
   const overnightFee = keepOvernight ? 30 : 0;
 
-  const isHardSurface = /hard surface/i.test(floorType);
-  const floorFee = isHardSurface ? 10 : 0;
+  // £10 placement fee applies outdoors on a hard surface or on artificial
+  // grass. Indoors is always free, including indoors on a hard surface.
+  const isIndoors = /indoors/i.test(floorType);
+  const needsPlacementFee =
+    !isIndoors && (/hard surface/i.test(floorType) || /artificial grass/i.test(floorType));
+  const floorFee = needsPlacementFee ? 10 : 0;
 
   const total =
     subTotal -
@@ -250,10 +254,10 @@ export default function OrderOverview({
             </div>
           )}
 
-          {/* Hard Surface Placement Fee */}
+          {/* Outdoor Placement Fee (hard surface or artificial grass) */}
           {floorFee > 0 && (
             <div className="flex items-center justify-between">
-              <span className="text-ink-900">Hard Surface Placement</span>
+              <span className="text-ink-900">Outdoor Placement Fee</span>
               <span className="font-medium text-brand-orange-500">
                 +£{floorFee}
               </span>
