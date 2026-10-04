@@ -34,6 +34,7 @@ export type TOrder = {
   subtotalAmount: number;
   deliveryFee: number;
   overnightFee: number;
+  placementFee?: number;
   discountAmount: number;
   totalAmount: number; // Changed from total
   paymentMethod: string;
