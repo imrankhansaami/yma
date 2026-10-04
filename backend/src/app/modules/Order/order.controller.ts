@@ -79,6 +79,7 @@ export const createOrderHandler = asyncHandler(
         subtotalAmount: order.subtotalAmount,
         deliveryFee: order.deliveryFee,
         overnightFee: order.overnightFee,
+        placementFee: order.placementFee,
         discountAmount: order.discountAmount,
         totalAmount: order.totalAmount,
         paymentMethod: order.paymentMethod,

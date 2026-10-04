@@ -109,6 +109,7 @@ type InternalOrderState = {
   summary: {
     shippingCharge: string;
     overnightCharge: string;
+    placementCharge: string;
     couponCode: string;
     couponAmount: string;
     totalAmount: string;
@@ -381,6 +382,7 @@ const transformOrderToState = (order: TOrder): InternalOrderState => {
     summary: {
       shippingCharge: `$${(order.deliveryFee || 0).toFixed(2)}`,
       overnightCharge: `$${(order.overnightFee || 0).toFixed(2)}`,
+      placementCharge: `$${(order.placementFee || 0).toFixed(2)}`,
       couponCode: order.promoCode || "",
       couponAmount: `-$${(order.discountAmount || 0).toFixed(2)}`,
       totalAmount: `$${(order.totalAmount || 0).toFixed(2)}`,
@@ -578,6 +580,7 @@ export function OrderDetailsModal({
     couponAmount: string,
     shippingCharge: string,
     overnightCharge: string,
+    placementCharge: string,
   ) => {
     const subtotal = items.reduce((sum, item) => {
       return sum + (parseFloat(item.total.replace("$", "")) || 0);
@@ -585,10 +588,17 @@ export function OrderDetailsModal({
 
     const shippingValue = parseCurrencyValue(shippingCharge);
     const overnightValue = parseCurrencyValue(overnightCharge);
+    const placementValue = parseCurrencyValue(placementCharge);
     const couponValue = parseCurrencyValue(couponAmount);
     const couponDiscount = Math.abs(couponValue);
 
-    return subtotal + shippingValue + overnightValue - couponDiscount;
+    return (
+      subtotal +
+      shippingValue +
+      overnightValue +
+      placementValue -
+      couponDiscount
+    );
   };
 
   const handleEditToggle = () => {
@@ -763,6 +773,7 @@ export function OrderDetailsModal({
         prev.summary.couponAmount,
         prev.summary.shippingCharge,
         newOvernightCharge,
+        prev.summary.placementCharge,
       );
 
       return {
@@ -815,6 +826,7 @@ export function OrderDetailsModal({
         prev.summary.couponAmount,
         prev.summary.shippingCharge,
         prev.summary.overnightCharge,
+        prev.summary.placementCharge,
       );
 
       return {
@@ -838,6 +850,7 @@ export function OrderDetailsModal({
           prev.summary.couponAmount,
           prev.summary.shippingCharge,
           prev.summary.overnightCharge,
+          prev.summary.placementCharge,
         );
 
         return {
@@ -911,6 +924,7 @@ export function OrderDetailsModal({
         prev.summary.couponAmount,
         prev.summary.shippingCharge,
         prev.summary.overnightCharge,
+        prev.summary.placementCharge,
       );
 
       return {
@@ -949,7 +963,12 @@ export function OrderDetailsModal({
         parseFloat(
           internalOrder.summary.overnightCharge.replace(/[^0-9.-]+/g, ""),
         ) || 0;
-      const orderAmount = subtotal + shippingCharge + overnightCharge;
+      const placementCharge =
+        parseFloat(
+          internalOrder.summary.placementCharge.replace(/[^0-9.-]+/g, ""),
+        ) || 0;
+      const orderAmount =
+        subtotal + shippingCharge + overnightCharge + placementCharge;
 
       const response = await applyPromoCode({
         promo: couponInput.trim(),
@@ -970,6 +989,7 @@ export function OrderDetailsModal({
           newCouponAmount,
           internalOrder.summary.shippingCharge,
           internalOrder.summary.overnightCharge,
+          internalOrder.summary.placementCharge,
         );
 
         setInternalOrder((prev) =>
@@ -1017,6 +1037,7 @@ export function OrderDetailsModal({
         "$0",
         prev.summary.shippingCharge,
         prev.summary.overnightCharge,
+        prev.summary.placementCharge,
       );
       return {
         ...prev,
@@ -1749,6 +1770,10 @@ export function OrderDetailsModal({
                 <SummaryRow
                   label="Overnight charge"
                   value={internalOrder.summary.overnightCharge}
+                />
+                <SummaryRow
+                  label="Outdoor placement fee"
+                  value={internalOrder.summary.placementCharge}
                 />
                 <SummaryRow
                   label={

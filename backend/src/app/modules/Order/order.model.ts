@@ -4,6 +4,7 @@ import {
   IOrderItem,
   IShippingAddress,
   DeliveryTimeManager,
+  PlacementFeeManager,
   DELIVERY_TIME_VALUES,
   COLLECTION_TIME_VALUES,
   HIRE_OCCASION_OPTIONS,
@@ -137,6 +138,7 @@ const orderSchema = new Schema<IOrderDocument>(
     subtotalAmount: { type: Number, required: false, default: 0 },
     deliveryFee: { type: Number, required: true, default: 0 },
     overnightFee: { type: Number, required: true, default: 0 },
+    placementFee: { type: Number, required: true, default: 0 },
     discountAmount: { type: Number, default: 0 },
 
     totalAmount: { type: Number },
@@ -252,11 +254,17 @@ orderSchema.pre("save", async function (next) {
 
     this.deliveryFee = deliveryFee + collectionFee;
 
+    // ─── Placement fee (outdoors on hard surface / artificial grass) ──────
+    this.placementFee = PlacementFeeManager.getFee(
+      this.shippingAddress?.floorType,
+    );
+
     // Total calculation (overnightFee should already be set elsewhere or here)
     this.totalAmount =
       this.subtotalAmount +
       this.deliveryFee +
-      this.overnightFee -
+      this.overnightFee +
+      this.placementFee -
       this.discountAmount;
 
     next();

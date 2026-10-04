@@ -147,6 +147,11 @@ export interface IOrder {
   subtotalAmount: number;
   deliveryFee: number;
   overnightFee: number;
+  /**
+   * Fee for placing the product outdoors on a hard surface or on artificial
+   * grass. Computed from shippingAddress.floorType on save; 0 for indoors.
+   */
+  placementFee: number;
   discountAmount: number;
   totalAmount: number;
   paymentMethod: "cash_on_delivery" | "credit_card" | "online";
@@ -455,6 +460,47 @@ export class DeliveryTimeManager {
 
   static isValidCollection(value: string): boolean {
     return COLLECTION_TIME_VALUES.includes(value);
+  }
+}
+
+// ───────────────────────────────────────────────
+// PLACEMENT FEE (where the product will be set up)
+// ───────────────────────────────────────────────
+
+export const PLACEMENT_FEE = 10;
+
+export const PLACEMENT_OPTIONS = [
+  "Indoors on Hard Surface",
+  "Outdoors on Artificial Grass",
+  "Outdoors on Grass",
+  "Outdoors on Hard Surface",
+] as const;
+
+/**
+ * A £10 placement fee applies when a product is set up outdoors on a hard
+ * surface or on artificial grass. Grass is free, and indoors is always free —
+ * including indoors on a hard surface.
+ *
+ * Understands both the storefront wording ("Outdoors on Artificial Grass") and
+ * the older admin wording ("Hard Floor (outdoor)"), because an order can be
+ * re-edited after it was placed.
+ */
+export class PlacementFeeManager {
+  static applies(floorType?: string | null): boolean {
+    const value = (floorType || "").trim().toLowerCase();
+    if (!value) return false;
+    if (value.includes("indoor")) return false; // indoors is always free
+    return (
+      value.includes("hard surface") ||
+      value.includes("hard floor") ||
+      value.includes("artificial grass") ||
+      value.includes("astroturf") ||
+      value.includes("astro turf")
+    );
+  }
+
+  static getFee(floorType?: string | null): number {
+    return this.applies(floorType) ? PLACEMENT_FEE : 0;
   }
 }
 

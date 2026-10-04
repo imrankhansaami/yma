@@ -13,6 +13,7 @@ import {
   FilterOptions,
   ORDER_STATUS,
   DeliveryTimeManager,
+  PlacementFeeManager,
   IShippingAddress,
 } from "./order.interface";
 import {
@@ -182,8 +183,13 @@ export const createOrder = async (
     );
 
     const discountAmount = promoDiscount || 0;
+    const placementFee = PlacementFeeManager.getFee(shippingAddress?.floorType);
     const totalAmount =
-      subtotalAmount + totalDeliveryFee + overnightFee - discountAmount;
+      subtotalAmount +
+      totalDeliveryFee +
+      overnightFee +
+      placementFee -
+      discountAmount;
 
     const finalShippingAddress: IShippingAddress = {
       firstName: shippingAddress?.firstName || "",
@@ -222,6 +228,7 @@ export const createOrder = async (
       subtotalAmount,
       deliveryFee: totalDeliveryFee,
       overnightFee,
+      placementFee,
       discountAmount,
       totalAmount,
       paymentMethod,
@@ -722,11 +729,17 @@ export const updateOrder = async (
     ).length;
     order.overnightFee = overnightCount * 50;
 
-    // Recalculate total (subtotal + delivery + overnight - discount)
+    // Recalculate placement fee from the (possibly updated) address
+    order.placementFee = PlacementFeeManager.getFee(
+      order.shippingAddress?.floorType,
+    );
+
+    // Recalculate total (subtotal + delivery + overnight + placement - discount)
     order.totalAmount =
       (order.subtotalAmount || 0) +
       (order.deliveryFee || 0) +
-      (order.overnightFee || 0) -
+      (order.overnightFee || 0) +
+      (order.placementFee || 0) -
       (order.discountAmount || 0);
   }
 
@@ -792,11 +805,17 @@ export const updateOrder = async (
 
     order.deliveryFee = deliveryFee + collectionFee;
 
-    // Recalculate Total: Subtotal + Delivery + Overnight - Discount
+    // Recalculate placement fee from the address
+    order.placementFee = PlacementFeeManager.getFee(
+      order.shippingAddress?.floorType,
+    );
+
+    // Recalculate Total: Subtotal + Delivery + Overnight + Placement - Discount
     order.totalAmount =
       order.subtotalAmount +
       order.deliveryFee +
-      order.overnightFee -
+      order.overnightFee +
+      (order.placementFee || 0) -
       (order.discountAmount || 0);
   }
 
@@ -820,6 +839,7 @@ export const updateOrder = async (
     "totalAmount",
     "deliveryFee",
     "overnightFee",
+    "placementFee",
   ];
 
   Object.entries(updateData).forEach(([key, value]) => {
@@ -1295,6 +1315,7 @@ const generateInvoiceHtml = (order: IOrderDocument): string => {
               .join("")}
             ${order.deliveryFee > 0 ? `<tr><td colspan="3">Delivery Fee</td><td>£${order.deliveryFee.toFixed(2)}</td></tr>` : ""}
             ${order.overnightFee > 0 ? `<tr><td colspan="3">Overnight Keeping Fee</td><td>£${order.overnightFee.toFixed(2)}</td></tr>` : ""}
+            ${order.placementFee > 0 ? `<tr><td colspan="3">Outdoor Placement Fee</td><td>£${order.placementFee.toFixed(2)}</td></tr>` : ""}
           </tbody>
         </table>
 
@@ -1302,6 +1323,7 @@ const generateInvoiceHtml = (order: IOrderDocument): string => {
           <div class="total-row"><div class="total-label">Subtotal:</div><div class="total-value">£${order.subtotalAmount.toFixed(2)}</div></div>
           ${order.deliveryFee > 0 ? `<div class="total-row"><div class="total-label">Delivery Fee:</div><div class="total-value">£${order.deliveryFee.toFixed(2)}</div></div>` : ""}
           ${order.overnightFee > 0 ? `<div class="total-row"><div class="total-label">Overnight Fee:</div><div class="total-value">£${order.overnightFee.toFixed(2)}</div></div>` : ""}
+          ${order.placementFee > 0 ? `<div class="total-row"><div class="total-label">Outdoor Placement Fee:</div><div class="total-value">£${order.placementFee.toFixed(2)}</div></div>` : ""}
           <div class="total-row grand-total">
             <div class="total-label">TOTAL:</div>
             <div class="total-value">£${order.totalAmount.toFixed(2)}</div>

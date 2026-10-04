@@ -6,6 +6,7 @@ import ApiError from "../../utils/apiError";
 import Order from "../../modules/Order/order.model";
 import Product from "../../modules/Product/product.model";
 import type { IOrderItemExtra } from "../../modules/Order/order.interface";
+import { PlacementFeeManager } from "../../modules/Order/order.interface";
 import User from "../../modules/Auth/user.model";
 import { PromoService } from "../../modules/promos/promos.service";
 import crypto from "crypto";
@@ -341,18 +342,21 @@ export const checkoutFromCart = asyncHandler(
       );
 
       const overnightFee = shippingAddress.keepOvernight ? 30 : 0;
-      const feesTotal = deliveryFee + overnightFee;
+      const placementFee = PlacementFeeManager.getFee(shippingAddress.floorType);
+      const feesTotal = deliveryFee + overnightFee + placementFee;
       const amountBeforePromo = subtotalAmount + feesTotal;
 
       console.log("📊 Fee calculation:", {
         subtotalAmount,
         deliveryFee,
         overnightFee,
+        placementFee,
         feesTotal,
         amountBeforePromo,
         deliveryTime: shippingAddress.deliveryTime,
         collectionTime: shippingAddress.collectionTime,
         keepOvernight: shippingAddress.keepOvernight,
+        floorType: shippingAddress.floorType,
       });
 
       let discount = 0;
@@ -376,6 +380,7 @@ export const checkoutFromCart = asyncHandler(
         subtotalAmount,
         deliveryFee,
         overnightFee,
+        placementFee,
         discount,
         totalAmount,
       });
@@ -386,6 +391,7 @@ export const checkoutFromCart = asyncHandler(
         subtotalAmount,
         deliveryFee,
         overnightFee,
+        placementFee,
         discountAmount: discount,
         totalAmount,
         paymentMethod,

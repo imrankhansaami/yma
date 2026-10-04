@@ -204,6 +204,25 @@ const generateProductTable = (
     `
         : ""
     }
+    ${
+      order.placementFee > 0
+        ? `
+    <tr style="border-bottom: 1px solid #e5e7eb;">
+      <td colspan="3" style="padding: 16px 20px; text-align: right; font-weight: 600; color: #374151;">
+        Outdoor Placement Fee
+        ${
+          order.shippingAddress?.floorType
+            ? `<div style="font-size: 13px; color: #6b7280;">${order.shippingAddress.floorType}</div>`
+            : ""
+        }
+      </td>
+      <td style="padding: 16px 20px; text-align: right; font-weight: 600; color: #374151;">${formatCurrency(
+        order.placementFee,
+      )}</td>
+    </tr>
+    `
+        : ""
+    }
     <tr style="background-color: #f9fafb;">
       <td colspan="3" style="padding: 20px; text-align: right; font-weight: 700; color: #111827; font-size: 18px;">Total Amount</td>
       <td style="padding: 20px; text-align: right; font-weight: 700; color: #4f46e5; font-size: 20px;">${formatCurrency(
@@ -499,6 +518,11 @@ ${
 ${
   order.overnightFee > 0
     ? `Overnight Keeping: ${formatCurrency(order.overnightFee)}`
+    : ""
+}
+${
+  order.placementFee > 0
+    ? `Outdoor Placement Fee: ${formatCurrency(order.placementFee)}`
     : ""
 }
 Total: ${formatCurrency(order.totalAmount)}
@@ -1107,6 +1131,11 @@ ${
     ? `Overnight Keeping: ${formatCurrency(order.overnightFee)}`
     : ""
 }
+${
+  order.placementFee > 0
+    ? `Outdoor Placement Fee: ${formatCurrency(order.placementFee)}`
+    : ""
+}
 Total: ${formatCurrency(order.totalAmount)}
 
 If you have any questions, want to add extras, or need help with anything else, feel free to give us a call or send a message on WhatsApp.
@@ -1526,6 +1555,11 @@ ${
 ${
   order.overnightFee > 0
     ? `Overnight Keeping: ${formatCurrency(order.overnightFee)}`
+    : ""
+}
+${
+  order.placementFee > 0
+    ? `Outdoor Placement Fee: ${formatCurrency(order.placementFee)}`
     : ""
 }
 Total: ${formatCurrency(order.totalAmount)}

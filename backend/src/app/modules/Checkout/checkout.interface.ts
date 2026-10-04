@@ -66,6 +66,7 @@ export interface IOrder {
   subtotalAmount: number;
   deliveryFee: number;
   overnightFee: number;
+  placementFee?: number;
   paymentMethod: "cash_on_delivery" | "credit_card" | "online";
   status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
   shippingAddress: IShippingAddress;

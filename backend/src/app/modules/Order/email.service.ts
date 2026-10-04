@@ -102,6 +102,20 @@ const generateProductTable = (order: IOrderDocument): string => {
               : ""
           }
           ${
+            order.placementFee > 0
+              ? `
+            <tr>
+              <td colspan="3" style="padding: 12px; text-align: right; border: none; font-weight: 600; color: #555;">
+                Outdoor Placement Fee:
+              </td>
+              <td style="padding: 12px; text-align: right; border: none; font-weight: 600; color: #555;">
+                £${order.placementFee.toFixed(2)}
+              </td>
+            </tr>
+          `
+              : ""
+          }
+          ${
             order.discountAmount > 0
               ? `
             <tr>
@@ -919,6 +933,16 @@ const emailTemplates = {
                   `
                       : ""
                   }
+                  ${
+                    order.placementFee > 0
+                      ? `
+                    <tr>
+                      <td colspan="3">Outdoor Placement Fee</td>
+                      <td>£${order.placementFee.toFixed(2)}</td>
+                    </tr>
+                  `
+                      : ""
+                  }
                 </tbody>
               </table>
               
@@ -947,6 +971,18 @@ const emailTemplates = {
                   <div class="total-row">
                     <div class="total-label">Overnight Fee:</div>
                     <div class="total-value">£${order.overnightFee.toFixed(
+                      2
+                    )}</div>
+                  </div>
+                `
+                    : ""
+                }
+                ${
+                  order.placementFee > 0
+                    ? `
+                  <div class="total-row">
+                    <div class="total-label">Outdoor Placement Fee:</div>
+                    <div class="total-value">£${order.placementFee.toFixed(
                       2
                     )}</div>
                   </div>
