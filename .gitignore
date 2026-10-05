@@ -30,12 +30,17 @@ Thumbs.db
 # Test / coverage
 coverage/
 
-# Seed, verify and one-off repair scripts. These are run from the backend
-# directory and deleted after use, but an interrupted session can leave one
-# behind; without this, the next `git add -A` on the server commits it.
+# One-off DB scripts: seed, verify and repair. They are run from the repo root
+# or the backend directory and deleted after use, but an interrupted session can
+# leave one behind; without this, the next `git add -A` on the server commits
+# it. Scoped to these two directories, so the tracked deploy scripts and the
+# frontend's own .mjs configs/scripts stay visible to git.
 backend/*.mjs
 backend/*.cjs
 backend/*.sh
+/*.mjs
+/*.cjs
+/*.sh
 
 # JSON snapshots written before a seed overwrites records, and one-off data
 # backups. These are the recovery copies: large and per-run, so they stay out
