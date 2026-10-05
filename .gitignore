@@ -1,41 +1,47 @@
-# dependencies
+# Build output
 node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
 
-# env files  (never commit real secrets)
+# Dependencies
+.pnp
+.pnp.js
+
+# Environment
 .env
-.env.local
-.env.production
-.env.development
-.env.test
-.env.*.local
-.env.production.local
-
-# ...but always keep the templates
+.env*.local
 !.env.example
-!.env.*.example
 
-# build outputs
-frontend/.next/
-frontend/out/
-backend/dist/
-
-# debug logs
+# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-firebase-debug.log
 
-# OS files
+# Editor / OS
 .DS_Store
 Thumbs.db
-
-# IDE
-.vscode/
 .idea/
+.vscode/*
+!.vscode/extensions.json
 
-# misc
-*.tgz
-*.log
+# Test / coverage
+coverage/
 
-# local screenshots from the agent browser
+# Seed, verify and one-off repair scripts. These are run from the backend
+# directory and deleted after use, but an interrupted session can leave one
+# behind; without this, the next `git add -A` on the server commits it.
+backend/*.mjs
+backend/*.cjs
+backend/*.sh
+
+# JSON snapshots written before a seed overwrites records, and one-off data
+# backups. These are the recovery copies: large and per-run, so they stay out
+# of git, but do not delete them without checking.
+backend/seed-backups/
+backend/removed-*-backup-*.json
+
+# OpenChamber
 .openchamber/
