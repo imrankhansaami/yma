@@ -150,6 +150,19 @@ export type ContactFormContent = {
 /** A numbered legal document section: heading plus rich-text body. */
 export type LegalSection = { title: string; content: string };
 
+/** A category page's SEO copy: intro, "why choose" reasons and offerings. */
+export type SeoListItem = { title: string; body: string };
+export type SeoLink = { label: string; href: string };
+export type SeoContentContent = {
+  heading: string;
+  intro: string;
+  reasonsHeading: string;
+  reasons: SeoListItem[];
+  offeringsHeading: string;
+  offerings: SeoListItem[];
+  crossLinks: SeoLink[];
+};
+
 /** Terms / Privacy layout: page heading, last-updated date and sections. */
 export type LegalPageContent = {
   heading: string;
@@ -188,6 +201,7 @@ export const BLOCK_CATALOG: {
   { type: "faq", label: "FAQ", description: "Question and answer list" },
   { type: "contactPage", label: "Contact Page Layout", description: "The full two-column contact page" },
   { type: "legalPage", label: "Legal Page", description: "Page heading, last-updated date and numbered sections" },
+  { type: "seoContent", label: "Category SEO Content", description: "Intro, why-choose reasons, offerings and cross links" },
   { type: "categoryTiles", label: "Category Tiles", description: "Grid of image tiles linking to catalogues" },
   { type: "productGrid", label: "Product Grid", description: "Top picks or newest products" },
   { type: "featureGrid", label: "Feature Grid", description: "Why-choose-us style feature cards" },

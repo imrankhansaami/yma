@@ -505,6 +505,52 @@ function BlockFields({
         </div>
       );
 
+    case "seoContent":
+      return (
+        <div className="space-y-3">
+          <Text label="Main heading" value={data.heading} onChange={(v) => setData({ heading: v })} />
+          <TextArea label="Intro paragraph" value={data.intro} onChange={(v) => setData({ intro: v })} rows={4} />
+          <Text label="Reasons heading" value={data.reasonsHeading} onChange={(v) => setData({ reasonsHeading: v })} />
+          <Repeater
+            label="Reasons"
+            items={asArray(data, "reasons")}
+            onChange={(reasons) => setData({ reasons })}
+            makeItem={() => ({ title: "", body: "" })}
+            renderItem={(item, update) => (
+              <div className="space-y-2">
+                <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
+                <TextArea label="Body" value={item.body} onChange={(v) => update({ body: v })} rows={3} />
+              </div>
+            )}
+          />
+          <Text label="Offerings heading" value={data.offeringsHeading} onChange={(v) => setData({ offeringsHeading: v })} />
+          <Repeater
+            label="Offerings"
+            items={asArray(data, "offerings")}
+            onChange={(offerings) => setData({ offerings })}
+            makeItem={() => ({ title: "", body: "" })}
+            renderItem={(item, update) => (
+              <div className="space-y-2">
+                <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
+                <TextArea label="Body" value={item.body} onChange={(v) => update({ body: v })} rows={3} />
+              </div>
+            )}
+          />
+          <Repeater
+            label="Cross links"
+            items={asArray(data, "crossLinks")}
+            onChange={(crossLinks) => setData({ crossLinks })}
+            makeItem={() => ({ label: "", href: "" })}
+            renderItem={(item, update) => (
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <Text label="Label" value={item.label} onChange={(v) => update({ label: v })} />
+                <Text label="Link" value={item.href} onChange={(v) => update({ href: v })} placeholder="/booking-catalog/..." />
+              </div>
+            )}
+          />
+        </div>
+      );
+
     case "legalPage":
       return (
         <div className="space-y-3">

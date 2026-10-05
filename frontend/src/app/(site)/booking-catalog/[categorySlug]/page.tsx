@@ -12,6 +12,7 @@ import { CATEGORY_PAGE_BY_SLUG } from "@/lib/category-pages";
 import { buildSeoTitle, getSeoDefaults, mergeKeywords } from "@/lib/seo";
 import { joinCanonicalPath } from "@/lib/canonical";
 import { fetchPageContent } from "@/lib/pageContent";
+import type { PageBlock, SeoContentContent } from "@/lib/blocks/types";
 import Script from "next/script";
 
 type Params = { categorySlug: string };
@@ -228,6 +229,9 @@ export default async function CategoryCatalogPage({
   const defaults = await getSeoDefaults();
   const products = await fetchCategoryProducts(config.slug);
   const pageContent = await fetchPageContent("category", config.slug);
+  const seoContent = ((pageContent?.sections || []) as PageBlock[]).find(
+    (b) => b.type === "seoContent",
+  )?.data as SeoContentContent | undefined;
   const itemList = products.map((product) => ({
     name: product.name,
     url: `${defaults.defaultCanonicalBaseUrl}/product/${product.slug}`,
@@ -257,11 +261,11 @@ export default async function CategoryCatalogPage({
         <ItemListJsonLd name={`${config.title} Products`} items={itemList} />
       ) : null}
       <BookingCatalogSection forcedCategoryName={config.slug} />
-      {config.slug === "bouncy-castle-hire" ? <BouncyCastleSeoContent /> : null}
-      {config.slug === "soft-play-hire" ? <SoftPlaySeoContent /> : null}
-      {config.slug === "garden-games-hire" ? <GardenGamesSeoContent /> : null}
-      {config.slug === "fun-food-hire" ? <FunFoodSeoContent /> : null}
-      {config.slug === "obstacle-course-slides-hire" ? <ObstacleCourseSlidesSeoContent /> : null}
+      {config.slug === "bouncy-castle-hire" ? <BouncyCastleSeoContent content={seoContent} /> : null}
+      {config.slug === "soft-play-hire" ? <SoftPlaySeoContent content={seoContent} /> : null}
+      {config.slug === "garden-games-hire" ? <GardenGamesSeoContent content={seoContent} /> : null}
+      {config.slug === "fun-food-hire" ? <FunFoodSeoContent content={seoContent} /> : null}
+      {config.slug === "obstacle-course-slides-hire" ? <ObstacleCourseSlidesSeoContent content={seoContent} /> : null}
     </>
   );
 }
