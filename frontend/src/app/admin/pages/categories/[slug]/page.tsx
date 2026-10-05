@@ -4,10 +4,11 @@ import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getPageContentByKey,
+  PageSection,
   upsertPageContent,
 } from "@/services/pageContent.service";
 import { CATEGORY_PAGE_BY_SLUG } from "@/lib/category-pages";
-import TextEditor from "@/components/admin/inventory/TextEditor";
+import BlockEditor from "@/components/admin/pages/BlockEditor";
 import { useAdminToast } from "@/components/ui/admin-toast";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -31,7 +32,8 @@ export default function EditCategoryPage() {
   const [metaKeywords, setMetaKeywords] = useState("");
   const [canonicalUrl, setCanonicalUrl] = useState("");
   const [customJsonLd, setCustomJsonLd] = useState("");
-  const [content, setContent] = useState("");
+  const [sections, setSections] = useState<PageSection[]>([]);
+  const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
     if (pageContent) {
@@ -40,9 +42,8 @@ export default function EditCategoryPage() {
       setMetaKeywords(pageContent.metaKeywords || "");
       setCanonicalUrl(pageContent.canonicalUrl || "");
       setCustomJsonLd(pageContent.customJsonLd || "");
-      setContent(
-        pageContent.sections?.[0]?.content || ""
-      );
+      setSections(pageContent.sections || []);
+      setIsActive(pageContent.isActive !== false);
     } else if (categoryConfig) {
       setMetaTitle(categoryConfig.title);
       setMetaDescription(categoryConfig.seoDescription);
@@ -58,15 +59,8 @@ export default function EditCategoryPage() {
         metaKeywords,
         canonicalUrl,
         customJsonLd,
-        sections: [
-          {
-            sectionKey: "main",
-            title: categoryConfig?.title || slug,
-            content,
-            order: 0,
-          },
-        ],
-        isActive: true,
+        sections,
+        isActive,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pageContent"] });
@@ -175,6 +169,23 @@ export default function EditCategoryPage() {
               placeholder='{"@context": "https://schema.org", ...}'
             />
           </div>
+
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300"
+            />
+            <span>
+              <span className="block text-sm font-medium text-slate-700">
+                Use this saved content
+              </span>
+              <span className="block text-xs text-slate-500">
+                Unticked, the page falls back to the copy built into the site.
+              </span>
+            </span>
+          </label>
         </div>
 
         {/* Page Content */}
@@ -182,9 +193,13 @@ export default function EditCategoryPage() {
           <h2 className="text-sm font-semibold text-brand-black-950 uppercase tracking-wide">
             Page Content
           </h2>
-          <TextEditor value={content} onChange={setContent} />
+          <p className="text-xs text-slate-500">
+            Add, edit, reorder or hide the sections shown under the product
+            grid. Use the &quot;Category SEO Content&quot; block for the intro,
+            the why-choose reasons, the offerings and the cross links.
+          </p>
+          <BlockEditor sections={sections} onChange={setSections} />
         </div>
-
         {/* Save */}
         <button
           type="button"

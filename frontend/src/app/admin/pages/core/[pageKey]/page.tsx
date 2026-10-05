@@ -128,7 +128,8 @@ export default function EditCorePage() {
                 Visible on the site
               </span>
               <span className="block text-xs text-slate-500">
-                Unticked pages return 404 and are left out of the sitemap.
+                Controls whether these saved sections are used. Unticked, the
+                page falls back to the copy built into the site.
               </span>
             </span>
           </label>

@@ -4,6 +4,12 @@ import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminToast } from "@/components/ui/admin-toast";
 import TextEditor from "@/components/admin/inventory/TextEditor";
+import BlockEditor from "@/components/admin/pages/BlockEditor";
+import {
+  getPageContentByKey,
+  PageSection,
+  upsertPageContent,
+} from "@/services/pageContent.service";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -29,6 +35,23 @@ export default function EditLocationPage() {
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
   const [isActive, setIsActive] = useState(true);
+
+  // CMS page blocks for this location's long-form copy.
+  const { data: pageContent } = useQuery({
+    queryKey: ["pageContent", "location", slug],
+    queryFn: () => getPageContentByKey("location", slug),
+    enabled: !!slug,
+  });
+
+  const [sections, setSections] = useState<PageSection[]>([]);
+  const [useSavedContent, setUseSavedContent] = useState(true);
+
+  useEffect(() => {
+    if (pageContent) {
+      setSections(pageContent.sections || []);
+      setUseSavedContent(pageContent.isActive !== false);
+    }
+  }, [pageContent]);
 
   useEffect(() => {
     if (location) {
@@ -60,6 +83,29 @@ export default function EditLocationPage() {
     },
     onError: () => {
       notify({ title: "Error", message: "Failed to update location", variant: "error" });
+    },
+  });
+
+  const blocksMutation = useMutation({
+    mutationFn: () =>
+      upsertPageContent("location", slug, {
+        sections,
+        isActive: useSavedContent,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pageContent"] });
+      notify({
+        title: "Success",
+        message: "Page sections saved successfully",
+        variant: "success",
+      });
+    },
+    onError: () => {
+      notify({
+        title: "Error",
+        message: "Failed to save page sections",
+        variant: "error",
+      });
     },
   });
 
@@ -159,6 +205,41 @@ export default function EditLocationPage() {
             Page Content
           </h2>
           <TextEditor value={content} onChange={setContent} />
+        </div>
+
+        <div className="rounded-lg border border-slate-200 p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-brand-black-950 uppercase tracking-wide">
+            Page Sections
+          </h2>
+          <p className="text-xs text-slate-500">
+            These are the blocks that make up the copy on this page: the
+            headline and intro beside the map, and the about, why-choose-us,
+            services, safety and occasions sections below the product grid.
+            Unticking &quot;use this saved content&quot; falls back to the copy
+            built into the site.
+          </p>
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={useSavedContent}
+              onChange={(e) => setUseSavedContent(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300"
+            />
+            <span>
+              <span className="block text-sm font-medium text-slate-700">
+                Use this saved content
+              </span>
+            </span>
+          </label>
+          <BlockEditor sections={sections} onChange={setSections} />
+          <button
+            type="button"
+            onClick={() => blocksMutation.mutate()}
+            disabled={blocksMutation.isPending}
+            className="rounded-md bg-brand-black-950 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-black-900 disabled:opacity-50"
+          >
+            {blocksMutation.isPending ? "Saving..." : "Save Page Sections"}
+          </button>
         </div>
 
         <button
