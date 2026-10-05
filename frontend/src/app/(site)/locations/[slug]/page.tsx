@@ -355,7 +355,6 @@ export default async function LocationDetailPage({
 
         <div className="pt-8 space-y-4">
           <LocationDetailClient locationName={locationName} />
-          </div>
         </div>
       </div>
     </main>
