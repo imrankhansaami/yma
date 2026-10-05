@@ -57,17 +57,6 @@ export default function BlogClient() {
     }
   };
 
-  const formatDate = useCallback((iso?: string) => {
-    if (!iso) return "";
-    const date = new Date(iso);
-    if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  }, []);
-
   const buildShareUrl = useCallback((path?: string) => {
     if (!path) return "";
     if (typeof window === "undefined") return path;
@@ -85,7 +74,6 @@ export default function BlogClient() {
           <div className="flex flex-col gap-2 sm:gap-4 flex-1">
             <div className="flex flex-col gap-1">
               <div className="h-4 sm:h-5 w-3/4 bg-slate-100 rounded" />
-              <div className="h-3 sm:h-4 w-1/2 bg-slate-100 rounded" />
             </div>
             <div className="h-12 sm:h-14 w-full bg-slate-100 rounded" />
             <div className="flex gap-2 sm:gap-4 mt-auto">
@@ -133,7 +121,6 @@ export default function BlogClient() {
     return blogs.map((blog: ApiBlog, idx: number) => {
       const heroImage =
         (Array.isArray(blog.images) && blog.images[0]) || "/placeholder.png";
-      const dateLabel = formatDate(blog.publishedAt || blog.createdAt) || "";
       const normalizedSlug = String(blog.slug || "").trim();
       const preferredSlug =
         normalizedSlug && !OBJECT_ID_RE.test(normalizedSlug)
@@ -212,9 +199,6 @@ export default function BlogClient() {
               <h3 className="text-brand-ink-900 font-semibold text-sm sm:text-[16px] leading-[1.4] sm:leading-[1.5] line-clamp-2 group-hover:text-brand-orange-500 transition-colors duration-200">
                 {blog.title}
               </h3>
-              <p className="text-brand-gray-600 text-xs sm:text-[16px] leading-[1.4] sm:leading-[1.5] font-normal">
-                {dateLabel}
-              </p>
             </div>
 
             {/* Description */}
@@ -260,7 +244,7 @@ export default function BlogClient() {
         </Link>
       );
     });
-  }, [blogs, formatDate, isError, isLoading, refetch, showEmpty, buildShareUrl]);
+  }, [blogs, isError, isLoading, refetch, showEmpty, buildShareUrl]);
 
   return (
     <>

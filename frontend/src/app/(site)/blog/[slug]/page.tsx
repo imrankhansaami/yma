@@ -38,17 +38,6 @@ async function fetchBlog(slug: string): Promise<ApiBlog | null> {
   }
 }
 
-function formatDate(iso?: string) {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 function stripHtml(value?: string | null) {
   if (!value) return "";
   return value
@@ -196,7 +185,6 @@ export default async function BlogDetailsPage({
     title: blogData.title,
     subtitle: blogData.subtitle ?? "",
     description: blogData.description ?? "",
-    createdAt: formatDate(blogData.createdAt),
     featuredImage: blogData.images?.[0],
     author: blogData.author ?? {
       name: blogData.authorName ?? "",
@@ -264,18 +252,6 @@ export default async function BlogDetailsPage({
           </span>
         </nav>
 
-        <div className="flex items-center gap-2 text-brand-gray-525 mb-6 flex-wrap min-w-0 text-sm">
-          <time
-            dateTime={blogData.createdAt}
-            className="text-[14px] font-medium"
-            itemProp="datePublished"
-          >
-            {blog.createdAt}
-          </time>
-          <span className="text-[14px] font-normal">·</span>
-          <span className="text-[14px] font-medium">Article</span>
-        </div>
-
         <h1
           className="text-brand-ink-900 font-bold text-[30px] sm:text-[36px] leading-[1.15] tracking-[-0.02em] mb-4 max-w-[34ch] break-words"
           itemProp="headline"
@@ -289,32 +265,6 @@ export default async function BlogDetailsPage({
         >
           {blog.subtitle}
         </p>
-
-        {blog.author?.name && (
-          <div className="flex items-center gap-3" itemProp="author" itemScope itemType="https://schema.org/Person">
-            <div className="relative w-10 h-10 rounded-full overflow-hidden bg-brand-gray-90 flex items-center justify-center flex-shrink-0">
-              {blog.author.avatar ? (
-                <Image
-                  src={blog.author.avatar}
-                  alt={blog.author.name}
-                  width={40}
-                  height={40}
-                  className="object-cover"
-                />
-              ) : (
-                <span className="text-xs font-semibold text-brand-gray-600">
-                  {blog.author.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </span>
-              )}
-            </div>
-            <p className="text-brand-ink-900 font-semibold text-[14px]" itemProp="name">
-              {blog.author.name}
-            </p>
-          </div>
-        )}
       </header>
 
       <article className="px-4 sm:px-0 pb-12" itemScope itemType="https://schema.org/BlogPosting">
