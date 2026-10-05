@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 
 import BookingCatalogSection from "@/components/catalog/BookingCatalogSection";
 import { CmsJsonLd } from "@/components/common/CmsJsonLd";
-import { CmsSections } from "@/components/common/CmsSections";
+import { PageBlocks } from "@/components/blocks/PageBlocks";
 import { fetchPageContent } from "@/lib/pageContent";
+import type { PageBlock } from "@/lib/blocks/types";
 import { buildSeoTitle, getSeoDefaults, mergeKeywords } from "@/lib/seo";
 import type { ApiProduct } from "@/services/product.service";
 
@@ -346,15 +347,26 @@ export default async function BookingCatalogPage({
     : await fetchCatalogProducts(resolvedSearchParams);
 
   const cms = await fetchPageContent("core", "booking-catalog");
+  const blocks = (cms?.sections || []) as PageBlock[];
+  const header = blocks.find((b) => b.type === "pageHeader");
+  const contentBlocks = blocks.filter(
+    (b) => b.type !== "pageHeader" && b.visible !== false,
+  );
 
   return (
     <>
       <BookingCatalogSection
         initialProducts={seeded?.items}
         initialTotal={seeded?.total}
+        title={(header?.data as any)?.title || undefined}
+        intro={(header?.data as any)?.subtitle || undefined}
       />
+      {contentBlocks.length > 0 ? (
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 pb-16 font-inter">
+          <PageBlocks blocks={contentBlocks} />
+        </div>
+      ) : null}
       <CmsJsonLd jsonLd={cms?.customJsonLd} id="custom-jsonld-booking-catalog" />
-      <CmsSections sections={cms?.sections} />
     </>
   );
 }

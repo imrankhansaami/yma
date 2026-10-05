@@ -5,7 +5,8 @@ import Link from "next/link";
 import { FAQPageJsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/button";
 import { CmsJsonLd } from "@/components/common/CmsJsonLd";
-import { CmsSections } from "@/components/common/CmsSections";
+import { PageBlocks } from "@/components/blocks/PageBlocks";
+import type { FaqItem, PageBlock } from "@/lib/blocks/types";
 import { SEO_STATIC } from "@/lib/seo-static";
 import { fetchPageContent } from "@/lib/pageContent";
 
@@ -107,9 +108,16 @@ const faqs = [
 
 export default async function FaqsPage() {
   const cms = await fetchPageContent("core", "faqs");
+  const blocks = (cms?.sections || []) as PageBlock[];
+  const hasBlocks = blocks.length > 0;
+  const faqBlock = blocks.find((b) => b.type === "faq");
+  const faqItems: FaqItem[] = Array.isArray((faqBlock?.data as any)?.items)
+    ? ((faqBlock!.data as any).items as FaqItem[])
+    : faqs;
+
   return (
     <main className="w-full bg-white text-brand-ink-900 font-inter mt-24 md:mt-36">
-      <FAQPageJsonLd questions={faqs} />
+      <FAQPageJsonLd questions={faqItems} />
       <div className="mx-auto w-full max-w-[1000px] px-6 md:px-8 pb-16">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 pt-6 text-[13px] leading-none text-brand-gray-600">
@@ -120,65 +128,54 @@ export default async function FaqsPage() {
           <span>FAQs</span>
         </div>
 
-        <p className="mt-6 text-xs uppercase tracking-[0.12em] text-brand-gray-400 font-semibold">
-          FAQ section
-        </p>
-        <div className="mt-3 flex flex-col gap-2">
-          <h1 className="text-[26px] sm:text-[32px] font-semibold tracking-[-0.02em] text-brand-ink-900">
-            Frequently asked questions
-          </h1>
-          <p className="text-sm sm:text-base text-brand-gray-650 max-w-[720px]">
-            We&apos;ve compiled the most important information to help you get
-            the most out of your experience. Can&apos;t find what you&apos;re
-            looking for?{" "}
-            <Link
-              href="/contact"
-              className="text-brand-slate-950 underline underline-offset-4"
-            >
-              Contact us.
-            </Link>
-          </p>
-        </div>
-
-        {/* Divider */}
-        <div className="mt-6 h-px w-full bg-brand-gray-170" />
-
-        {/* FAQ List */}
-        <div className="divide-y divide-brand-gray-175 overflow-hidden mt-8">
-          {faqs.map((faq) => (
-            <details key={faq.question} className="group bg-white py-3 sm:py-6">
-              <summary className="flex items-start justify-between gap-3 cursor-pointer list-none">
-                <span className="text-sm sm:text-base font-semibold text-brand-ink-900">
-                  {faq.question}
-                </span>
-                <ChevronDown className="h-4 w-4 text-brand-gray-650 transition-transform group-open:rotate-180" />
-              </summary>
-              <p className="mt-2 text-sm sm:text-base text-brand-gray-650">
-                {faq.question ===
-                "What areas do you cover for bouncy castle rentals?" ? (
-                  <>
-                    Our service area includes various regions of North and East
-                    London, covering places like Loughton, Chigwell,
-                    Walthamstow, Chingford, Edmonton, Muswell Hill, Tottenham,
-                    Highgate, Wood Green, Hornsey, South Woodford, Woodford,
-                    Wanstead and other adjacent areas. We also provide our
-                    services to nearby areas such as Romford, Barking, Dagenham,
-                    and Leyton. For more information, please check our{" "}
-                    <Link
-                      href="/locations"
-                      className="text-brand-slate-950 underline underline-offset-4"
-                    >
-                      Location Page
-                    </Link>
-                    .
-                  </>
-                ) : (
-                  faq.answer
-                )}
+        {hasBlocks ? (
+          <PageBlocks blocks={blocks} />
+        ) : (
+          <>
+            <p className="mt-6 text-xs uppercase tracking-[0.12em] text-brand-gray-400 font-semibold">
+              FAQ section
+            </p>
+            <div className="mt-3 flex flex-col gap-2">
+              <h1 className="text-[26px] sm:text-[32px] font-semibold tracking-[-0.02em] text-brand-ink-900">
+                Frequently asked questions
+              </h1>
+              <p className="text-sm sm:text-base text-brand-gray-650 max-w-[720px]">
+                We&apos;ve compiled the most important information to help you
+                get the most out of your experience. Can&apos;t find what
+                you&apos;re looking for?{" "}
+                <Link
+                  href="/contact"
+                  className="text-brand-slate-950 underline underline-offset-4"
+                >
+                  Contact us.
+                </Link>
               </p>
-            </details>
-          ))}
-        </div>
+            </div>
+
+            {/* Divider */}
+            <div className="mt-6 h-px w-full bg-brand-gray-170" />
+
+            {/* FAQ List */}
+            <div className="divide-y divide-brand-gray-175 overflow-hidden mt-8">
+              {faqs.map((faq) => (
+                <details
+                  key={faq.question}
+                  className="group bg-white py-3 sm:py-6"
+                >
+                  <summary className="flex items-start justify-between gap-3 cursor-pointer list-none">
+                    <span className="text-sm sm:text-base font-semibold text-brand-ink-900">
+                      {faq.question}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-brand-gray-650 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <p className="mt-2 text-sm sm:text-base text-brand-gray-650">
+                    {faq.answer}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className="mt-10 rounded-2xl border border-brand-gray-170 bg-brand-gray-50 p-6 sm:p-7">
           <h3 className="text-[18px] font-semibold text-brand-ink-900">
@@ -207,7 +204,6 @@ export default async function FaqsPage() {
       </div>
 
       <CmsJsonLd jsonLd={cms?.customJsonLd} id="custom-jsonld-faqs" />
-      <CmsSections sections={cms?.sections} />
     </main>
   );
 }

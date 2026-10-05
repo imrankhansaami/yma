@@ -111,6 +111,60 @@ export type RichTextContent = {
   content?: string;
 };
 
+export type PageHeaderContent = {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  badges?: string[];
+};
+
+export type FaqItem = { question: string; answer: string };
+export type FaqContent = {
+  eyebrow?: string;
+  title?: string;
+  intro?: string;
+  items: FaqItem[];
+};
+
+export type BulletItem = { title: string; text: string };
+export type BulletListContent = {
+  title?: string;
+  intro?: string;
+  items: BulletItem[];
+};
+
+export type ContactDetailsContent = {
+  heading?: string;
+  label?: string;
+  phone?: string;
+  email?: string;
+  facebook?: string;
+  instagram?: string;
+};
+
+export type ContactFormContent = {
+  heading?: string;
+  intro?: string;
+};
+
+/** The bespoke two-column Contact page layout, as editable fields. */
+export type ContactPageContent = {
+  badge: string;
+  title: string;
+  intro: string;
+  pills: string[];
+  stepsLabel: string;
+  stepsTitle: string;
+  steps: string[];
+  detailsLabel: string;
+  detailsHeading: string;
+  phone: string;
+  email: string;
+  facebook: string;
+  instagram: string;
+  formBadges: string[];
+};
+
 /** Admin-facing catalogue of block types that can be added to a page. */
 export const BLOCK_CATALOG: {
   type: string;
@@ -118,7 +172,11 @@ export const BLOCK_CATALOG: {
   description: string;
 }[] = [
   { type: "hero", label: "Hero", description: "Big banner with headline, image and booking buttons" },
+  { type: "pageHeader", label: "Page Header", description: "Page title, intro and optional badges" },
   { type: "richText", label: "Rich Text", description: "A heading and free-form text" },
+  { type: "bulletList", label: "List", description: "A titled list of items (steps, reasons, services)" },
+  { type: "faq", label: "FAQ", description: "Question and answer list" },
+  { type: "contactPage", label: "Contact Page Layout", description: "The full two-column contact page" },
   { type: "categoryTiles", label: "Category Tiles", description: "Grid of image tiles linking to catalogues" },
   { type: "productGrid", label: "Product Grid", description: "Top picks or newest products" },
   { type: "featureGrid", label: "Feature Grid", description: "Why-choose-us style feature cards" },

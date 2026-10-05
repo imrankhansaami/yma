@@ -430,6 +430,81 @@ function BlockFields({
         </div>
       );
 
+    case "pageHeader":
+      return (
+        <div className="space-y-3">
+          <Text label="Eyebrow" value={data.eyebrow} onChange={(v) => setData({ eyebrow: v })} />
+          <Text label="Title" value={data.title} onChange={(v) => setData({ title: v })} />
+          <TextArea label="Intro" value={data.subtitle} onChange={(v) => setData({ subtitle: v })} rows={2} />
+          <StringList label="Badges" value={data.badges} onChange={(badges) => setData({ badges })} />
+        </div>
+      );
+
+    case "faq":
+      return (
+        <div className="space-y-3">
+          <Text label="Eyebrow" value={data.eyebrow} onChange={(v) => setData({ eyebrow: v })} />
+          <Text label="Title" value={data.title} onChange={(v) => setData({ title: v })} />
+          <TextArea label="Intro" value={data.intro} onChange={(v) => setData({ intro: v })} rows={2} />
+          <Repeater
+            label="Questions"
+            items={asArray(data, "items")}
+            onChange={(items) => setData({ items })}
+            makeItem={() => ({ question: "", answer: "" })}
+            renderItem={(item, update) => (
+              <div className="space-y-2">
+                <Text label="Question" value={item.question} onChange={(v) => update({ question: v })} />
+                <TextArea label="Answer" value={item.answer} onChange={(v) => update({ answer: v })} rows={3} />
+              </div>
+            )}
+          />
+        </div>
+      );
+
+    case "bulletList":
+      return (
+        <div className="space-y-3">
+          <Text label="Heading" value={data.title} onChange={(v) => setData({ title: v })} />
+          <TextArea label="Intro" value={data.intro} onChange={(v) => setData({ intro: v })} rows={2} />
+          <Repeater
+            label="Items"
+            items={asArray(data, "items")}
+            onChange={(items) => setData({ items })}
+            makeItem={() => ({ title: "", text: "" })}
+            renderItem={(item, update) => (
+              <div className="space-y-2">
+                <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
+                <TextArea label="Text" value={item.text} onChange={(v) => update({ text: v })} rows={2} />
+              </div>
+            )}
+          />
+        </div>
+      );
+
+    case "contactPage":
+      return (
+        <div className="space-y-3">
+          <Text label="Badge" value={data.badge} onChange={(v) => setData({ badge: v })} />
+          <Text label="Title" value={data.title} onChange={(v) => setData({ title: v })} />
+          <TextArea label="Intro" value={data.intro} onChange={(v) => setData({ intro: v })} rows={2} />
+          <StringList label="Pills" value={data.pills} onChange={(pills) => setData({ pills })} />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Text label="Steps label" value={data.stepsLabel} onChange={(v) => setData({ stepsLabel: v })} />
+            <Text label="Steps heading" value={data.stepsTitle} onChange={(v) => setData({ stepsTitle: v })} />
+          </div>
+          <StringList label="Steps" value={data.steps} onChange={(steps) => setData({ steps })} />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Text label="Details label" value={data.detailsLabel} onChange={(v) => setData({ detailsLabel: v })} />
+            <Text label="Details heading" value={data.detailsHeading} onChange={(v) => setData({ detailsHeading: v })} />
+            <Text label="Phone" value={data.phone} onChange={(v) => setData({ phone: v })} />
+            <Text label="Email" value={data.email} onChange={(v) => setData({ email: v })} />
+            <Text label="Facebook URL" value={data.facebook} onChange={(v) => setData({ facebook: v })} />
+            <Text label="Instagram URL" value={data.instagram} onChange={(v) => setData({ instagram: v })} />
+          </div>
+          <StringList label="Form badges" value={data.formBadges} onChange={(formBadges) => setData({ formBadges })} />
+        </div>
+      );
+
     case "richText":
     default:
       return (

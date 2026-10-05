@@ -8,10 +8,14 @@ export default function BookingCatalogSection({
   forcedCategoryName,
   initialProducts,
   initialTotal,
+  title = "Pick Your Perfect Castle",
+  intro = "Explore our full collection and find the perfect inflatable for your event.",
 }: {
   forcedCategoryName?: string;
   initialProducts?: ApiProduct[];
   initialTotal?: number;
+  title?: string;
+  intro?: string;
 }) {
   return (
     <section className="w-full mt-16 md:mt-24">
@@ -24,12 +28,9 @@ export default function BookingCatalogSection({
 
         <div className="mb-4">
           <h1 className="text-brand-ink-900 font-semibold text-[26px] sm:text-[28px]">
-            Pick Your Perfect Castle
+            {title}
           </h1>
-          <p className="mt-2 text-brand-gray-600 text-[14px]">
-            Explore our full collection and find the perfect inflatable for your
-            event.
-          </p>
+          <p className="mt-2 text-brand-gray-600 text-[14px]">{intro}</p>
         </div>
 
         <BookingCatalogClient

@@ -1,4 +1,9 @@
-import { CmsSections } from "@/components/common/CmsSections";
+import {
+  BulletList,
+  FaqBlock,
+  PageHeader,
+  RichTextBlock,
+} from "@/components/blocks/contentBlocks";
 import CastleHireSection from "@/components/sections/CastleHireSection";
 import CtaReadySection from "@/components/sections/CtaReadySection";
 import HeroSection from "@/components/sections/HeroSection";
@@ -39,6 +44,12 @@ function BlockView({ block }: { block: PageBlock }) {
   switch (type) {
     case "hero":
       return <HeroSection content={data} />;
+    case "pageHeader":
+      return <PageHeader content={data} />;
+    case "faq":
+      return <FaqBlock content={data} />;
+    case "bulletList":
+      return <BulletList content={data} />;
     case "categoryTiles":
       return <PickCastle content={data} />;
     case "productGrid":
@@ -57,17 +68,6 @@ function BlockView({ block }: { block: PageBlock }) {
       return <NewsletterSection content={data} />;
     case "richText":
     default:
-      return (
-        <CmsSections
-          sections={[
-            {
-              sectionKey: block.sectionKey,
-              title: block.title,
-              content: block.content,
-              order: block.order,
-            },
-          ]}
-        />
-      );
+      return <RichTextBlock title={block.title} content={block.content} />;
   }
 }
