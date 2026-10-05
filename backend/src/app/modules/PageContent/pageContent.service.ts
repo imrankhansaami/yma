@@ -87,9 +87,14 @@ export const updatePageContentByKey = async (
   pageKey: string,
   data: UpdatePageContentData,
 ): Promise<IPageContentDocument> => {
+  // `pageType`/`pageKey` are identity fields supplied by the route. They must
+  // not appear in `$set` as well as `$setOnInsert`, or MongoDB throws
+  // "Updating the path 'pageKey' would create a conflict at 'pageKey'".
+  const { pageType: _pt, pageKey: _pk, ...fields } = data as any;
+
   const pageContent = await PageContent.findOneAndUpdate(
     { pageType, pageKey: pageKey.toLowerCase() },
-    { $set: data, $setOnInsert: { pageType, pageKey: pageKey.toLowerCase() } },
+    { $set: fields, $setOnInsert: { pageType, pageKey: pageKey.toLowerCase() } },
     { new: true, upsert: true, runValidators: true },
   );
 
