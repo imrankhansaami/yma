@@ -9,8 +9,18 @@ import { notFound, permanentRedirect } from "next/navigation";
 import LocationDetailClient from "./LocationDetailClient";
 import WhatsappBtn from "@/components/common/btn/WhatsappBtn";
 import { RichText } from "@/components/common/RichText";
+import {
+  LocationBodyBlock,
+  LocationHeroBlock,
+} from "@/components/blocks/LocationBlocks";
+import type {
+  LocationBodyContent,
+  LocationHeroContent,
+  PageBlock,
+} from "@/lib/blocks/types";
 import { buildSeoTitle, getSeoDefaults, mergeKeywords } from "@/lib/seo";
 import { joinCanonicalPath, normalizeCanonicalSlug } from "@/lib/canonical";
+import { fetchPageContent } from "@/lib/pageContent";
 
 type Params = { slug: string };
 type ApiLocation = {
@@ -22,6 +32,104 @@ type ApiLocation = {
   content?: string;
   isActive?: boolean;
 };
+
+/** Hero copy for a location page, used until a `locationHero` block exists. */
+function defaultHero(name: string): LocationHeroContent {
+  return {
+    title: `Turn Up the Fun with ${name}\u2019s Best Bouncy Castle Hire`,
+    paragraphs: [
+      `Bouncy castles, inflatable slides, and obstacle courses are the ultimate entertainment for any event, and YMA Bouncy Castles LTD is your trusted provider in ${name}. Whether it\u2019s a birthday party, a corporate gathering, a school fair, or a community festival, our inflatable castles, soft play areas, and themed designs deliver endless fun and excitement for all ages.`,
+      `With safe, high-quality equipment like jumping castles, moon bounces, and inflatable water slides, YMA ensures every event runs smoothly. Our hassle-free service includes delivery, setup, and takedown, so you can focus on enjoying the celebration without worry. From small gardens to large outdoor spaces, we treat every venue professionally and carefully.`,
+      `Looking to rent small bouncy castle units for a birthday or indoor party? Our online booking system makes it easy to find the perfect inflatable for your space. Use our live online booking system to check availability and secure your party inflatable rentals. Alternatively, reach out to us for prompt responses to your bouncy castle rental queries.`,
+    ],
+  };
+}
+
+/** Body copy for a location page, used until a `locationBody` block exists. */
+function defaultBody(name: string): LocationBodyContent {
+  return {
+    aboutTitle: `Bouncy Castle Hire in ${name} \u2013 YMA Bouncy Castle LTD`,
+    aboutParagraphs: [
+      `YMA Bouncy Castle LTD specializes in offering high-quality bouncy castle hire services across ${name}. We provide a wide variety of inflatables, including bouncy castles, slides, obstacle courses, and soft play setups suitable for all ages. Whether you're organizing a birthday party, a school fair, a corporate event, or a public festival, our inflatables bring an extra dose of excitement to your special occasion.`,
+      `Our team is committed to providing hassle-free service, with a strong focus on safety, customer satisfaction, and competitive pricing. We help you make your event memorable by ensuring fun-filled experiences for both children and adults. From the initial booking to the final takedown, our reliable service and attention to detail guarantee an unforgettable experience for you and your guests.`,
+    ],
+    whyTitle: "Why Choose YMA Bouncy Castle LTD?",
+    whyItems: [
+      {
+        title: `Trusted Experts in ${name}`,
+        body: "Our team is professional and reliable. With years of experience, we guarantee clear communication and attention to detail. From booking to setup, we make sure everything runs smoothly.",
+      },
+      {
+        title: "Safety First",
+        body: "All our inflatables are PIPA-certified, regularly inspected, and cleaned after every use. We follow strict safety guidelines and provide secure anchoring, ensuring your event is safe.",
+      },
+      {
+        title: "Wide Range & Affordable Pricing",
+        body: "We offer a variety of themes and sizes for all ages and budgets. Whether it\u2019s a princess castle for kids or an obstacle course for a team-building event, we have something for everyone.",
+      },
+      {
+        title: "Fast Local Delivery",
+        body: `We serve ${name} and surrounding areas, including Rush Green, Becontree, and Heathway. We offer prompt, free delivery and setup, ensuring your event is hassle-free.`,
+      },
+      {
+        title: "Last-Minute Bookings Available",
+        body: "Need a bouncy castle last minute? We offer emergency event solutions, with same-day or next-day bookings depending on availability.",
+      },
+    ],
+    servicesTitle: "Our Bouncy Castle Hire Services",
+    servicesItems: [
+      {
+        title: "Children's & Adult Bouncy Castles",
+        body: "We offer bouncy castles in various sizes and themes. Whether you're planning a backyard party or a small indoor celebration, you can rent small bouncy castle units perfect for limited spaces. Our adult bouncy castles are built to last, using reinforced materials for added durability.",
+      },
+      {
+        title: "Themed Bouncy Castles",
+        body: "Choose from a range of exciting themes like superheroes, princess castles, jungle adventures, and disco domes. Perfect for all ages, these inflatables add extra fun to your event.",
+      },
+      {
+        title: "Inflatable Slides & Obstacle Courses",
+        body: "For a more exciting experience, we have giant inflatable slides and obstacle courses. These are ideal for both kids and adults and bring interactive fun to your event.",
+      },
+      {
+        title: "Soft Play & Ball Pits",
+        body: "We provide soft play setups and ball pits for toddlers. These are designed to offer a safe and fun space for younger children to play.",
+      },
+      {
+        title: "Garden Games & Fun Food",
+        body: "Make your event even more enjoyable with interactive games and food options. We offer giant board games, Nerf shooting, penalty shootouts, and machines for popcorn and candy floss.",
+      },
+      {
+        title: "Flexible Setup Options",
+        body: "We can set up inflatables indoors or outdoors on grass, artificial turf, or hard surfaces, with safety mats for added protection. We ensure everything is securely installed for a worry-free event.",
+      },
+    ],
+    safetyTitle: "Bouncy Castle Safety & Quality",
+    safetyItems: [
+      {
+        title: "Safety Standards",
+        body: "We adhere to the highest UK safety standards. All our inflatables are fully insured and PIPA safety tested.",
+      },
+      {
+        title: "Professional Setup & Takedown",
+        body: "Our team installs and secures each inflatable to prevent accidents, ensuring a safe environment for your guests.",
+      },
+      {
+        title: "Risk Assessments & Guidelines",
+        body: "We provide clear usage instructions and perform safety checks before each hire. We also offer guidance in case of bad weather or strong winds.",
+      },
+    ],
+    occasionsTitle: "Perfect for Every Occasion",
+    occasionsSubtitle: "Our Bouncy Castle Hire Service Is Perfect For:",
+    occasionsItems: [
+      "Birthday Parties \u2013 Create lasting memories with hours of fun.",
+      "School Events & Fairs \u2013 Safe, engaging activities for kids at school fundraisers.",
+      "Corporate Events \u2013 Add excitement to company parties and team-building events.",
+      "Community & Charity Events \u2013 Great for local fundraisers and gatherings.",
+      "Weddings & Family Gatherings \u2013 Keep the kids entertained while adults celebrate.",
+      "Public Festivals & Carnivals \u2013 We cater to large-scale events and festivals.",
+    ],
+  };
+}
 
 function toTitle(value: string) {
   if (!value) return "Location";
@@ -151,6 +259,25 @@ export default async function LocationDetailPage({
     `Premium bouncy castle hire in ${locationName}, delivered on time and loved by kids and adults alike.`;
   const locationContentHtml = resolvedLocation?.content?.trim() || "";
 
+  // CMS-managed page blocks (Admin → Pages → Locations), with the current
+  // copy as the fallback so every location page renders unchanged.
+  const locationCms = await fetchPageContent("location", canonicalSlug);
+  const locationBlocks = (locationCms?.sections || []) as PageBlock[];
+  const heroBlock = locationBlocks.find((b) => b.type === "locationHero")?.data as
+    | LocationHeroContent
+    | undefined;
+  const bodyBlock = locationBlocks.find((b) => b.type === "locationBody")?.data as
+    | LocationBodyContent
+    | undefined;
+  const hero: LocationHeroContent = {
+    ...defaultHero(locationName),
+    ...(heroBlock || {}),
+  };
+  const body: LocationBodyContent = {
+    ...defaultBody(locationName),
+    ...(bodyBlock || {}),
+  };
+
   return (
     <main className="bg-white mt-16 md:mt-24 font-inter">
       <BreadcrumbJsonLd
@@ -183,37 +310,7 @@ export default async function LocationDetailPage({
         {/* --------------Hero Section---------------- */}
         <div className="grid grid-cols-1 gap-10 md:gap-16 md:grid-cols-2 items-stretch py-12 sm:py-14 md:py-16">
           <div className="space-y-4 text-brand-ink-900">
-            <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight">
-              Turn Up the Fun with {locationName}&rsquo;s Best Bouncy Castle
-              Hire
-            </h2>
-
-            <div className="space-y-4 text-brand-gray-450 text-[15px] sm:text-[16px] leading-relaxed">
-              <p>
-                Bouncy castles, inflatable slides, and obstacle courses are the
-                ultimate entertainment for any event, and YMA Bouncy Castles LTD
-                is your trusted provider in {locationName}. Whether it&rsquo;s a
-                birthday party, a corporate gathering, a school fair, or a
-                community festival, our inflatable castles, soft play areas, and
-                themed designs deliver endless fun and excitement for all ages.
-              </p>
-              <p>
-                With safe, high-quality equipment like jumping castles, moon
-                bounces, and inflatable water slides, YMA ensures every event
-                runs smoothly. Our hassle-free service includes delivery, setup,
-                and takedown, so you can focus on enjoying the celebration
-                without worry. From small gardens to large outdoor spaces, we
-                treat every venue professionally and carefully.
-              </p>
-              <p>
-                Looking to rent small bouncy castle units for a birthday or
-                indoor party? Our online booking system makes it easy to find
-                the perfect inflatable for your space. Use our live online
-                booking system to check availability and secure your party
-                inflatable rentals. Alternatively, reach out to us for prompt
-                responses to your bouncy castle rental queries.
-              </p>
-            </div>
+            <LocationHeroBlock content={hero} />
 
             <div className="mt-6 sm:mt-8 flex flex-row items-center  gap-3 sm:gap-4 font-londrina! w-full ">
               <WhatsappBtn />
@@ -254,240 +351,10 @@ export default async function LocationDetailPage({
         {/* -------------CTA--------------------- */}
         <CtaReadySection />
 
-        <div className="mt-8 sm:mt-10 flex flex-col gap-10 text-brand-ink-900">
-          <div className="space-y-3">
-            <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight">
-              Bouncy Castle Hire in {locationName} – YMA Bouncy Castle LTD
-            </h2>
-            <p className="text-brand-gray-450 text-[15px] sm:text-[16px] leading-relaxed">
-              YMA Bouncy Castle LTD specializes in offering high-quality bouncy
-              castle hire services across {locationName}. We provide a wide
-              variety of inflatables, including bouncy castles, slides, obstacle
-              courses, and soft play setups suitable for all ages. Whether
-              you&apos;re organizing a birthday party, a school fair, a
-              corporate event, or a public festival, our inflatables bring an
-              extra dose of excitement to your special occasion.
-            </p>
-            <p className="text-brand-gray-450 text-[15px] sm:text-[16px] leading-relaxed">
-              Our team is committed to providing hassle-free service, with a
-              strong focus on safety, customer satisfaction, and competitive
-              pricing. We help you make your event memorable by ensuring
-              fun-filled experiences for both children and adults. From the
-              initial booking to the final takedown, our reliable service and
-              attention to detail guarantee an unforgettable experience for you
-              and your guests.
-            </p>
-          </div>
+        <LocationBodyBlock content={body} />
 
-          <div className="space-y-3">
-            <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight">
-              Why Choose YMA Bouncy Castle LTD?
-            </h2>
-            <div className="space-y-3 text-brand-gray-450 text-[15px] sm:text-[16px] leading-relaxed">
-              <div>
-                <p className="font-semibold text-brand-ink-900">
-                  Trusted Experts in {locationName}
-                </p>
-                <p>
-                  Our team is professional and reliable. With years of
-                  experience, we guarantee clear communication and attention to
-                  detail. From booking to setup, we make sure everything runs
-                  smoothly.
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold text-brand-ink-900">Safety First</p>
-                <p>
-                  All our inflatables are PIPA-certified, regularly inspected,
-                  and cleaned after every use. We follow strict safety
-                  guidelines and provide secure anchoring, ensuring your event
-                  is safe.
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold text-brand-ink-900">
-                  Wide Range &amp; Affordable Pricing
-                </p>
-                <p>
-                  We offer a variety of themes and sizes for all ages and
-                  budgets. Whether it’s a princess castle for kids or an
-                  obstacle course for a team-building event, we have something
-                  for everyone.
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold text-brand-ink-900">
-                  Fast Local Delivery
-                </p>
-                <p>
-                  We serve {locationName} and surrounding areas, including Rush
-                  Green, Becontree, and Heathway. We offer prompt, free delivery
-                  and setup, ensuring your event is hassle-free.
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold text-brand-ink-900">
-                  Last-Minute Bookings Available
-                </p>
-                <p>
-                  Need a bouncy castle last minute? We offer emergency event
-                  solutions, with same-day or next-day bookings depending on
-                  availability.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight">
-              Our Bouncy Castle Hire Services
-            </h2>
-            <div className="space-y-3 text-brand-gray-700">
-              <div>
-                <p className="font-semibold text-brand-ink-900">
-                  Children&apos;s &amp; Adult Bouncy Castles
-                </p>
-                <p>
-                  We offer bouncy castles in various sizes and themes. Whether
-                  you&apos;re planning a backyard party or a small indoor
-                  celebration, you can rent small bouncy castle units perfect
-                  for limited spaces. Our adult bouncy castles are built to
-                  last, using reinforced materials for added durability.
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold text-brand-ink-900">
-                  Themed Bouncy Castles
-                </p>
-                <p>
-                  Choose from a range of exciting themes like superheroes,
-                  princess castles, jungle adventures, and disco domes. Perfect
-                  for all ages, these inflatables add extra fun to your event.
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold text-brand-ink-900">
-                  Inflatable Slides &amp; Obstacle Courses
-                </p>
-                <p>
-                  For a more exciting experience, we have giant inflatable
-                  slides and obstacle courses. These are ideal for both kids and
-                  adults and bring interactive fun to your event.
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold text-brand-ink-900">
-                  Soft Play &amp; Ball Pits
-                </p>
-                <p>
-                  We provide soft play setups and ball pits for toddlers. These
-                  are designed to offer a safe and fun space for younger
-                  children to play.
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold text-brand-ink-900">
-                  Garden Games &amp; Fun Food
-                </p>
-                <p>
-                  Make your event even more enjoyable with interactive games and
-                  food options. We offer giant board games, Nerf shooting,
-                  penalty shootouts, and machines for popcorn and candy floss.
-                </p>
-              </div>
-
-              <div>
-                <p className="font-semibold text-brand-ink-900">
-                  Flexible Setup Options
-                </p>
-                <p>
-                  We can set up inflatables indoors or outdoors on grass,
-                  artificial turf, or hard surfaces, with safety mats for added
-                  protection. We ensure everything is securely installed for a
-                  worry-free event.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight">
-                Bouncy Castle Safety &amp; Quality
-              </h2>
-
-              <div className="space-y-3 text-brand-gray-700">
-                <div>
-                  <p className="font-semibold text-brand-ink-900">
-                    Safety Standards
-                  </p>
-                  <p className="text-sm sm:text-base">
-                    We adhere to the highest UK safety standards. All our
-                    inflatables are fully insured and PIPA safety tested.
-                  </p>
-                </div>
-
-                <div>
-                  <p className="font-semibold text-brand-ink-900">
-                    Professional Setup &amp; Takedown
-                  </p>
-                  <p className="text-sm sm:text-base">
-                    Our team installs and secures each inflatable to prevent
-                    accidents, ensuring a safe environment for your guests.
-                  </p>
-                </div>
-
-                <div>
-                  <p className="font-semibold text-brand-ink-900">
-                    Risk Assessments &amp; Guidelines
-                  </p>
-                  <p className="text-sm sm:text-base">
-                    We provide clear usage instructions and perform safety
-                    checks before each hire. We also offer guidance in case of
-                    bad weather or strong winds.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-8 space-y-4">
-            <div>
-              <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight">
-                Perfect for Every Occasion
-              </h2>
-              <p className="text-lg font-semibold text-brand-ink-900 mt-2">
-                Our Bouncy Castle Hire Service Is Perfect For:
-              </p>
-              <div className="mt-4 space-y-3">
-                {[
-                  "Birthday Parties – Create lasting memories with hours of fun.",
-                  "School Events & Fairs – Safe, engaging activities for kids at school fundraisers.",
-                  "Corporate Events – Add excitement to company parties and team-building events.",
-                  "Community & Charity Events – Great for local fundraisers and gatherings.",
-                  "Weddings & Family Gatherings – Keep the kids entertained while adults celebrate.",
-                  "Public Festivals & Carnivals – We cater to large-scale events and festivals.",
-                ].map((text, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-3 text-brand-gray-700"
-                  >
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 text-brand-orange-500" />
-                    <span className="text-sm sm:text-base">{text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <LocationDetailClient locationName={locationName} />
+        <div className="pt-8 space-y-4">
+          <LocationDetailClient locationName={locationName} />
           </div>
         </div>
       </div>

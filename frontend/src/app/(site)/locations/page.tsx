@@ -20,6 +20,8 @@ import {
   northLondonAreas,
 } from "@/data/locations";
 import { SEO_STATIC } from "@/lib/seo-static";
+import { fetchPageContent } from "@/lib/pageContent";
+import type { LocationHubContent, PageBlock } from "@/lib/blocks/types";
 
 export const metadata: Metadata = {
   title: "All Locations",
@@ -67,25 +69,68 @@ const heroCopy = {
     "We cover East London, North London, Essex, Enfield, and nearby areas.",
 };
 
-export default function LocationsPage() {
+const DEFAULT_SHOWCASE_COPY = [
+  {
+    title: "EAST LONDON",
+    intro:
+      "East London\u2019s vibrant mix of riverside districts, markets, and family neighborhoods.",
+  },
+  {
+    title: "NORTH LONDON",
+    intro:
+      "North London\u2019s leafy parks, lively high streets, and close-knit communities.",
+  },
+  {
+    title: "ESSEX",
+    intro:
+      "Essex towns and suburbs known for spacious gardens and family events.",
+  },
+  {
+    title: "ENFIELD",
+    intro:
+      "Enfield\u2019s blend of suburban neighborhoods, green spaces, and local hubs.",
+  },
+];
+
+export default async function LocationsPage() {
+  // CMS-managed copy (Admin \u2192 Pages \u2192 Core \u2192 locations), with the
+  // current copy as the fallback.
+  const cms = await fetchPageContent("core", "locations");
+  const hubBlock = ((cms?.sections || []) as PageBlock[]).find(
+    (b) => b.type === "locationHub",
+  )?.data as LocationHubContent | undefined;
+  const hub: LocationHubContent = {
+    ...{
+      eyebrow: heroCopy.eyebrow,
+      title: heroCopy.title,
+      description: heroCopy.description,
+      subtext: heroCopy.subtext,
+      showcases: DEFAULT_SHOWCASE_COPY,
+    },
+    ...(hubBlock || {}),
+  };
+  const showcases = (hub.showcases || DEFAULT_SHOWCASE_COPY).slice(0, 4);
+  const showCopy = (index: number) =>
+    showcases[index] || DEFAULT_SHOWCASE_COPY[index];
+
   return (
     <main className="bg-white text-brand-ink-900 mt-16 md:mt-32 font-inter">
       <section className="relative overflow-hidden">
         <div className="relative mx-auto max-w-[1280px] px-4  py-12  md:py-16 text-center">
           <p className="text-[11px] sm:text-sm capitalize text-brand-gray-500 font-medium mb-4 sm:mb-5 font-inter">
-            {heroCopy.eyebrow}
+            {hub.eyebrow}
           </p>
 
           <h1 className="font-display text-[26px] sm:text-5xl md:text-5xl lg:text-6xl font-bold leading-snug text-brand-slate-900 mb-4 sm:mb-5">
-            {heroCopy.title}
+            {hub.title}
           </h1>
 
           <p className="text-[14px] sm:text-lg md:text-lg leading-relaxed text-brand-gray-700 mx-auto mb-4 sm:mb-6 font-inter">
-            {heroCopy.description}
+            {hub.description}
           </p>
 
           <p className="text-[14px] sm:text-base text-brand-gray-700 mx-auto mb-6 sm:mb-8 font-inter">
-            {heroCopy.subtext}
+            {hub.subtext}
           </p>
 
           <div className="flex flex-nowrap items-center justify-center gap-3 sm:gap-4">
@@ -115,8 +160,8 @@ export default function LocationsPage() {
         </div>
 
         <LocationShowcase
-          title="EAST LONDON"
-          intro="East London’s vibrant mix of riverside districts, markets, and family neighborhoods."
+          title={showCopy(0).title}
+          intro={showCopy(0).intro}
           ctaHref="/booking-catalog?locationName=East%20London"
           ctaLabel="Reserve Now"
           imageSrc={EastLondonImg}
@@ -125,8 +170,8 @@ export default function LocationsPage() {
         />
 
         <LocationShowcase
-          title="NORTH LONDON"
-          intro="North London’s leafy parks, lively high streets, and close-knit communities."
+          title={showCopy(1).title}
+          intro={showCopy(1).intro}
           ctaHref="/booking-catalog?locationName=North%20London"
           ctaLabel="Reserve Now"
           imageSrc={NorthLondonImg}
@@ -134,8 +179,8 @@ export default function LocationsPage() {
         />
 
         <LocationShowcase
-          title="ESSEX"
-          intro="Essex towns and suburbs known for spacious gardens and family events."
+          title={showCopy(2).title}
+          intro={showCopy(2).intro}
           ctaHref="/booking-catalog?locationName=Essex"
           ctaLabel="Reserve Now"
           imageSrc={EssexImg}
@@ -144,8 +189,8 @@ export default function LocationsPage() {
         />
 
         <LocationShowcase
-          title="ENFIELD"
-          intro="Enfield’s blend of suburban neighborhoods, green spaces, and local hubs."
+          title={showCopy(3).title}
+          intro={showCopy(3).intro}
           ctaHref="/booking-catalog?locationName=Enfield"
           ctaLabel="Reserve Now"
           imageSrc={EnfieldImg}

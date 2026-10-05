@@ -505,6 +505,86 @@ function BlockFields({
         </div>
       );
 
+    case "locationHub":
+      return (
+        <div className="space-y-3">
+          <Text label="Eyebrow" value={data.eyebrow} onChange={(v) => setData({ eyebrow: v })} />
+          <Text label="Title" value={data.title} onChange={(v) => setData({ title: v })} />
+          <TextArea label="Description" value={data.description} onChange={(v) => setData({ description: v })} rows={2} />
+          <TextArea label="Sub text" value={data.subtext} onChange={(v) => setData({ subtext: v })} rows={2} />
+          <Repeater
+            label="Regional showcases"
+            items={asArray(data, "showcases")}
+            onChange={(showcases) => setData({ showcases })}
+            makeItem={() => ({ title: "", intro: "" })}
+            renderItem={(item, update) => (
+              <div className="space-y-2">
+                <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
+                <TextArea label="Intro" value={item.intro} onChange={(v) => update({ intro: v })} rows={2} />
+              </div>
+            )}
+          />
+        </div>
+      );
+
+    case "locationHero":
+      return (
+        <div className="space-y-3">
+          <Text label="Headline" value={data.title} onChange={(v) => setData({ title: v })} />
+          <StringList label="Paragraphs" value={data.paragraphs} onChange={(paragraphs) => setData({ paragraphs })} />
+        </div>
+      );
+
+    case "locationBody":
+      return (
+        <div className="space-y-3">
+          <Text label="About heading" value={data.aboutTitle} onChange={(v) => setData({ aboutTitle: v })} />
+          <StringList label="About paragraphs" value={data.aboutParagraphs} onChange={(aboutParagraphs) => setData({ aboutParagraphs })} />
+          <Text label="Why choose us heading" value={data.whyTitle} onChange={(v) => setData({ whyTitle: v })} />
+          <Repeater
+            label="Why choose us points"
+            items={asArray(data, "whyItems")}
+            onChange={(whyItems) => setData({ whyItems })}
+            makeItem={() => ({ title: "", body: "" })}
+            renderItem={(item, update) => (
+              <div className="space-y-2">
+                <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
+                <TextArea label="Body" value={item.body} onChange={(v) => update({ body: v })} rows={3} />
+              </div>
+            )}
+          />
+          <Text label="Services heading" value={data.servicesTitle} onChange={(v) => setData({ servicesTitle: v })} />
+          <Repeater
+            label="Services"
+            items={asArray(data, "servicesItems")}
+            onChange={(servicesItems) => setData({ servicesItems })}
+            makeItem={() => ({ title: "", body: "" })}
+            renderItem={(item, update) => (
+              <div className="space-y-2">
+                <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
+                <TextArea label="Body" value={item.body} onChange={(v) => update({ body: v })} rows={3} />
+              </div>
+            )}
+          />
+          <Text label="Safety heading" value={data.safetyTitle} onChange={(v) => setData({ safetyTitle: v })} />
+          <Repeater
+            label="Safety points"
+            items={asArray(data, "safetyItems")}
+            onChange={(safetyItems) => setData({ safetyItems })}
+            makeItem={() => ({ title: "", body: "" })}
+            renderItem={(item, update) => (
+              <div className="space-y-2">
+                <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
+                <TextArea label="Body" value={item.body} onChange={(v) => update({ body: v })} rows={3} />
+              </div>
+            )}
+          />
+          <Text label="Occasions heading" value={data.occasionsTitle} onChange={(v) => setData({ occasionsTitle: v })} />
+          <Text label="Occasions subheading" value={data.occasionsSubtitle} onChange={(v) => setData({ occasionsSubtitle: v })} />
+          <StringList label="Occasions" value={data.occasionsItems} onChange={(occasionsItems) => setData({ occasionsItems })} />
+        </div>
+      );
+
     case "seoContent":
       return (
         <div className="space-y-3">

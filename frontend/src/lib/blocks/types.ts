@@ -150,6 +150,39 @@ export type ContactFormContent = {
 /** A numbered legal document section: heading plus rich-text body. */
 export type LegalSection = { title: string; content: string };
 
+/** A titled paragraph used by the location page sections. */
+export type LocationItem = { title: string; body: string };
+
+/** The two-column hero at the top of a location detail page. */
+export type LocationHeroContent = {
+  title: string;
+  paragraphs: string[];
+};
+
+/** The long-form sections under a location detail page's product grid. */
+export type LocationBodyContent = {
+  aboutTitle: string;
+  aboutParagraphs: string[];
+  whyTitle: string;
+  whyItems: LocationItem[];
+  servicesTitle: string;
+  servicesItems: LocationItem[];
+  safetyTitle: string;
+  safetyItems: LocationItem[];
+  occasionsTitle: string;
+  occasionsSubtitle: string;
+  occasionsItems: string[];
+};
+
+/** The /locations hub page: hero copy and the four regional showcases. */
+export type LocationHubContent = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  subtext: string;
+  showcases: { title: string; intro: string }[];
+};
+
 /** A category page's SEO copy: intro, "why choose" reasons and offerings. */
 export type SeoListItem = { title: string; body: string };
 export type SeoLink = { label: string; href: string };
@@ -202,6 +235,9 @@ export const BLOCK_CATALOG: {
   { type: "contactPage", label: "Contact Page Layout", description: "The full two-column contact page" },
   { type: "legalPage", label: "Legal Page", description: "Page heading, last-updated date and numbered sections" },
   { type: "seoContent", label: "Category SEO Content", description: "Intro, why-choose reasons, offerings and cross links" },
+  { type: "locationHero", label: "Location Hero", description: "Location page headline and intro paragraphs" },
+  { type: "locationBody", label: "Location Body", description: "About, why choose us, services, safety and occasions" },
+  { type: "locationHub", label: "Locations Hub", description: "Locations index hero copy and regional showcases" },
   { type: "categoryTiles", label: "Category Tiles", description: "Grid of image tiles linking to catalogues" },
   { type: "productGrid", label: "Product Grid", description: "Top picks or newest products" },
   { type: "featureGrid", label: "Feature Grid", description: "Why-choose-us style feature cards" },
