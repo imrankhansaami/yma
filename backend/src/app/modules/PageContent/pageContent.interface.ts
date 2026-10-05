@@ -2,9 +2,19 @@ export type PageType = "category" | "location" | "core";
 
 export interface IPageSection {
   sectionKey: string;
+  /**
+   * Block type. Legacy records omit it and are treated as "richText".
+   * Other values map to the typed blocks rendered by the storefront
+   * (hero, featureGrid, faq, cta, ...).
+   */
+  type?: string;
   title: string;
   content: string; // HTML
   order: number;
+  /** Hidden blocks stay in the CMS but are not rendered. */
+  visible?: boolean;
+  /** Structured fields for typed blocks. */
+  data?: Record<string, any>;
 }
 
 export interface IPageContent {

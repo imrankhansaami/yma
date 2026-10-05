@@ -7,9 +7,9 @@ import {
   upsertPageContent,
   PageSection,
 } from "@/services/pageContent.service";
-import TextEditor from "@/components/admin/inventory/TextEditor";
+import BlockEditor from "@/components/admin/pages/BlockEditor";
 import { useAdminToast } from "@/components/ui/admin-toast";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -54,32 +54,6 @@ export default function EditCorePage() {
       setSections(pageContent.sections || []);
     }
   }, [pageContent]);
-
-  const addSection = () => {
-    setSections((prev) => [
-      ...prev,
-      {
-        sectionKey: `section-${Date.now()}`,
-        title: "",
-        content: "",
-        order: prev.length,
-      },
-    ]);
-  };
-
-  const removeSection = (index: number) => {
-    setSections((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const updateSection = (
-    index: number,
-    field: keyof PageSection,
-    value: string | number
-  ) => {
-    setSections((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, [field]: value } : s))
-    );
-  };
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -226,53 +200,15 @@ export default function EditCorePage() {
 
         {/* Sections */}
         <div className="rounded-lg border border-slate-200 p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-brand-black-950 uppercase tracking-wide">
-              Page Sections
-            </h2>
-            <button
-              type="button"
-              onClick={addSection}
-              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
-            >
-              <Plus className="h-4 w-4" /> Add Section
-            </button>
-          </div>
+          <h2 className="text-sm font-semibold text-brand-black-950 uppercase tracking-wide">
+            Page Sections
+          </h2>
+          <p className="text-xs text-slate-500">
+            Add, edit, reorder or hide the sections shown on this page. Use the
+            eye icon to hide a block without deleting it.
+          </p>
 
-          {sections.length === 0 && (
-            <p className="text-sm text-slate-500">
-              No sections yet. Click &quot;Add Section&quot; to start building
-              this page.
-            </p>
-          )}
-
-          {sections.map((section, idx) => (
-            <div
-              key={section.sectionKey}
-              className="rounded-md border border-slate-200 p-4 space-y-3"
-            >
-              <div className="flex items-center justify-between">
-                <input
-                  type="text"
-                  value={section.title}
-                  onChange={(e) => updateSection(idx, "title", e.target.value)}
-                  placeholder="Section title"
-                  className="text-sm font-medium border-none bg-transparent p-0 focus:ring-0 flex-1"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeSection(idx)}
-                  className="text-red-400 hover:text-red-600"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <TextEditor
-                value={section.content}
-                onChange={(val) => updateSection(idx, "content", val)}
-              />
-            </div>
-          ))}
+          <BlockEditor sections={sections} onChange={setSections} />
         </div>
 
         <button

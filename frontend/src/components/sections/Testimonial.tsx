@@ -7,6 +7,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 
 import "swiper/css";
 import "swiper/css/pagination";
+import type { TestimonialsContent } from "@/lib/blocks/types";
 
 type Testimonial = {
   quote: string;
@@ -85,10 +86,28 @@ const getToneClass = (name: string) => {
   return AVATAR_TONES[seed % AVATAR_TONES.length];
 };
 
-export default function TestimonialSection() {
-  const [reviews, setReviews] = useState<Testimonial[]>(FALLBACK_TESTIMONIALS);
+export default function TestimonialSection({
+  content,
+}: {
+  content?: TestimonialsContent;
+}) {
+  const cmsTestimonials: Testimonial[] = (content?.items || [])
+    .filter((item) => String(item?.quote || "").trim())
+    .map((item) => ({
+      quote: item.quote,
+      author: item.author || "Guest",
+      avatar: null,
+      rating: typeof item.rating === "number" ? item.rating : 5,
+    }));
+
+  const [reviews, setReviews] = useState<Testimonial[]>(
+    cmsTestimonials.length ? cmsTestimonials : FALLBACK_TESTIMONIALS,
+  );
 
   useEffect(() => {
+    // CMS testimonials take precedence over the Google Places feed.
+    if (cmsTestimonials.length) return;
+
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
     const placeId = process.env.NEXT_PUBLIC_GOOGLE_PLACES_PLACE_ID;
 

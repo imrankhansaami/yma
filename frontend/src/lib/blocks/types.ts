@@ -1,0 +1,134 @@
+import type { StaticImageData } from "next/image";
+
+/**
+ * A CMS "page block". Blocks are stored in `PageContent.sections`; the legacy
+ * rich-text sections are simply blocks of `type: "richText"`.
+ */
+export type PageBlock = {
+  sectionKey: string;
+  type?: string;
+  title?: string;
+  content?: string;
+  order?: number;
+  visible?: boolean;
+  data?: Record<string, unknown>;
+};
+
+/** Images may come from the repo (imported asset) or the CMS (URL string). */
+export type BlockImage = string | StaticImageData;
+
+export type HeroPill = { label: string; category: string };
+
+export type HeroContent = {
+  title: string;
+  subtitle: string;
+  backgroundImage?: BlockImage;
+  bookLabel: string;
+  callLabel: string;
+  phone: string;
+  pills: HeroPill[];
+};
+
+export type CategoryTile = {
+  title: string;
+  href: string;
+  image?: BlockImage;
+  imageAlt?: string;
+};
+
+export type CategoryTilesContent = {
+  title: string;
+  subtitle: string;
+  tiles: CategoryTile[];
+};
+
+export type ProductGridContent = {
+  title: string;
+  subtitle: string;
+  source: "topPicks" | "newest";
+  limit: number;
+};
+
+export type FeatureItem = {
+  /** Icon key (see FeatureGrid icon map) — not a user-facing string. */
+  icon: string;
+  title: string;
+  description: string;
+};
+
+export type FeatureGridContent = {
+  title: string;
+  titleAccent?: string;
+  items: FeatureItem[];
+};
+
+export type MediaTextContent = {
+  badges: string[];
+  title: string;
+  body: string;
+  listItems: string[];
+  linkText: string;
+  linkHref: string;
+  image?: BlockImage;
+  imageAlt?: string;
+  reserveLabel?: string;
+};
+
+export type TestimonialItem = {
+  quote: string;
+  author: string;
+  rating: number;
+};
+
+export type TestimonialsContent = {
+  items: TestimonialItem[];
+};
+
+export type ProductTabsContent = {
+  title: string;
+  subtitle: string;
+  ctaLabel: string;
+  ctaHref: string;
+};
+
+export type CtaContent = {
+  title: string;
+  body: string;
+};
+
+export type NewsletterContent = {
+  title: string;
+  body: string;
+  placeholder: string;
+  buttonLabel: string;
+  privacyPrefix: string;
+  privacyLinkText: string;
+  privacyHref: string;
+};
+
+export type RichTextContent = {
+  title?: string;
+  content?: string;
+};
+
+/** Admin-facing catalogue of block types that can be added to a page. */
+export const BLOCK_CATALOG: {
+  type: string;
+  label: string;
+  description: string;
+}[] = [
+  { type: "hero", label: "Hero", description: "Big banner with headline, image and booking buttons" },
+  { type: "richText", label: "Rich Text", description: "A heading and free-form text" },
+  { type: "categoryTiles", label: "Category Tiles", description: "Grid of image tiles linking to catalogues" },
+  { type: "productGrid", label: "Product Grid", description: "Top picks or newest products" },
+  { type: "featureGrid", label: "Feature Grid", description: "Why-choose-us style feature cards" },
+  { type: "mediaText", label: "Image + Text", description: "Text beside an image with a call-to-action" },
+  { type: "testimonials", label: "Testimonials", description: "Customer review slides" },
+  { type: "productTabs", label: "Product Tabs", description: "Tabbed product carousel" },
+  { type: "cta", label: "Call to Action", description: "Closing call-to-action with buttons" },
+  { type: "newsletter", label: "Newsletter", description: "Email sign-up block" },
+];
+
+export const BLOCK_LABELS: Record<string, string> = Object.fromEntries(
+  BLOCK_CATALOG.map((b) => [b.type, b.label]),
+);

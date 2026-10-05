@@ -33,8 +33,47 @@ import { fetchLocations } from "@/services/location.service";
 import Image from "next/image";
 import type { DateRange } from "react-day-picker";
 import WhatsappBtn from "../common/btn/WhatsappBtn";
+import type { HeroContent } from "@/lib/blocks/types";
 
-export default function HeroSection() {
+/** Default hero copy — the live site's content, used when no CMS block exists. */
+export const DEFAULT_HERO: HeroContent = {
+  title: "Bounce Into Adventure",
+  subtitle:
+    "Safe, reliable, and super fun bouncy castle hire for all occasions. Easy booking, on-time delivery, and memories that last forever!",
+  backgroundImage: "/header_bg.png",
+  bookLabel: "Book Online",
+  callLabel: "Call Us",
+  phone: "07951431111",
+  pills: [
+    { label: "Bouncy Castle", category: "Bouncy Castle" },
+    { label: "Soft Play", category: "Soft Play" },
+    { label: "Garden Games", category: "Garden Games" },
+    { label: "Obstacle Slides", category: "Obstacle Course/Slides" },
+    { label: "Fun Food", category: "Fun Food" },
+  ],
+};
+
+/** Pill colour styles, in order. Kept as the fixed original brand palette. */
+const PILL_STYLES = [
+  "bg-brand-yellow-500 hover:bg-brand-yellow-600 shadow-brand-yellow-500 hover:shadow-brand-yellow-600",
+  "bg-brand-indigo-500 hover:bg-brand-indigo-600 shadow-brand-indigo-500 hover:shadow-brand-indigo-600",
+  "bg-brand-cyan-500 hover:bg-brand-cyan-600 shadow-brand-cyan-500 hover:shadow-brand-cyan-600",
+  "bg-brand-orange-500 hover:bg-brand-orange-600 shadow-brand-orange-500 hover:shadow-brand-orange-600",
+  "bg-brand-emerald-600 hover:bg-brand-green-650 shadow-brand-emerald-600 hover:shadow-brand-green-650",
+];
+
+const PILL_WRAPPER = [
+  "",
+  "",
+  "",
+  "",
+  "col-span-2 sm:col-span-1 justify-self-center w-full max-w-[210px] sm:max-w-none",
+];
+
+export default function HeroSection({ content }: { content?: HeroContent }) {
+  const hero = { ...DEFAULT_HERO, ...(content || {}) };
+  const pills = hero.pills?.length ? hero.pills : DEFAULT_HERO.pills;
+  const phoneHref = `tel:${hero.phone}`;
   const router = useRouter();
   const [isMobile, setIsMobile] = React.useState(false);
   const [shouldLoadFilters, setShouldLoadFilters] = React.useState(false);
@@ -267,7 +306,7 @@ export default function HeroSection() {
   return (
     <div className="relative min-h-svh lg:h-[959px] w-full bg-brand-ink-975">
       <Image
-        src="/header_bg.png"
+        src={hero.backgroundImage || "/header_bg.png"}
         alt=""
         fill
         priority
@@ -293,15 +332,15 @@ export default function HeroSection() {
                   onClick={() => router.push("/booking-catalog")}
                   className="hover:underline cursor-pointer"
                 >
-                  Book Online
+                  {hero.bookLabel}
                 </button>
                 {" or "}
-                <a href="tel:07951431111" className="hover:underline">
-                  Call Us
+                <a href={phoneHref} className="hover:underline">
+                  {hero.callLabel}
                 </a>
               </span>
               <a
-                href="tel:07951431111"
+                href={phoneHref}
                 className="font-display whitespace-nowrap hover:underline"
               >
                 <Image
@@ -309,7 +348,7 @@ export default function HeroSection() {
                   alt="phone icon"
                   className="h-4 w-4 mr-2 inline-block -mt-1"
                 />
-                07951431111
+                {hero.phone}
               </a>
             </div>
           </div>
@@ -323,19 +362,19 @@ export default function HeroSection() {
                 onClick={() => router.push("/booking-catalog")}
                 className="hover:underline cursor-pointer"
               >
-                Book Online
+                {hero.bookLabel}
               </button>
               {" or "}
-              <a href="tel:07951431111" className="hover:underline">
-                Call Us
+              <a href={phoneHref} className="hover:underline">
+                {hero.callLabel}
               </a>
             </span>
             <Image src={PhoneIcon} alt="phone icon" className="h-6 w-6 mr-2" />
             <a
-              href="tel:07951431111"
+              href={phoneHref}
               className="font-display text-4xl md:text-3xl hover:underline"
             >
-              07951431111
+              {hero.phone}
             </a>
           </div>
 
@@ -343,12 +382,10 @@ export default function HeroSection() {
             {/* LEFT: Headline + Copy */}
             <div className="text-white w-full lg:max-w-[560px] lg:pt-0 text-center lg:text-left mx-auto lg:mx-0">
               <h1 className="font-display leading-[1.1] text-[36px] sm:text-[46px] md:text-[56px] lg:text-[62px]">
-                Bounce Into Adventure
+                {hero.title}
               </h1>
               <p className="mt-3 sm:mt-4 text-base sm:text-lg md:text-2xl leading-relaxed max-w-[620px] mx-auto lg:mx-0">
-                Safe, reliable, and super fun bouncy castle hire for all
-                occasions. Easy booking, on-time delivery, and memories that
-                last forever!
+                {hero.subtitle}
               </p>
             </div>
 
@@ -579,58 +616,21 @@ export default function HeroSection() {
 
           <div className="mt-10 lg:mt-32">
             <div className="grid grid-cols-2 gap-4 sm:gap-2 sm:grid-cols-3 lg:grid-cols-5">
-              <Button
-                size="lg"
-                onClick={() =>
-                  goToBookingCatalog({ categoryLabel: "Bouncy Castle" })
-                }
-                className="w-full rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-yellow-500 hover:bg-brand-yellow-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-yellow-500 border border-white transition-colors duration-300 hover:shadow-brand-yellow-600"
-              >
-                Bouncy Castle{" "}
-                <ChevronRight className="ml-2 h-5 w-5 font-bold" />
-              </Button>
-
-              <Button
-                size="lg"
-                onClick={() =>
-                  goToBookingCatalog({ categoryLabel: "Soft Play" })
-                }
-                className="w-full rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-indigo-500 hover:bg-brand-indigo-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-indigo-500 border border-white transition-colors duration-300 hover:shadow-brand-indigo-600"
-              >
-                Soft Play <ChevronRight className="ml-2 h-5 w-5 font-bold" />
-              </Button>
-
-              <Button
-                size="lg"
-                onClick={() =>
-                  goToBookingCatalog({ categoryLabel: "Garden Games" })
-                }
-                className="w-full rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-cyan-500 hover:bg-brand-cyan-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-cyan-500 border border-white transition-colors duration-300 hover:shadow-brand-cyan-600"
-              >
-                Garden Games <ChevronRight className="ml-2 h-5 w-5 font-bold" />
-              </Button>
-              <Button
-                size="lg"
-                onClick={() =>
-                  goToBookingCatalog({
-                    categoryLabel: "Obstacle Course/Slides",
-                  })
-                }
-                className="w-full rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-orange-500 hover:bg-brand-orange-600 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-orange-500 border border-white transition-colors duration-300 hover:shadow-brand-orange-600"
-              >
-                Obstacle Slides{" "}
-                <ChevronRight className="h-5 w-5 font-bold" />
-              </Button>
-
-              <Button
-                size="lg"
-                onClick={() =>
-                  goToBookingCatalog({ categoryLabel: "Fun Food" })
-                }
-                className="col-span-2 sm:col-span-1 justify-self-center w-full max-w-[210px] sm:max-w-none rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal bg-brand-emerald-600 hover:bg-brand-green-650 shadow-[0_3px_0_var(--alpha-black-30)] shadow-brand-emerald-600 border border-white transition-colors duration-300 hover:shadow-brand-green-650"
-              >
-                Fun Food <ChevronRight className="ml-2 h-5 w-5 font-bold" />
-              </Button>
+              {pills.map((pill, index) => (
+                <Button
+                  key={`${pill.label}-${index}`}
+                  size="lg"
+                  onClick={() =>
+                    goToBookingCatalog({ categoryLabel: pill.category })
+                  }
+                  className={`w-full rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal shadow-[0_3px_0_var(--alpha-black-30)] border border-white transition-colors duration-300 ${
+                    PILL_STYLES[index % PILL_STYLES.length]
+                  } ${PILL_WRAPPER[index] ?? ""}`}
+                >
+                  {pill.label}{" "}
+                  <ChevronRight className="ml-2 h-5 w-5 font-bold" />
+                </Button>
+              ))}
             </div>
           </div>
         </div>

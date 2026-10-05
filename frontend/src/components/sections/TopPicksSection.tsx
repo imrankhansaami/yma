@@ -7,11 +7,24 @@ import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import ProductCard, { ProductCardProps } from "../ProductCard";
+import type { ProductGridContent } from "@/lib/blocks/types";
 
-export default function TopPicksSection() {
+const DEFAULT_PRODUCT_GRID: ProductGridContent = {
+  title: "Top Picks for Big Fun",
+  subtitle: "Our top-booked castles, loved by kids and parents alike.",
+  source: "topPicks",
+  limit: 16,
+};
+
+export default function TopPicksSection({
+  content,
+}: {
+  content?: ProductGridContent;
+}) {
+  const c = { ...DEFAULT_PRODUCT_GRID, ...(content || {}) };
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
-  const limit = 16;
+  const limit = Number(c.limit) > 0 ? Number(c.limit) : DEFAULT_PRODUCT_GRID.limit;
 
   const fallbackImage = (SampleImage as unknown as { src: string }).src;
 
@@ -99,10 +112,10 @@ export default function TopPicksSection() {
         {/* Heading */}
         <div className="text-center mb-12 sm:mb-10 md:mb-12">
           <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight text-brand-ink-900">
-            Top Picks for Big Fun
+            {c.title}
           </h2>
           <p className="font-inter text-[14px] sm:text-[18px] mt-3 text-brand-gray-700 max-w-[620px] mx-auto">
-            Our top-booked castles, loved by kids and parents alike.
+            {c.subtitle}
           </p>
         </div>
 

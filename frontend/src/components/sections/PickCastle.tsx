@@ -1,4 +1,4 @@
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 
 import Bg1 from "@/assets/images/bg1.png";
@@ -6,15 +6,16 @@ import Bg2 from "@/assets/images/bg2.png";
 import Bg3 from "@/assets/images/bg3.png";
 import Bg4 from "@/assets/images/bg4.png";
 import ObstacleBg from "@/assets/images/obstacle.jpeg";
+import type { BlockImage, CategoryTilesContent } from "@/lib/blocks/types";
 
 type CastleItem = {
   title: string;
   href: string;
-  imgSrc: StaticImageData;
+  imgSrc: BlockImage;
   imgAlt: string;
 };
 
-const ITEMS: CastleItem[] = [
+const DEFAULT_ITEMS: CastleItem[] = [
   {
     title: "Bouncy Castle\nHire Catalogue",
     href: "/booking-catalog/bouncy-castle-hire",
@@ -47,25 +48,53 @@ const ITEMS: CastleItem[] = [
   },
 ];
 
-export default function PickCastle() {
+const DEFAULT_TILES: CategoryTilesContent = {
+  title: "Pick Your Perfect Castle",
+  subtitle:
+    "Browse our categories to discover the right bouncy castle that matches your party vibe.",
+  tiles: DEFAULT_ITEMS.map((i) => ({
+    title: i.title,
+    href: i.href,
+    image: i.imgSrc,
+    imageAlt: i.imgAlt,
+  })),
+};
+
+/** Turn CMS tiles into the internal item shape, falling back to defaults. */
+function toItems(content?: CategoryTilesContent): CastleItem[] {
+  const tiles = content?.tiles?.filter(Boolean) ?? [];
+  if (!tiles.length) return DEFAULT_ITEMS;
+  return tiles.map((tile, index) => ({
+    title: tile.title,
+    href: tile.href,
+    imgSrc: tile.image || DEFAULT_ITEMS[index % DEFAULT_ITEMS.length].imgSrc,
+    imgAlt: tile.imageAlt || tile.title.replace(/\n/g, " "),
+  }));
+}
+
+export default function PickCastle({
+  content,
+}: {
+  content?: CategoryTilesContent;
+}) {
+  const items = toItems(content);
   return (
     <section className="w-full py-12  md:py-16">
       <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
         {/* Heading */}
         <div className="text-center mb-12 sm:mb-10 md:mb-12">
           <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight text-brand-ink-900">
-            Pick Your Perfect Castle
+            {content?.title || DEFAULT_TILES.title}
           </h2>
           <p className="font-inter text-[14px] sm:text-[18px] mt-3 text-brand-gray-700 max-w-[620px] mx-auto">
-            Browse our categories to discover the right bouncy castle that
-            matches your party vibe.
+            {content?.subtitle || DEFAULT_TILES.subtitle}
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-6 md:gap-6">
-          {ITEMS.map((item, index) => (
+          {items.map((item, index) => (
             <CardLink
-              key={item.href}
+              key={`${item.href}-${index}`}
               {...item}
               className={
                 index === 3

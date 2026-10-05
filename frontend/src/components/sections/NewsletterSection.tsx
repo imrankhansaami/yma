@@ -4,8 +4,25 @@ import api from "@/api/api";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import type { NewsletterContent } from "@/lib/blocks/types";
 
-export default function NewsletterSection() {
+const DEFAULT_NEWSLETTER: NewsletterContent = {
+  title: "Stay Updated with Our Newsletter",
+  body: "Join our community and never miss out on the latest news, exclusive updates, and special offers. Sign up for our newsletter to get valuable content delivered straight to your inbox!",
+  placeholder: "Enter your email address",
+  buttonLabel: "Subscribe Now",
+  privacyPrefix:
+    "We value your privacy. Your email will never be shared, and you can unsubscribe at any time. For more details, please read our",
+  privacyLinkText: "Privacy Policy",
+  privacyHref: "/privacy-policy",
+};
+
+export default function NewsletterSection({
+  content,
+}: {
+  content?: NewsletterContent;
+}) {
+  const c = { ...DEFAULT_NEWSLETTER, ...(content || {}) };
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,12 +53,10 @@ export default function NewsletterSection() {
           {/* Left: Heading + Subtitle */}
           <div>
             <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight text-brand-ink-900">
-              Stay Updated with Our Newsletter
+              {c.title}
             </h2>
             <p className="mt-3 text-brand-gray-600 text-[14px] sm:text-[15px] max-w-[620px]">
-              Join our community and never miss out on the latest news,
-              exclusive updates, and special offers. Sign up for our newsletter
-              to get valuable content delivered straight to your inbox!
+              {c.body}
             </p>
           </div>
 
@@ -56,7 +71,7 @@ export default function NewsletterSection() {
                 type="email"
                 name="email"
                 aria-label="Enter your email"
-                placeholder="Enter your email address"
+                placeholder={c.placeholder}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="
@@ -73,18 +88,17 @@ export default function NewsletterSection() {
                 className="cursor-pointer font-londrina shrink-0 h-11 sm:h-12 rounded-full px-4 sm:px-5 min-w-[170px] bg-brand-orange-400 hover:bg-brand-orange-500 text-white font-semibold border-[2px] border-white shadow-sm flex items-center justify-center transition-colors"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Subscribing..." : "Subscribe Now"}
+                {isSubmitting ? "Subscribing..." : c.buttonLabel}
               </button>
             </form>
 
             <p className="mt-2 text-[13px] text-brand-gray-600">
-              We value your privacy. Your email will never be shared, and you
-              can unsubscribe at any time. For more details, please read our{" "}
+              {c.privacyPrefix}{" "}
               <Link
-                href="/privacy-policy"
+                href={c.privacyHref}
                 className="underline underline-offset-2 hover:text-brand-ink-900"
               >
-                Privacy Policy
+                {c.privacyLinkText}
               </Link>
               .
             </p>

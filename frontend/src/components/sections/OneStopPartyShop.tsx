@@ -12,6 +12,15 @@ import {
 } from "@/services/product.service";
 import Link from "next/link";
 import ProductCard, { ProductCardProps } from "../ProductCard";
+import type { ProductTabsContent } from "@/lib/blocks/types";
+
+const DEFAULT_PRODUCT_TABS: ProductTabsContent = {
+  title: "Your One-Stop Party Shop",
+  subtitle:
+    "Browse bouncy castles, soft play, garden games, and fun food — everything you need to make your event unforgettable.",
+  ctaLabel: "See More Products",
+  ctaHref: "/booking-catalog",
+};
 
 const CATEGORIES = [
   "Bouncy Castle Hire Catalogue",
@@ -58,7 +67,12 @@ function mapProductToCard(
   };
 }
 
-export default function OneStopPartyShop() {
+export default function OneStopPartyShop({
+  content,
+}: {
+  content?: ProductTabsContent;
+}) {
+  const c = { ...DEFAULT_PRODUCT_TABS, ...(content || {}) };
   const fallbackImage = (SampleImage as unknown as { src: string }).src;
 
   const { data: categoriesApi } = useQuery<Category[]>({
@@ -163,11 +177,10 @@ export default function OneStopPartyShop() {
         {/* Header */}
         <header className="text-center mb-6 sm:mb-8">
           <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight text-brand-ink-900">
-            Your One-Stop Party Shop
+            {c.title}
           </h2>
           <p className="font-inter text-[14px] sm:text-[18px] mt-3 text-brand-gray-700 max-w-[620px] mx-auto">
-            Browse bouncy castles, soft play, garden games, and fun food —
-            everything you need to make your event unforgettable.
+            {c.subtitle}
           </p>
         </header>
         {/* ----------------------Product Catalogue Tab for Small device--------------- */}
@@ -269,10 +282,10 @@ export default function OneStopPartyShop() {
 
         <div className="mt-8 flex justify-center">
           <Link
-            href="/booking-catalog"
+            href={c.ctaHref}
             className="inline-flex h-11 sm:h-12 w-auto min-w-[170px] items-center justify-center gap-2 rounded-full border-[2px] border-white bg-brand-green-500 px-4 font-londrina text-white shadow-sm transition-colors hover:bg-brand-green-600"
           >
-            See More Products
+            {c.ctaLabel}
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>

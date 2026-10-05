@@ -10,6 +10,12 @@ const pageSectionSchema = new Schema(
       required: [true, "Section key is required"],
       trim: true,
     },
+    // Legacy records omit `type`; the storefront treats missing as "richText".
+    type: {
+      type: String,
+      trim: true,
+      default: "richText",
+    },
     title: {
       type: String,
       trim: true,
@@ -22,6 +28,15 @@ const pageSectionSchema = new Schema(
     order: {
       type: Number,
       default: 0,
+    },
+    visible: {
+      type: Boolean,
+      default: true,
+    },
+    // Free-form fields for typed blocks (hero, featureGrid, faq, ...).
+    data: {
+      type: Schema.Types.Mixed,
+      default: {},
     },
   },
   { _id: true },

@@ -2,9 +2,15 @@ import api from "@/api/api";
 
 export interface PageSection {
   sectionKey: string;
+  /** Block type; legacy records omit it (treated as "richText"). */
+  type?: string;
   title: string;
   content: string;
   order: number;
+  /** Hidden blocks stay in the CMS but are not rendered. */
+  visible?: boolean;
+  /** Structured fields for typed blocks. */
+  data?: Record<string, unknown>;
 }
 
 export interface PageContent {

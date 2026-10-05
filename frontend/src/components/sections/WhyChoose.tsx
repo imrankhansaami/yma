@@ -7,6 +7,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { FeatureGridContent } from "@/lib/blocks/types";
 
 type Theme = "green" | "yellow" | "blue" | "orange" | "cyan";
 
@@ -16,6 +17,51 @@ type Feature = {
   Icon: LucideIcon;
   theme: Theme;
   iconAlt?: string;
+};
+
+/** Admin-selectable icons, keyed by a short string stored in the CMS. */
+const ICONS: Record<string, LucideIcon> = {
+  dollar: BadgeDollarSign,
+  castle: Castle,
+  shield: ShieldCheck,
+  smile: SmilePlus,
+  calendar: CalendarCheck,
+};
+
+const THEME_ORDER: Theme[] = ["green", "yellow", "blue", "orange", "cyan"];
+
+const DEFAULT_FEATURES: FeatureGridContent = {
+  title: "Why Families and Event Organisers Across the UK",
+  titleAccent: "Choose YMA Bouncy Castles",
+  items: [
+    {
+      icon: "dollar",
+      title: "Fair, Transparent Pricing",
+      description: "Clear pricing with great value — no surprises at checkout.",
+    },
+    {
+      icon: "castle",
+      title: "Huge Range of Options",
+      description:
+        "Castles, slides, soft play, and more — something for every age and event.",
+    },
+    {
+      icon: "shield",
+      title: "Clean & Safety‑Checked Gear",
+      description:
+        "Every item is cleaned, inspected, and set up to keep your event safe.",
+    },
+    {
+      icon: "smile",
+      title: "Friendly, Reliable Team",
+      description: "On‑time delivery, quick setup, and a team that’s easy to reach.",
+    },
+    {
+      icon: "calendar",
+      title: "Simple Booking, Fast Support",
+      description: "Book online in minutes and get help whenever you need it.",
+    },
+  ],
 };
 
 const THEME_STYLES: Record<
@@ -53,72 +99,53 @@ const THEME_STYLES: Record<
   },
 };
 
-const TOP_FEATURES: Feature[] = [
-  {
-    title: "Fair, Transparent Pricing",
-    desc: "Clear pricing with great value — no surprises at checkout.",
-    Icon: BadgeDollarSign,
-    theme: "green",
-    iconAlt: "Dollar sign icon representing affordable pricing",
-  },
-  {
-    title: "Huge Range of Options",
-    desc: "Castles, slides, soft play, and more — something for every age and event.",
-    Icon: Castle,
-    theme: "yellow",
-    iconAlt: "Castle icon representing wide selection and variety",
-  },
-  {
-    title: "Clean & Safety‑Checked Gear",
-    desc: "Every item is cleaned, inspected, and set up to keep your event safe.",
-    Icon: ShieldCheck,
-    theme: "blue",
-    iconAlt: "Shield check icon representing quality and standards",
-  },
-];
+export default function WhyChoose({
+  content,
+}: {
+  content?: FeatureGridContent;
+}) {
+  const c =
+    content?.items && content.items.length ? content : DEFAULT_FEATURES;
+  const features: Feature[] = c.items.map((item, index) => ({
+    title: item.title,
+    desc: item.description,
+    Icon: ICONS[item.icon] ?? SmilePlus,
+    theme: THEME_ORDER[index % THEME_ORDER.length],
+  }));
+  const top = features.slice(0, 3);
+  const bottom = features.slice(3);
 
-const BOTTOM_FEATURES: Feature[] = [
-  {
-    title: "Friendly, Reliable Team",
-    desc: "On‑time delivery, quick setup, and a team that’s easy to reach.",
-    Icon: SmilePlus,
-    theme: "orange",
-    iconAlt: "Smiley face icon representing friendly service",
-  },
-  {
-    title: "Simple Booking, Fast Support",
-    desc: "Book online in minutes and get help whenever you need it.",
-    Icon: CalendarCheck,
-    theme: "cyan",
-    iconAlt: "Calendar check icon representing easy and hassle-free experience",
-  },
-];
-
-export default function WhyChoose() {
   return (
     <section className="w-full py-12  md:py-16 font-inter">
       <div className="mx-auto max-w-[1200px] px-4 sm:px-6 pb-14 sm:pb-18 lg:pb-24">
         {/* Heading */}
         <div className="text-center mb-12 sm:mb-10 md:mb-12">
           <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight text-brand-ink-900">
-            Why Families and Event Organisers Across the UK <br /> Choose YMA
-            Bouncy Castles
+            {c.title}
+            {c.titleAccent ? (
+              <>
+                {" "}
+                <br /> {c.titleAccent}
+              </>
+            ) : null}
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 lg:gap-7">
-          {TOP_FEATURES.map((f) => (
+          {top.map((f) => (
             <FeatureCard key={f.title} {...f} />
           ))}
         </div>
 
-        <div className="mt-8 md:mt-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 lg:gap-7">
-            <FeatureCard {...BOTTOM_FEATURES[0]} />
-
-            <FeatureCard {...BOTTOM_FEATURES[1]} />
+        {bottom.length > 0 && (
+          <div className="mt-8 md:mt-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 lg:gap-7">
+              {bottom.map((f) => (
+                <FeatureCard key={f.title} {...f} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );

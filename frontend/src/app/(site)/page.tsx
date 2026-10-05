@@ -2,7 +2,8 @@ import HeroSection from "@/components/sections/HeroSection";
 import PickCastle from "@/components/sections/PickCastle";
 import WhyChoose from "@/components/sections/WhyChoose";
 import { CmsJsonLd } from "@/components/common/CmsJsonLd";
-import { CmsSections } from "@/components/common/CmsSections";
+import { PageBlocks } from "@/components/blocks/PageBlocks";
+import type { PageBlock } from "@/lib/blocks/types";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { SEO_STATIC } from "@/lib/seo-static";
@@ -117,21 +118,29 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const Page = async () => {
   const cms = await fetchPageContent("core", "home");
+  const blocks = (cms?.sections || []) as PageBlock[];
+  const hasBlocks = blocks.length > 0;
+
   return (
     <div>
-      <HeroSection />
-      <PickCastle />
-      <TopPicksSection />
-      <WhyChoose />
-      <CastleHireSection />
-      <TestimonialSection />
-      <div className="px-4">
-        <OneStopPartyShop />
-        <CtaReadySection />
-      </div>
-      <NewsletterSection />
+      {hasBlocks ? (
+        <PageBlocks blocks={blocks} />
+      ) : (
+        <>
+          <HeroSection />
+          <PickCastle />
+          <TopPicksSection />
+          <WhyChoose />
+          <CastleHireSection />
+          <TestimonialSection />
+          <div className="px-4">
+            <OneStopPartyShop />
+            <CtaReadySection />
+          </div>
+          <NewsletterSection />
+        </>
+      )}
       <CmsJsonLd jsonLd={cms?.customJsonLd} id="custom-jsonld-home" />
-      <CmsSections sections={cms?.sections} />
     </div>
   );
 };
