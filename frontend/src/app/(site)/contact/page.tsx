@@ -91,7 +91,10 @@ export default async function ContactPage() {
   const block = ((cms?.sections || []) as PageBlock[]).find(
     (b) => b.type === "contactPage",
   );
-  const c = { ...DEFAULT_CONTACT_PAGE, ...((block?.data as any) || {}) };
+  const c: ContactPageContent = {
+    ...DEFAULT_CONTACT_PAGE,
+    ...((block?.data as Partial<ContactPageContent>) || {}),
+  };
   const pills = c.pills?.length ? c.pills : DEFAULT_CONTACT_PAGE.pills;
   const steps = c.steps?.length ? c.steps : DEFAULT_CONTACT_PAGE.steps;
   const formBadges = c.formBadges?.length
