@@ -1,6 +1,7 @@
 import {
   BulletList,
   FaqBlock,
+  LegalPageBlock,
   PageHeader,
   RichTextBlock,
 } from "@/components/blocks/contentBlocks";
@@ -50,6 +51,8 @@ function BlockView({ block }: { block: PageBlock }) {
       return <FaqBlock content={data} />;
     case "bulletList":
       return <BulletList content={data} />;
+    case "legalPage":
+      return <LegalPageBlock content={data} />;
     case "categoryTiles":
       return <PickCastle content={data} />;
     case "productGrid":

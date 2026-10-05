@@ -147,6 +147,16 @@ export type ContactFormContent = {
   intro?: string;
 };
 
+/** A numbered legal document section: heading plus rich-text body. */
+export type LegalSection = { title: string; content: string };
+
+/** Terms / Privacy layout: page heading, last-updated date and sections. */
+export type LegalPageContent = {
+  heading: string;
+  lastUpdated?: string;
+  sections: LegalSection[];
+};
+
 /** The bespoke two-column Contact page layout, as editable fields. */
 export type ContactPageContent = {
   badge: string;
@@ -177,6 +187,7 @@ export const BLOCK_CATALOG: {
   { type: "bulletList", label: "List", description: "A titled list of items (steps, reasons, services)" },
   { type: "faq", label: "FAQ", description: "Question and answer list" },
   { type: "contactPage", label: "Contact Page Layout", description: "The full two-column contact page" },
+  { type: "legalPage", label: "Legal Page", description: "Page heading, last-updated date and numbered sections" },
   { type: "categoryTiles", label: "Category Tiles", description: "Grid of image tiles linking to catalogues" },
   { type: "productGrid", label: "Product Grid", description: "Top picks or newest products" },
   { type: "featureGrid", label: "Feature Grid", description: "Why-choose-us style feature cards" },

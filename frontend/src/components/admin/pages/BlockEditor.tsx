@@ -505,6 +505,32 @@ function BlockFields({
         </div>
       );
 
+    case "legalPage":
+      return (
+        <div className="space-y-3">
+          <Text label="Page heading" value={data.heading} onChange={(v) => setData({ heading: v })} />
+          <Text label="Last updated" value={data.lastUpdated} onChange={(v) => setData({ lastUpdated: v })} placeholder="December 2024" />
+          <Repeater
+            label="Sections"
+            items={asArray(data, "sections")}
+            onChange={(sections) => setData({ sections })}
+            makeItem={() => ({ title: "", content: "" })}
+            renderItem={(item, update) => (
+              <div className="space-y-2">
+                <Text label="Section heading" value={item.title} onChange={(v) => update({ title: v })} />
+                <div>
+                  <span className="mb-1 block text-xs font-medium text-slate-600">Content</span>
+                  <TextEditor
+                    value={item.content || ""}
+                    onChange={(val) => update({ content: val })}
+                  />
+                </div>
+              </div>
+            )}
+          />
+        </div>
+      );
+
     case "richText":
     default:
       return (

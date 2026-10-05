@@ -3,6 +3,7 @@ import { RichText } from "@/components/common/RichText";
 import type {
   BulletListContent,
   FaqContent,
+  LegalPageContent,
   PageHeaderContent,
 } from "@/lib/blocks/types";
 
@@ -103,6 +104,44 @@ export function BulletList({ content }: { content?: BulletListContent }) {
         ))}
       </ul>
     </section>
+  );
+}
+
+/** Terms / Privacy page: heading, last-updated date and numbered sections. */
+export function LegalPageBlock({ content }: { content?: LegalPageContent }) {
+  if (!content) return null;
+  const sections = (content.sections || []).filter(
+    (section) => section?.title?.trim() || section?.content?.trim(),
+  );
+
+  return (
+    <>
+      <h1 className="mt-6 text-[32px] font-semibold tracking-[-0.02em] text-brand-ink-900">
+        {content.heading}
+      </h1>
+      {content.lastUpdated?.trim() ? (
+        <p className="mt-2 text-[15px] text-brand-gray-600">
+          Last updated: {content.lastUpdated}
+        </p>
+      ) : null}
+
+      <div className="mt-6 h-px w-full bg-brand-gray-170" />
+
+      <div className="mt-8 max-w-none">
+        {sections.map((section, i) => (
+          <section key={`${section.title}-${i}`} className="mb-8 last:mb-0">
+            {section.title?.trim() ? (
+              <h2 className="mb-3 text-[20px] font-semibold text-brand-ink-900">
+                {section.title}
+              </h2>
+            ) : null}
+            {section.content?.trim() ? (
+              <RichText html={section.content} className="cms-content max-w-none" />
+            ) : null}
+          </section>
+        ))}
+      </div>
+    </>
   );
 }
 

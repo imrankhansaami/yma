@@ -2,7 +2,8 @@ import { ChevronRight, Home } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CmsJsonLd } from "@/components/common/CmsJsonLd";
-import { CmsSections } from "@/components/common/CmsSections";
+import { PageBlocks } from "@/components/blocks/PageBlocks";
+import type { PageBlock } from "@/lib/blocks/types";
 import { fetchPageContent } from "@/lib/pageContent";
 import { SEO_STATIC } from "@/lib/seo-static";
 
@@ -53,6 +54,7 @@ export const metadata: Metadata = {
 
 export default async function TermsPage() {
   const cms = await fetchPageContent("core", "terms");
+  const blocks = (cms?.sections || []) as PageBlock[];
   return (
     <main className="w-full bg-white text-brand-ink-900 font-inter mt-24 md:mt-36">
       <div className="mx-auto w-full max-w-[900px] px-6 md:px-8 pb-16">
@@ -65,6 +67,10 @@ export default async function TermsPage() {
           <span>Terms & Conditions</span>
         </div>
 
+        {blocks.length > 0 ? (
+          <PageBlocks blocks={blocks} />
+        ) : (
+          <>
         {/* Title */}
         <h1 className="mt-6 text-[32px] font-semibold tracking-[-0.02em]">
           Terms & Conditions
@@ -345,10 +351,11 @@ export default async function TermsPage() {
             </div>
           </section>
         </div>
+          </>
+        )}
       </div>
 
       <CmsJsonLd jsonLd={cms?.customJsonLd} id="custom-jsonld-terms" />
-      <CmsSections sections={cms?.sections} />
     </main>
   );
 }
