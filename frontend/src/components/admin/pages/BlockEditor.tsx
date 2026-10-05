@@ -677,9 +677,16 @@ function BlockFields({
 export default function BlockEditor({
   sections,
   onChange,
+  allowedTypes,
 }: {
   sections: PageSection[];
   onChange: (sections: PageSection[]) => void;
+  /**
+   * Restricts which types the "add a block" picker offers. Pages whose layout is
+   * assembled from blocks pass GENERIC_BLOCK_TYPES so the picker cannot offer a
+   * type their page does not render. Existing blocks are always editable.
+   */
+  allowedTypes?: string[];
 }) {
   const updateBlock = (
     index: number,
@@ -727,6 +734,10 @@ export default function BlockEditor({
   const ordered = [...sections].sort(
     (a, b) => (a.order ?? 0) - (b.order ?? 0),
   );
+
+  const addable = allowedTypes
+    ? BLOCK_CATALOG.filter((entry) => allowedTypes.includes(entry.type))
+    : BLOCK_CATALOG;
 
   return (
     <div className="space-y-4">
@@ -802,7 +813,7 @@ export default function BlockEditor({
       <div className="rounded-lg border border-dashed border-slate-300 p-4">
         <p className="mb-2 text-xs font-semibold text-slate-600">Add a block</p>
         <div className="flex flex-wrap gap-2">
-          {BLOCK_CATALOG.map((entry) => (
+          {addable.map((entry) => (
             <button
               key={entry.type}
               type="button"

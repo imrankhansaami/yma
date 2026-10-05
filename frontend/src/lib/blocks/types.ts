@@ -251,3 +251,28 @@ export const BLOCK_CATALOG: {
 export const BLOCK_LABELS: Record<string, string> = Object.fromEntries(
   BLOCK_CATALOG.map((b) => [b.type, b.label]),
 );
+
+/**
+ * Block types that the owning page component renders itself, in a position
+ * chosen for its layout. They need page context (the category slug, the
+ * location name, the map) so they cannot go through the generic renderer.
+ *
+ * PageBlocks skips these, so a copy of one accidentally added to the wrong
+ * page renders nothing instead of an empty heading.
+ */
+export const PAGE_OWNED_BLOCK_TYPES = [
+  "contactPage",
+  "seoContent",
+  "locationHero",
+  "locationBody",
+  "locationHub",
+] as const;
+
+/**
+ * Block types PageBlocks renders on its own. These are safe to offer on any
+ * page, so admin editors whose page is assembled from blocks restrict their
+ * "add a block" picker to this list.
+ */
+export const GENERIC_BLOCK_TYPES: string[] = BLOCK_CATALOG.map((b) => b.type).filter(
+  (type) => !(PAGE_OWNED_BLOCK_TYPES as readonly string[]).includes(type),
+);

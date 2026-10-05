@@ -21,6 +21,7 @@ import type {
 import { buildSeoTitle, getSeoDefaults, mergeKeywords } from "@/lib/seo";
 import { joinCanonicalPath, normalizeCanonicalSlug } from "@/lib/canonical";
 import { fetchPageContent } from "@/lib/pageContent";
+import { PageBlocks } from "@/components/blocks/PageBlocks";
 
 type Params = { slug: string };
 type ApiLocation = {
@@ -277,6 +278,11 @@ export default async function LocationDetailPage({
     ...defaultBody(locationName),
     ...(bodyBlock || {}),
   };
+  // Any further blocks saved on this location, rendered after the body copy.
+  // PageBlocks skips the locationHero/locationBody blocks used above.
+  const otherBlocks = locationBlocks.filter(
+    (b) => b.type !== "locationHero" && b.type !== "locationBody",
+  );
 
   return (
     <main className="bg-white mt-16 md:mt-24 font-inter">
@@ -356,6 +362,9 @@ export default async function LocationDetailPage({
         <div className="pt-8 space-y-4">
           <LocationDetailClient locationName={locationName} />
         </div>
+
+        {/* ---- Additional blocks saved in Admin → Pages → Locations ---- */}
+        <PageBlocks blocks={otherBlocks} />
       </div>
     </main>
   );

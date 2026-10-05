@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminToast } from "@/components/ui/admin-toast";
 import TextEditor from "@/components/admin/inventory/TextEditor";
 import BlockEditor from "@/components/admin/pages/BlockEditor";
+import { GENERIC_BLOCK_TYPES } from "@/lib/blocks/types";
 import {
   getPageContentByKey,
   PageSection,
@@ -14,6 +15,13 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import api from "@/api/api";
+
+/** A location page renders its own hero and body, plus any generic blocks. */
+const LOCATION_BLOCK_TYPES = [
+  ...GENERIC_BLOCK_TYPES,
+  "locationHero",
+  "locationBody",
+];
 
 export default function EditLocationPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -231,7 +239,11 @@ export default function EditLocationPage() {
               </span>
             </span>
           </label>
-          <BlockEditor sections={sections} onChange={setSections} />
+          <BlockEditor
+            sections={sections}
+            onChange={setSections}
+            allowedTypes={LOCATION_BLOCK_TYPES}
+          />
           <button
             type="button"
             onClick={() => blocksMutation.mutate()}

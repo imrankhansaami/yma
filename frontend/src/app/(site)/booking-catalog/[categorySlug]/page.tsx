@@ -12,6 +12,7 @@ import { CATEGORY_PAGE_BY_SLUG } from "@/lib/category-pages";
 import { buildSeoTitle, getSeoDefaults, mergeKeywords } from "@/lib/seo";
 import { joinCanonicalPath } from "@/lib/canonical";
 import { fetchPageContent } from "@/lib/pageContent";
+import { PageBlocks } from "@/components/blocks/PageBlocks";
 import type { PageBlock, SeoContentContent } from "@/lib/blocks/types";
 import Script from "next/script";
 
@@ -229,9 +230,11 @@ export default async function CategoryCatalogPage({
   const defaults = await getSeoDefaults();
   const products = await fetchCategoryProducts(config.slug);
   const pageContent = await fetchPageContent("category", config.slug);
-  const seoContent = ((pageContent?.sections || []) as PageBlock[]).find(
+  const categoryBlocks = (pageContent?.sections || []) as PageBlock[];
+  const seoContent = categoryBlocks.find(
     (b) => b.type === "seoContent",
   )?.data as SeoContentContent | undefined;
+  const otherBlocks = categoryBlocks.filter((b) => b.type !== "seoContent");
   const itemList = products.map((product) => ({
     name: product.name,
     url: `${defaults.defaultCanonicalBaseUrl}/product/${product.slug}`,
@@ -266,6 +269,11 @@ export default async function CategoryCatalogPage({
       {config.slug === "garden-games-hire" ? <GardenGamesSeoContent content={seoContent} /> : null}
       {config.slug === "fun-food-hire" ? <FunFoodSeoContent content={seoContent} /> : null}
       {config.slug === "obstacle-course-slides-hire" ? <ObstacleCourseSlidesSeoContent content={seoContent} /> : null}
+
+      {/* Any further blocks saved on this category page, below the SEO copy.
+          PageBlocks skips the seoContent block itself, which is rendered above
+          by the category's own layout. */}
+      <PageBlocks blocks={otherBlocks} />
     </>
   );
 }

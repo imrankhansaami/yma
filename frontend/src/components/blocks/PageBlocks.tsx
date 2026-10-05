@@ -14,16 +14,24 @@ import PickCastle from "@/components/sections/PickCastle";
 import TestimonialSection from "@/components/sections/Testimonial";
 import TopPicksSection from "@/components/sections/TopPicksSection";
 import WhyChoose from "@/components/sections/WhyChoose";
+import { PAGE_OWNED_BLOCK_TYPES } from "@/lib/blocks/types";
 import type { PageBlock } from "@/lib/blocks/types";
+
+const PAGE_OWNED = PAGE_OWNED_BLOCK_TYPES as readonly string[];
 
 /**
  * Renders a page's CMS blocks. Each block is one typed section; legacy blocks
  * with no `type` (or `type: "richText"`) render as a heading + rich text, which
  * keeps every previously-saved page working unchanged.
+ *
+ * Blocks whose type is page-owned (a category's SEO content, a location's hero
+ * and body, the contact and locations-hub layouts) are skipped: their page
+ * renders those itself, in a position chosen for that layout.
  */
 export function PageBlocks({ blocks }: { blocks?: PageBlock[] | null }) {
   const visible = (Array.isArray(blocks) ? blocks : [])
     .filter((block) => block && block.visible !== false)
+    .filter((block) => !PAGE_OWNED.includes(block.type || "richText"))
     .slice()
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 

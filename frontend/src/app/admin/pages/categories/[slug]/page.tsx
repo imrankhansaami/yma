@@ -8,6 +8,7 @@ import {
   upsertPageContent,
 } from "@/services/pageContent.service";
 import { CATEGORY_PAGE_BY_SLUG } from "@/lib/category-pages";
+import { GENERIC_BLOCK_TYPES } from "@/lib/blocks/types";
 import BlockEditor from "@/components/admin/pages/BlockEditor";
 import { useAdminToast } from "@/components/ui/admin-toast";
 import { ArrowLeft } from "lucide-react";
@@ -200,7 +201,11 @@ export default function EditCategoryPage() {
             grid. Use the &quot;Category SEO Content&quot; block for the intro,
             the why-choose reasons, the offerings and the cross links.
           </p>
-          <BlockEditor sections={sections} onChange={setSections} />
+          <BlockEditor
+            sections={sections}
+            onChange={setSections}
+            allowedTypes={GENERIC_BLOCK_TYPES}
+          />
         </div>
         {/* Save */}
         <button
