@@ -36,18 +36,20 @@ export default function EditCategoryPage() {
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
+    // Fall back per field so a page that only has saved blocks still shows
+    // the category's real SEO defaults instead of blank inputs.
+    setMetaTitle(pageContent?.metaTitle || categoryConfig?.title || "");
+    setMetaDescription(
+      pageContent?.metaDescription || categoryConfig?.seoDescription || "",
+    );
+    setMetaKeywords(
+      pageContent?.metaKeywords || categoryConfig?.keywords.join(", ") || "",
+    );
+    setCanonicalUrl(pageContent?.canonicalUrl || "");
+    setCustomJsonLd(pageContent?.customJsonLd || "");
     if (pageContent) {
-      setMetaTitle(pageContent.metaTitle || "");
-      setMetaDescription(pageContent.metaDescription || "");
-      setMetaKeywords(pageContent.metaKeywords || "");
-      setCanonicalUrl(pageContent.canonicalUrl || "");
-      setCustomJsonLd(pageContent.customJsonLd || "");
       setSections(pageContent.sections || []);
       setIsActive(pageContent.isActive !== false);
-    } else if (categoryConfig) {
-      setMetaTitle(categoryConfig.title);
-      setMetaDescription(categoryConfig.seoDescription);
-      setMetaKeywords(categoryConfig.keywords.join(", "));
     }
   }, [pageContent, categoryConfig]);
 
