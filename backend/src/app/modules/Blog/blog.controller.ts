@@ -23,6 +23,9 @@ export const createBlog = asyncHandler(async (req: Request, res: Response) => {
     metaTitle,
     metaDescription,
     imageAltText,
+    slug,
+    canonicalUrl,
+    customJsonLd,
   } = req.body;
 
   // Handle file uploads
@@ -62,6 +65,11 @@ export const createBlog = asyncHandler(async (req: Request, res: Response) => {
     metaTitle: metaTitle || "",
     metaDescription: metaDescription || "",
     imageAltText: imageAltText || "",
+    // Only sent when the admin filled them in; omitted otherwise so the schema
+    // defaults and the pre-save slug generation behave as before.
+    ...(canonicalUrl ? { canonicalUrl } : {}),
+    ...(customJsonLd ? { customJsonLd } : {}),
+    ...(slug ? { slug } : {}),
   };
 
   const blog = await blogService.createBlog(blogData);

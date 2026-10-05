@@ -245,13 +245,17 @@ blogSchema.pre("findOneAndUpdate", async function (next) {
 
   const title = update?.title ?? update?.$set?.title;
   const incomingSlug = update?.slug ?? update?.$set?.slug;
-  const candidate = String(title || incomingSlug || "").trim();
   const normalizedIncomingSlug = incomingSlug ? normalizeSlug(incomingSlug) : "";
   if (incomingSlug && !normalizedIncomingSlug) {
     const err = new Error("Invalid slug format");
     (err as any).statusCode = 400;
     return next(err);
   }
+  // An explicitly submitted slug wins, so the admin's URL Slug field is
+  // authoritative rather than being overwritten by the title. A blank slug
+  // still falls back to the title, which is how posts created before the
+  // field existed keep working.
+  const candidate = normalizedIncomingSlug || String(title || "").trim();
   if (!candidate) {
     const mergedAliases = normalizeSlugList([...currentAliases, currentSlug]).filter(
       (item) => item !== currentSlug,

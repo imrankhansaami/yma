@@ -81,6 +81,9 @@ export default function EditBlogPageClient() {
       formData.append("metaTitle", data.metaTitle || "");
       formData.append("metaDescription", data.metaDescription || "");
       formData.append("imageAltText", data.imageAltText || "");
+      formData.append("slug", data.slug || "");
+      formData.append("canonicalUrl", data.canonicalUrl || "");
+      formData.append("customJsonLd", data.customJsonLd || "");
       if (data.image) {
         formData.append("images", data.image);
       }
@@ -186,6 +189,9 @@ export default function EditBlogPageClient() {
           metaTitle: blog?.metaTitle ?? "",
           metaDescription: blog?.metaDescription ?? "",
           imageAltText: blog?.imageAltText ?? "",
+          slug: blog?.slug ?? "",
+          canonicalUrl: blog?.canonicalUrl ?? "",
+          customJsonLd: blog?.customJsonLd ?? "",
         }}
         initialImage={blog?.images?.[0] ?? null}
         formId="edit-blog-form"

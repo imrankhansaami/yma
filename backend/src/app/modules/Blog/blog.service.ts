@@ -296,21 +296,40 @@ export const getBlogBySlug = async (slug: string): Promise<IBlog> => {
   return blog as unknown as IBlog;
 };
 
+/**
+ * Optional text fields the admin is allowed to clear by saving them empty.
+ *
+ * Every other field keeps the older "an empty string means leave it alone"
+ * rule, which is what stops a blank upload path from wiping the stored image.
+ */
+const CLEARABLE_TEXT_FIELDS = new Set([
+  "canonicalUrl",
+  "customJsonLd",
+  "metaTitle",
+  "seoTitle",
+  "seoDescription",
+  "metaDescription",
+  "imageAltText",
+  "customField1",
+  "customField2",
+  "customField3",
+  "customField4",
+  "customField5",
+  "customField6",
+  "customField7",
+  "customField8",
+]);
+
 export const updateBlog = async (
   blogId: string,
   updateData: any,
 ): Promise<any> => {
-  console.log("Updating blog with:", updateData); // Debug log
-
-  // Clean updateData - remove undefined fields
   const cleanUpdateData: any = {};
   for (const [key, value] of Object.entries(updateData)) {
-    if (value !== undefined && value !== null && value !== "") {
-      cleanUpdateData[key] = value;
-    }
+    if (value === undefined || value === null) continue;
+    if (value === "" && !CLEARABLE_TEXT_FIELDS.has(key)) continue;
+    cleanUpdateData[key] = value;
   }
-
-  console.log("Clean update data:", cleanUpdateData); // Debug log
 
   const blog = await Blog.findByIdAndUpdate(blogId, cleanUpdateData, {
     new: true,

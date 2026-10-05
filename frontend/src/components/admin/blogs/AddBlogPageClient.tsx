@@ -68,6 +68,9 @@ export default function AddBlogPageClient() {
       formData.append("metaTitle", data.metaTitle || "");
       formData.append("metaDescription", data.metaDescription || "");
       formData.append("imageAltText", data.imageAltText || "");
+      formData.append("slug", data.slug || "");
+      formData.append("canonicalUrl", data.canonicalUrl || "");
+      formData.append("customJsonLd", data.customJsonLd || "");
       if (data.image) {
         formData.append("images", data.image);
       }
