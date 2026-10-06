@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SEO_STATIC } from "@/lib/seo-static";
 import { fetchPageContent } from "@/lib/pageContent";
+import { resolveCanonical } from "@/lib/canonical";
 
 const DEFAULT_TITLE = "Contact Us | Get in Touch";
 const DEFAULT_DESCRIPTION =
@@ -11,15 +12,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const title = cms?.metaTitle || DEFAULT_TITLE;
   const description = cms?.metaDescription || DEFAULT_DESCRIPTION;
+  const canonical = resolveCanonical(cms?.canonicalUrl, "/contact");
 
   return {
     title,
     description,
     alternates: {
-      canonical:
-        typeof cms?.canonicalUrl === "string" && cms.canonicalUrl.trim().startsWith("/")
-          ? cms.canonicalUrl.trim()
-          : "/contact",
+      canonical,
     },
     authors: [{ name: SEO_STATIC.SITE_NAME }],
     creator: SEO_STATIC.CREATOR,
@@ -30,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: cms?.metaTitle || "Contact YMA Bouncy Castles",
       description,
-      url: `${SEO_STATIC.BASE_URL}${cms?.canonicalUrl?.startsWith("/") ? cms.canonicalUrl.trim() : "/contact"}`,
+      url: canonical.startsWith("http") ? canonical : `${SEO_STATIC.BASE_URL}${canonical}`,
       type: "website",
       siteName: SEO_STATIC.SITE_NAME,
       locale: SEO_STATIC.LOCALE,

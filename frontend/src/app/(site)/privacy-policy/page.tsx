@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CmsJsonLd } from "@/components/common/CmsJsonLd";
 import { PageBlocks } from "@/components/blocks/PageBlocks";
 import type { PageBlock } from "@/lib/blocks/types";
+import { resolveCanonical } from "@/lib/canonical";
 import { fetchPageContent } from "@/lib/pageContent";
 import { SEO_STATIC } from "@/lib/seo-static";
 
@@ -17,10 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const title = cms?.metaTitle || DEFAULT_TITLE;
   const description = cms?.metaDescription || DEFAULT_DESCRIPTION;
-  const canonical =
-    typeof cms?.canonicalUrl === "string" && cms.canonicalUrl.trim().startsWith("/")
-      ? cms.canonicalUrl.trim()
-      : DEFAULT_CANONICAL;
+  const canonical = resolveCanonical(cms?.canonicalUrl, DEFAULT_CANONICAL);
 
   return {
     title,
@@ -38,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: cms?.metaTitle || "Privacy Policy | YMA Bouncy Castles",
       description,
-      url: `${SEO_STATIC.BASE_URL}${canonical}`,
+      url: canonical.startsWith("http") ? canonical : `${SEO_STATIC.BASE_URL}${canonical}`,
       type: "website",
       siteName: SEO_STATIC.SITE_NAME,
       locale: SEO_STATIC.LOCALE,

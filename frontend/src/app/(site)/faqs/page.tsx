@@ -9,6 +9,7 @@ import { PageBlocks } from "@/components/blocks/PageBlocks";
 import type { FaqItem, PageBlock } from "@/lib/blocks/types";
 import { SEO_STATIC } from "@/lib/seo-static";
 import { fetchPageContent } from "@/lib/pageContent";
+import { resolveCanonical } from "@/lib/canonical";
 
 const DEFAULT_TITLE = "FAQs";
 const DEFAULT_DESCRIPTION =
@@ -19,15 +20,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const title = cms?.metaTitle || DEFAULT_TITLE;
   const description = cms?.metaDescription || DEFAULT_DESCRIPTION;
+  const canonical = resolveCanonical(cms?.canonicalUrl, "/faqs");
 
   return {
     title,
     description,
     alternates: {
-      canonical:
-        typeof cms?.canonicalUrl === "string" && cms.canonicalUrl.trim().startsWith("/")
-          ? cms.canonicalUrl.trim()
-          : "/faqs",
+      canonical,
     },
     keywords: [
       "bouncy castle FAQs",
@@ -44,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: cms?.metaTitle || "FAQs | YMA Bouncy Castles",
       description,
-      url: `${SEO_STATIC.BASE_URL}/faqs`,
+      url: canonical.startsWith("http") ? canonical : `${SEO_STATIC.BASE_URL}${canonical}`,
       type: "website",
       siteName: SEO_STATIC.SITE_NAME,
       locale: SEO_STATIC.LOCALE,

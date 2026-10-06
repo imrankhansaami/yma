@@ -35,6 +35,34 @@ export function joinCanonicalPath(parts: Array<string | undefined | null>) {
   return normalizeCanonicalPath(`/${joined}`);
 }
 
+/**
+ * Resolve a canonical value saved in the admin.
+ *
+ * Accepts either a site-relative path ("/terms", "/blog/my-post") or a full
+ * http(s) URL, so the field can point at another domain when a page is
+ * duplicated elsewhere. Anything else - empty, a bare word, a javascript: or
+ * mailto: value - falls back to the page's own path rather than emitting a
+ * canonical that points nowhere. A trailing slash is not stripped: "/terms"
+ * and "/terms/" are different URLs to a crawler, and the admin may mean either.
+ */
+export function resolveCanonical(
+  value: string | null | undefined,
+  fallback: string,
+): string {
+  const raw = String(value || "").trim();
+  if (!raw) return fallback;
+  if (raw.startsWith("/")) return raw;
+  try {
+    const url = new URL(raw);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return url.toString();
+    }
+  } catch {
+    return fallback;
+  }
+  return fallback;
+}
+
 export function publicCanonical(path: string): Pick<Metadata, "alternates"> {
   return {
     alternates: {

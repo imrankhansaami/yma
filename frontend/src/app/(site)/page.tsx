@@ -7,6 +7,7 @@ import type { PageBlock } from "@/lib/blocks/types";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { SEO_STATIC } from "@/lib/seo-static";
+import { resolveCanonical } from "@/lib/canonical";
 
 const TopPicksSection = dynamic(
   () => import("@/components/sections/TopPicksSection"),
@@ -65,10 +66,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   // Always emit a canonical. Returning `undefined` here clobbered the root
   // layout's canonical and left the homepage with none.
-  const canonical =
-    typeof cms?.canonicalUrl === "string" && cms.canonicalUrl.trim().startsWith("/")
-      ? cms.canonicalUrl.trim()
-      : "/";
+  const canonical = resolveCanonical(cms?.canonicalUrl, "/");
 
   return {
     title,
@@ -94,7 +92,12 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: cms?.metaTitle || "YMA Bouncy Castles | Premium Party Hire",
       description,
-      url: SEO_STATIC.BASE_URL,
+      url:
+        canonical === "/"
+          ? SEO_STATIC.BASE_URL
+          : canonical.startsWith("http")
+            ? canonical
+            : `${SEO_STATIC.BASE_URL}${canonical}`,
       type: "website",
       siteName: SEO_STATIC.SITE_NAME,
       locale: SEO_STATIC.LOCALE,
