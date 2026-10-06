@@ -9,7 +9,7 @@ import CtaReadySection from "@/components/sections/CtaReadySection";
 import DynamicOneStopPartyShop from "@/components/sections/DynamicOneStopPartyShop";
 import { normalizeCanonicalSlug } from "@/lib/canonical";
 import { fetchPageContent } from "@/lib/pageContent";
-import { fetchRedirectTarget } from "@/lib/redirects";
+import { fetchRedirectTarget, resolveRedirectTarget } from "@/lib/redirects";
 import { buildSeoTitle, getSeoDefaults } from "@/lib/seo";
 
 export const revalidate = 300;
@@ -115,7 +115,7 @@ export default async function CmsPage({
     // The page may have been moved. Forward through the redirect table even if
     // the middleware's cached list has not caught up yet.
     const target = await fetchRedirectTarget(`/${key}`);
-    if (target) permanentRedirect(target as `/${string}`);
+    if (target) permanentRedirect(resolveRedirectTarget(target));
     notFound();
   }
 

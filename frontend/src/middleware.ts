@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveRedirectTarget } from "@/lib/redirects";
 
 type Redirect = {
   fromPath: string;
@@ -55,9 +56,12 @@ export async function middleware(request: NextRequest) {
 
   const match = redirects.find((r) => r.fromPath === pathname);
   if (match) {
-    const url = request.nextUrl.clone();
-    url.pathname = match.toPath;
-    return NextResponse.redirect(url, match.statusCode);
+    // Absolute target: the proxied request origin is the internal address, so a
+    // relative redirect would point at localhost.
+    return NextResponse.redirect(
+      resolveRedirectTarget(match.toPath),
+      match.statusCode ?? 301,
+    );
   }
 
   return NextResponse.next();

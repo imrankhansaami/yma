@@ -9,11 +9,31 @@
  * Tagged "redirects" so a rename can purge it through /api/revalidate.
  */
 
+import { SITE_URL } from "@/lib/site-url";
+
 export type ActiveRedirect = {
   fromPath: string;
   toPath: string;
   statusCode?: number;
 };
+
+/**
+ * Turn a stored redirect destination into an absolute URL.
+ *
+ * Redirects must be absolute: the app is proxied, so the incoming request's
+ * origin is the internal address (localhost:3000) rather than the public one,
+ * and a relative Location would send visitors to the wrong host.
+ */
+export function resolveRedirectTarget(toPath: string): string {
+  const raw = String(toPath || "").trim();
+  if (!raw) return SITE_URL;
+  if (raw.startsWith("/")) return new URL(raw, SITE_URL).toString();
+  try {
+    return new URL(raw).toString();
+  } catch {
+    return new URL(`/${raw}`, SITE_URL).toString();
+  }
+}
 
 export async function fetchActiveRedirects(): Promise<ActiveRedirect[]> {
   try {
