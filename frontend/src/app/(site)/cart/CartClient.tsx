@@ -477,9 +477,9 @@ export default function CartClient() {
             <div className="px-4 py-14">
               <div className="h-full w-full flex flex-col items-center justify-center text-center">
                 <Image src={EmptyIcons} alt="empty icons" priority />
-                <h3 className="mt-6 text-ink-900 text-[18px] font-semibold">
+                <p className="mt-6 text-ink-900 text-[18px] font-semibold">
                   Your cart is currently empty!
-                </h3>
+                </p>
                 <p className="mt-2 text-gray-600 text-sm max-w-[18rem]">
                   Looks like you haven&apos;t added anything yet. Start shopping
                   to fill it up.
