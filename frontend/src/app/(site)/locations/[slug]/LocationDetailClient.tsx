@@ -10,8 +10,12 @@ import { FaqSection } from "@/components/blocks/FaqAccordion";
 
 export default function LocationDetailClient({
   locationName,
+  locationSlug,
 }: {
+  /** The place shown in copy, e.g. "Harlow". */
   locationName: string;
+  /** The slug used to match the location record, e.g. "cm18". */
+  locationSlug?: string;
 }) {
   const toSlug = (name: string) =>
     normalizeCanonicalSlug(name);
@@ -23,7 +27,7 @@ export default function LocationDetailClient({
   });
 
   const deliveryAreas = useMemo(() => {
-    const slug = toSlug(locationName);
+    const slug = toSlug(locationSlug || locationName);
     const all = Array.isArray(locationsData) ? (locationsData as any[]) : [];
 
     const match =
@@ -61,7 +65,7 @@ export default function LocationDetailClient({
     }
 
     return names;
-  }, [locationsData, locationName]);
+  }, [locationsData, locationName, locationSlug]);
 
   const faqs = [
     {

@@ -62,25 +62,33 @@ function mapProductToCard(
 
 export default function DynamicOneStopPartyShop({
   locationName,
+  locationQuery,
 }: {
+  /** The place shown in headings, e.g. "Harlow". */
   locationName?: string;
+  /**
+   * The value used to match the location in the catalogue, e.g. the "CM18"
+   * district code. Falls back to `locationName` when not given.
+   */
+  locationQuery?: string;
 }) {
   const fallbackImage = (SampleImage as unknown as { src: string }).src;
+  const queryName = locationQuery || locationName;
 
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
     queryKey: ["locations", { page: 1, limit: 100 }],
     queryFn: () => fetchLocations({ page: 1, limit: 100 }),
     staleTime: 5 * 60 * 1000,
-    enabled: !!locationName,
+    enabled: !!queryName,
   });
 
   const selectedLocationId = useMemo(() => {
-    if (!locationName || !locationsData) return null;
+    if (!queryName || !locationsData) return null;
 
     const toSlug = (name: string) => normalizeCanonicalSlug(name);
 
     const all = Array.isArray(locationsData) ? (locationsData as any[]) : [];
-    const targetSlug = toSlug(locationName);
+    const targetSlug = toSlug(queryName);
 
     // Helper to find location recursively
     const findLoc = (list: any[]): any => {
@@ -98,7 +106,7 @@ export default function DynamicOneStopPartyShop({
 
     const match = findLoc(all);
     return match?.id ?? match?._id ?? null;
-  }, [locationsData, locationName]);
+  }, [locationsData, queryName]);
 
   const { data: categoriesApi } = useQuery<Category[]>({
     queryKey: ["one-stop-categories"],
@@ -133,7 +141,7 @@ export default function DynamicOneStopPartyShop({
 
     // If a location is requested, wait until we've finished loading locations
     // so we don't prematurely pick a category based on global products.
-    if (locationName && locationsLoading) return;
+    if (queryName && locationsLoading) return;
 
     let cancelled = false;
 
@@ -171,7 +179,7 @@ export default function DynamicOneStopPartyShop({
     autoSelected,
     selectedLocationId,
     locationsLoading,
-    locationName,
+    queryName,
   ]);
 
   const activeCategory =
@@ -323,9 +331,9 @@ export default function DynamicOneStopPartyShop({
         <div className="mt-8 flex justify-center">
           <Link
             href={
-              locationName
+              queryName
                 ? `/booking-catalog?locationName=${encodeURIComponent(
-                    locationName,
+                    queryName,
                   )}`
                 : "/booking-catalog"
             }

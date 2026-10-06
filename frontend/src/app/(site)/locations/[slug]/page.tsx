@@ -20,6 +20,7 @@ import type {
 } from "@/lib/blocks/types";
 import { buildSeoTitle, getSeoDefaults, mergeKeywords } from "@/lib/seo";
 import { joinCanonicalPath, normalizeCanonicalSlug } from "@/lib/canonical";
+import { locationDisplayName, substituteLocationCode } from "@/lib/locations";
 import { fetchPageContent } from "@/lib/pageContent";
 import { PageBlocks } from "@/components/blocks/PageBlocks";
 
@@ -27,6 +28,7 @@ type Params = { slug: string };
 type ApiLocation = {
   name?: string;
   slug?: string;
+  slugAliases?: string[];
   metaTitle?: string;
   metaDescription?: string;
   description?: string;
@@ -132,31 +134,18 @@ function defaultBody(name: string): LocationBodyContent {
   };
 }
 
-function toTitle(value: string) {
-  if (!value) return "Location";
-  return value
-    .split(" ")
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join(" ");
-}
-
 /** A UK postcode district, e.g. CM18, RM10, E10, IG10. */
 const POSTCODE_DISTRICT = /^[A-Z]{1,2}\d{1,2}[A-Z]?$/i;
 
 /**
- * The name shown for a location.
- *
- * Prefer the name saved on the location so its real casing survives: deriving
- * it from the slug title-cased the postcode districts ("cm18" -> "Cm18").
- * A postcode district is always shown upper-case; only fall back to the slug
- * when the location has no name at all.
+ * The value used to match this location in the catalogue and delivery-area
+ * lookups. The page shows a place name ("Harlow"), but products are tagged and
+ * filtered by the district code ("CM18"), so the code is kept for queries.
  */
-function locationDisplayName(name: string | undefined, slug: string) {
+function locationQueryValue(name: string | undefined, slug: string) {
   const saved = String(name || "").trim();
-  if (saved) {
-    return POSTCODE_DISTRICT.test(saved) ? saved.toUpperCase() : saved;
-  }
-  return toTitle(slug.replace(/-/g, " "));
+  if (saved && POSTCODE_DISTRICT.test(saved)) return saved.toUpperCase();
+  return slug;
 }
 
 async function fetchLocationBySlug(slug: string): Promise<ApiLocation | null> {
@@ -190,13 +179,23 @@ export async function generateMetadata({
   const locationName = locationDisplayName(
     resolvedLocation?.name,
     canonicalSlug,
+    resolvedLocation?.slugAliases,
   );
 
   const defaults = await getSeoDefaults();
-  const title = resolvedLocation?.metaTitle || `Bouncy Castles Hire in ${locationName}`;
+  const metaCode = locationQueryValue(resolvedLocation?.name, canonicalSlug);
+  const title = substituteLocationCode(
+    resolvedLocation?.metaTitle || `Bouncy Castles Hire in ${locationName}`,
+    [metaCode],
+    locationName,
+  );
   const seoTitle = buildSeoTitle(title, defaults.siteName);
-  const description = resolvedLocation?.metaDescription ||
-    `Premium bouncy castle hire in ${locationName}. Book inflatables, soft play, and party rentals with fast delivery.`;
+  const description = substituteLocationCode(
+    resolvedLocation?.metaDescription ||
+      `Premium bouncy castle hire in ${locationName}. Book inflatables, soft play, and party rentals with fast delivery.`,
+    [metaCode],
+    locationName,
+  );
   const canonical = joinCanonicalPath(["locations", canonicalSlug]);
 
   return {
@@ -268,14 +267,23 @@ export default async function LocationDetailPage({
   const locationName = locationDisplayName(
     resolvedLocation?.name,
     canonicalSlug,
+    resolvedLocation?.slugAliases,
   );
+  const locationQuery = locationQueryValue(resolvedLocation?.name, canonicalSlug);
   const defaults = await getSeoDefaults();
 
   // CMS-managed copy (edited in Admin → Pages → Locations).
-  const locationDescription =
+  const locationDescription = substituteLocationCode(
     resolvedLocation?.description?.trim() ||
-    `Premium bouncy castle hire in ${locationName}, delivered on time and loved by kids and adults alike.`;
-  const locationContentHtml = resolvedLocation?.content?.trim() || "";
+      `Premium bouncy castle hire in ${locationName}, delivered on time and loved by kids and adults alike.`,
+    [locationQuery],
+    locationName,
+  );
+  const locationContentHtml = substituteLocationCode(
+    resolvedLocation?.content?.trim() || "",
+    [locationQuery],
+    locationName,
+  );
 
   // CMS-managed page blocks (Admin → Pages → Locations), with the current
   // copy as the fallback so every location page renders unchanged.
@@ -287,14 +295,22 @@ export default async function LocationDetailPage({
   const bodyBlock = locationBlocks.find((b) => b.type === "locationBody")?.data as
     | LocationBodyContent
     | undefined;
-  const hero: LocationHeroContent = {
-    ...defaultHero(locationName),
-    ...(heroBlock || {}),
-  };
-  const body: LocationBodyContent = {
-    ...defaultBody(locationName),
-    ...(bodyBlock || {}),
-  };
+  const hero: LocationHeroContent = substituteLocationCode(
+    {
+      ...defaultHero(locationName),
+      ...(heroBlock || {}),
+    },
+    [locationQuery],
+    locationName,
+  );
+  const body: LocationBodyContent = substituteLocationCode(
+    {
+      ...defaultBody(locationName),
+      ...(bodyBlock || {}),
+    },
+    [locationQuery],
+    locationName,
+  );
   // Any further blocks saved on this location, rendered after the body copy.
   // PageBlocks skips the locationHero/locationBody blocks used above.
   const otherBlocks = locationBlocks.filter(
@@ -339,7 +355,7 @@ export default async function LocationDetailPage({
               <WhatsappBtn />
               <ReserveNowBtn
                 href={`/booking-catalog?locationName=${encodeURIComponent(
-                  locationName,
+                  locationQuery,
                 )}`}
                 className="h-10 sm:h-11 md:h-12 px-6 sm:px-7"
               />
@@ -369,7 +385,10 @@ export default async function LocationDetailPage({
         ) : null}
 
         {/* --------------Product Catalogue------------ */}
-        <DynamicOneStopPartyShop locationName={locationName} />
+        <DynamicOneStopPartyShop
+          locationName={locationName}
+          locationQuery={locationQuery}
+        />
 
         {/* -------------CTA--------------------- */}
         <CtaReadySection />
@@ -377,7 +396,10 @@ export default async function LocationDetailPage({
         <LocationBodyBlock content={body} />
 
         <div className="pt-8 space-y-4">
-          <LocationDetailClient locationName={locationName} />
+          <LocationDetailClient
+            locationName={locationName}
+            locationSlug={canonicalSlug}
+          />
         </div>
 
         {/* ---- Additional blocks saved in Admin → Pages → Locations ---- */}
