@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
     category: "Contact",
     referrer: "origin-when-cross-origin",
     openGraph: {
-      title: cms?.metaTitle || "Contact YMA Bouncy Castles",
+      title: cms?.metaTitle || "Contact",
       description,
       url: canonical.startsWith("http") ? canonical : `${SEO_STATIC.BASE_URL}${canonical}`,
       type: "website",

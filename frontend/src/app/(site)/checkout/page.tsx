@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     follow: false,
   },
   openGraph: {
-    title: "Checkout | YMA Bouncy Castles",
+    title: "Checkout",
     description: "Complete your booking with YMA Bouncy Castles.",
     url: `${SEO_STATIC.BASE_URL}/checkout`,
     type: "website",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Checkout | YMA Bouncy Castles",
+    title: "Checkout",
     description: "Complete your booking with YMA Bouncy Castles.",
     images: ["/og-image.jpg"],
   },

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     follow: false,
   },
   openGraph: {
-    title: "Order Confirmed | YMA Bouncy Castles",
+    title: "Order Confirmed",
     description: "Your order has been confirmed with YMA Bouncy Castles.",
     url: `${SEO_STATIC.BASE_URL}/checkout/success`,
     type: "website",

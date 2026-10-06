@@ -1,5 +1,6 @@
 import api from "@/api/api";
 import { AxiosRequestConfig } from "axios";
+import { PRODUCTS_TAG, productTag } from "@/lib/productTags";
 
 export interface ApiLocation {
   coordinates?: { lat: number; lng: number };
@@ -212,7 +213,10 @@ export async function fetchProductBySlug(
     const baseUrl = process.env.NEXT_PUBLIC_SERVER_URI;
     if (!baseUrl) return null;
     try {
-      const res = await fetch(`${baseUrl}/api/v1/products/slug/${slug}`, { signal });
+      const res = await fetch(`${baseUrl}/api/v1/products/slug/${slug}`, {
+        signal,
+        next: { tags: [PRODUCTS_TAG, productTag(slug)] },
+      });
       if (!res.ok) return null;
       const data = await res.json();
       return data?.data?.product ?? null;

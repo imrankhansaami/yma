@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     follow: false,
   },
   openGraph: {
-    title: "My Profile | YMA Bouncy Castles",
+    title: "My Profile",
     description: "Manage your orders and account details.",
     url: `${SEO_STATIC.BASE_URL}/profile`,
     type: "website",

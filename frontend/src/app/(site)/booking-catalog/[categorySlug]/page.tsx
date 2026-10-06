@@ -10,6 +10,7 @@ import SoftPlaySeoContent from "@/components/catalog/SoftPlaySeoContent";
 import { BreadcrumbJsonLd, ItemListJsonLd } from "@/components/seo/JsonLd";
 import { CATEGORY_PAGE_BY_SLUG } from "@/lib/category-pages";
 import { buildSeoTitle, getSeoDefaults, mergeKeywords } from "@/lib/seo";
+import { PRODUCTS_TAG } from "@/lib/productTags";
 import { joinCanonicalPath } from "@/lib/canonical";
 import { fetchPageContent } from "@/lib/pageContent";
 import { PageBlocks } from "@/components/blocks/PageBlocks";
@@ -109,7 +110,7 @@ async function fetchCategoryProducts(categorySlug: string): Promise<CategoryProd
   try {
     const res = await fetch(
       `${baseUrl}/api/v1/products?page=1&limit=8&category=${encodeURIComponent(categoryId)}`,
-      { next: { revalidate: 300 } },
+      { next: { revalidate: 300, tags: [PRODUCTS_TAG] } },
     );
     if (!res.ok) return [];
 

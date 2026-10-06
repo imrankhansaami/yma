@@ -61,7 +61,7 @@ export const metadata: Metadata = {
   category: "Contact",
   referrer: "origin-when-cross-origin",
   openGraph: {
-    title: "Contact YMA Bouncy Castles",
+    title: "Contact",
     description:
       "Reach out to YMA Bouncy Castles for bookings, inquiries, or event details.",
     url: `${SEO_STATIC.BASE_URL}/contact`,
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Contact YMA Bouncy Castles",
+    title: "Contact",
     description:
       "Reach out to YMA Bouncy Castles for bookings, inquiries, or event details.",
     images: ["/og-image.jpg"],

@@ -7,6 +7,7 @@ import { fetchPageContent } from "@/lib/pageContent";
 import type { PageBlock } from "@/lib/blocks/types";
 import { buildSeoTitle, getSeoDefaults, mergeKeywords } from "@/lib/seo";
 import type { ApiProduct } from "@/services/product.service";
+import { PRODUCTS_TAG } from "@/lib/productTags";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -150,7 +151,7 @@ async function fetchCatalogProducts(searchParams: SearchParams) {
 
   try {
     const res = await fetch(`${baseUrl}/api/v1/products?${params.toString()}`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 300, tags: [PRODUCTS_TAG] },
     });
     if (!res.ok) return { items: [] as ApiProduct[], total: 0 };
 

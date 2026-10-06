@@ -91,7 +91,7 @@ export async function generateMetadata(): Promise<Metadata> {
     referrer: "origin-when-cross-origin",
     alternates: { canonical },
     openGraph: {
-      title: cms?.metaTitle || "YMA Bouncy Castles | Premium Party Hire",
+      title: cms?.metaTitle || "Premium Party Hire",
       description,
       url:
         canonical === "/"
@@ -113,7 +113,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: cms?.metaTitle || "YMA Bouncy Castles | Premium Party Hire",
+      title: cms?.metaTitle || "Premium Party Hire",
       description,
       images: ["/og-image.jpg"],
     },

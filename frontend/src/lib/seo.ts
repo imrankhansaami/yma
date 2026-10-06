@@ -25,7 +25,7 @@ const fallbackMeta = {
     "children entertainment",
   ].join(", "),
   defaultCanonicalBaseUrl: SITE_URL,
-  defaultOpenGraphTitle: "YMA Bouncy Castles | Premium Bouncy Castle Hire",
+  defaultOpenGraphTitle: "Premium Bouncy Castle Hire",
   defaultOpenGraphDescription:
     "Premium bouncy castle hire for parties and events in London, Essex, Enfield, Birmingham & Coventry. Book online today!",
   defaultRobots: "index, follow",

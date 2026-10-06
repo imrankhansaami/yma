@@ -5,6 +5,7 @@ import { joinCanonicalPath, normalizeCanonicalSlug } from "@/lib/canonical";
 import { SHOW_PRODUCT_REVIEWS } from "@/lib/features";
 import type { ApiProduct } from "@/services/product.service";
 import { notFound, permanentRedirect } from "next/navigation";
+import { PRODUCTS_TAG, productTag } from "@/lib/productTags";
 import ProductClient from "./ProductClient";
 
 type Params = { slug: string };
@@ -21,7 +22,11 @@ async function fetchProductBySlug(slug: string) {
     if (!baseUrl) return null;
 
     const res = await fetch(`${baseUrl}/api/v1/products/slug/${slug}`, {
-      next: { revalidate: 3600 },
+      next: {
+        revalidate: 3600,
+        // Tagged so an admin edit can purge this exact entry via /api/revalidate.
+        tags: [PRODUCTS_TAG, productTag(slug)],
+      },
     });
     if (!res.ok) return null;
 

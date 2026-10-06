@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   category: "Locations",
   referrer: "origin-when-cross-origin",
   openGraph: {
-    title: "All Locations | YMA Bouncy Castles",
+    title: "All Locations",
     description:
       "See every area we cover for bouncy castles, soft play, garden games, and fun food hire across the UK.",
     url: `${SEO_STATIC.BASE_URL}/locations`,

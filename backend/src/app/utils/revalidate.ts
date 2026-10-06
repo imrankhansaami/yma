@@ -33,3 +33,10 @@ export const pageContentTag = (pageType?: string, pageKey?: string) =>
   pageType && pageKey
     ? `page-content:${pageType}:${String(pageKey).toLowerCase()}`
     : "";
+
+/** Cache tag for product listings, matching the frontend's fetch tag. */
+export const PRODUCTS_TAG = "products";
+
+/** Cache tag for a single product's detail fetch. */
+export const productTag = (slug?: string) =>
+  slug ? `product:${slug}` : "";

@@ -7,7 +7,7 @@ import Category from "../Category/category.model";
 import { uploadToCloudinary } from "../../utils/cloudinary.util";
 import Product from "./product.model";
 import sharp from "sharp";
-import { revalidatePaths } from "../../utils/revalidate";
+import { revalidatePaths, PRODUCTS_TAG, productTag } from "../../utils/revalidate";
 import { expandBracketedFields } from "../../utils/expandFormFields";
 import type { IExtraOption } from "./product.interface";
 
@@ -578,7 +578,12 @@ export const updateProduct = asyncHandler(
 
     // Trigger ISR revalidation
     if (updatedProduct?.slug) {
-      revalidatePaths([`/product/${updatedProduct.slug}`, "/booking-catalog", "/"]);
+      revalidatePaths(
+        [`/product/${updatedProduct.slug}`, "/booking-catalog", "/"],
+        [PRODUCTS_TAG, productTag(updatedProduct.slug)],
+      );
+    } else {
+      revalidatePaths(["/booking-catalog", "/"], [PRODUCTS_TAG]);
     }
 
     res.status(200).json({
