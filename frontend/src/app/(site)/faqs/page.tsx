@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Home } from "lucide-react";
+import { ChevronRight, Home } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -6,6 +6,7 @@ import { FAQPageJsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/button";
 import { CmsJsonLd } from "@/components/common/CmsJsonLd";
 import { PageBlocks } from "@/components/blocks/PageBlocks";
+import { FaqSection } from "@/components/blocks/FaqAccordion";
 import type { FaqItem, PageBlock } from "@/lib/blocks/types";
 import { SEO_STATIC } from "@/lib/seo-static";
 import { fetchPageContent } from "@/lib/pageContent";
@@ -133,50 +134,24 @@ export default async function FaqsPage() {
         {hasBlocks ? (
           <PageBlocks blocks={blocks} />
         ) : (
-          <>
-            <p className="mt-6 text-xs uppercase tracking-[0.12em] text-brand-gray-400 font-semibold">
-              FAQ section
-            </p>
-            <div className="mt-3 flex flex-col gap-2">
-              <h1 className="text-[26px] sm:text-[32px] font-semibold tracking-[-0.02em] text-brand-ink-900">
-                Frequently asked questions
-              </h1>
-              <p className="text-sm sm:text-base text-brand-gray-650 max-w-[720px]">
+          <FaqSection
+            headingAs="h1"
+            name="faq"
+            intro={
+              <>
                 We&apos;ve compiled the most important information to help you
                 get the most out of your experience. Can&apos;t find what
                 you&apos;re looking for?{" "}
                 <Link
                   href="/contact"
-                  className="text-brand-slate-950 underline underline-offset-4"
+                  className="font-semibold text-brand-orange-600 underline underline-offset-4 hover:text-brand-orange-700"
                 >
                   Contact us.
                 </Link>
-              </p>
-            </div>
-
-            {/* Divider */}
-            <div className="mt-6 h-px w-full bg-brand-gray-170" />
-
-            {/* FAQ List */}
-            <div className="divide-y divide-brand-gray-175 overflow-hidden mt-8">
-              {faqs.map((faq) => (
-                <details
-                  key={faq.question}
-                  className="group bg-white py-3 sm:py-6"
-                >
-                  <summary className="flex items-start justify-between gap-3 cursor-pointer list-none">
-                    <span className="text-sm sm:text-base font-semibold text-brand-ink-900">
-                      {faq.question}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-brand-gray-650 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <p className="mt-2 text-sm sm:text-base text-brand-gray-650">
-                    {faq.answer}
-                  </p>
-                </details>
-              ))}
-            </div>
-          </>
+              </>
+            }
+            items={faqs}
+          />
         )}
 
         <div className="mt-10 rounded-2xl border border-brand-gray-170 bg-brand-gray-50 p-6 sm:p-7">

@@ -140,6 +140,25 @@ function toTitle(value: string) {
     .join(" ");
 }
 
+/** A UK postcode district, e.g. CM18, RM10, E10, IG10. */
+const POSTCODE_DISTRICT = /^[A-Z]{1,2}\d{1,2}[A-Z]?$/i;
+
+/**
+ * The name shown for a location.
+ *
+ * Prefer the name saved on the location so its real casing survives: deriving
+ * it from the slug title-cased the postcode districts ("cm18" -> "Cm18").
+ * A postcode district is always shown upper-case; only fall back to the slug
+ * when the location has no name at all.
+ */
+function locationDisplayName(name: string | undefined, slug: string) {
+  const saved = String(name || "").trim();
+  if (saved) {
+    return POSTCODE_DISTRICT.test(saved) ? saved.toUpperCase() : saved;
+  }
+  return toTitle(slug.replace(/-/g, " "));
+}
+
 async function fetchLocationBySlug(slug: string): Promise<ApiLocation | null> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SERVER_URI;
@@ -168,11 +187,10 @@ export async function generateMetadata({
   if (canonicalSlug && canonicalSlug !== routeSlug) {
     permanentRedirect(joinCanonicalPath(["locations", canonicalSlug]));
   }
-  const decoded = normalizeCanonicalSlug(resolvedLocation?.name || canonicalSlug).replace(
-    /-/g,
-    " ",
+  const locationName = locationDisplayName(
+    resolvedLocation?.name,
+    canonicalSlug,
   );
-  const locationName = toTitle(decoded);
 
   const defaults = await getSeoDefaults();
   const title = resolvedLocation?.metaTitle || `Bouncy Castles Hire in ${locationName}`;
@@ -247,11 +265,10 @@ export default async function LocationDetailPage({
     notFound();
   }
 
-  const decoded = normalizeCanonicalSlug(resolvedLocation?.name || canonicalSlug).replace(
-    /-/g,
-    " ",
+  const locationName = locationDisplayName(
+    resolvedLocation?.name,
+    canonicalSlug,
   );
-  const locationName = toTitle(decoded);
   const defaults = await getSeoDefaults();
 
   // CMS-managed copy (edited in Admin → Pages → Locations).

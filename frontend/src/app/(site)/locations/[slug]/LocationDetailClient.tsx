@@ -2,10 +2,11 @@
 
 import { fetchLocations } from "@/services/location.service";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, ChevronDown } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { normalizeCanonicalSlug } from "@/lib/canonical";
+import { FaqSection } from "@/components/blocks/FaqAccordion";
 
 export default function LocationDetailClient({
   locationName,
@@ -89,8 +90,6 @@ export default function LocationDetailClient({
     },
   ];
 
-  const [openFaq, setOpenFaq] = useState(0);
-
   return (
     <>
       {deliveryAreas.length > 0 && (
@@ -116,56 +115,24 @@ export default function LocationDetailClient({
         </div>
       )}
 
-      <p className="text-xs uppercase tracking-[0.12em] text-brand-gray-400 font-semibold mt-8">
-        FAQ section
-      </p>
-      <div className="flex flex-col gap-2">
-        <h3 className="text-[22px] sm:text-[24px] font-semibold text-brand-ink-900">
-          Frequently asked questions
-        </h3>
-        <p className="text-sm sm:text-base text-brand-gray-650">
-          We&apos;ve compiled the most important information to help you get the
-          most out of your experience. Can&apos;t find what you&apos;re looking
-          for?{" "}
-          <Link
-            href="/contact"
-            className="text-brand-slate-950 underline underline-offset-4"
-          >
-            Contact us.
-          </Link>
-        </p>
-      </div>
-
-      <div className="divide-y divide-brand-gray-175 overflow-hidden mt-6">
-        {faqs.map((item, idx) => {
-          const isOpen = openFaq === idx;
-          return (
-            <button
-              key={item.question}
-              onClick={() => setOpenFaq(isOpen ? -1 : idx)}
-              className="w-full text-left py-3 sm:py-4 bg-white transition-colors"
+      <FaqSection
+        headingAs="h3"
+        name="location-faq"
+        intro={
+          <>
+            We&apos;ve compiled the most important information to help you get
+            the most out of your experience. Can&apos;t find what you&apos;re
+            looking for?{" "}
+            <Link
+              href="/contact"
+              className="font-semibold text-brand-orange-600 underline underline-offset-4 hover:text-brand-orange-700"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <p className="text-sm sm:text-base font-semibold text-brand-ink-900">
-                    {item.question}
-                  </p>
-                  {isOpen && (
-                    <p className="mt-2 text-sm sm:text-base text-brand-gray-650">
-                      {item.answer}
-                    </p>
-                  )}
-                </div>
-                <ChevronDown
-                  className={`h-4 w-4 text-brand-gray-650 transition-transform ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </div>
-            </button>
-          );
-        })}
-      </div>
+              Contact us.
+            </Link>
+          </>
+        }
+        items={faqs}
+      />
     </>
   );
 }

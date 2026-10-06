@@ -1,5 +1,5 @@
-import { ChevronDown } from "lucide-react";
 import { RichText } from "@/components/common/RichText";
+import { FaqSection } from "@/components/blocks/FaqAccordion";
 import type {
   BulletListContent,
   FaqContent,
@@ -150,44 +150,15 @@ export function FaqBlock({ content }: { content?: FaqContent }) {
   const items = (content?.items || []).filter(
     (item) => item?.question?.trim(),
   );
+
   return (
-    <section>
-      {content?.eyebrow ? (
-        <p className="mt-6 text-xs uppercase tracking-[0.12em] text-brand-gray-400 font-semibold">
-          {content.eyebrow}
-        </p>
-      ) : null}
-      <div className="mt-3 flex flex-col gap-2">
-        <h1 className="text-[26px] sm:text-[32px] font-semibold tracking-[-0.02em] text-brand-ink-900">
-          {content?.title || "Frequently asked questions"}
-        </h1>
-        {content?.intro ? (
-          <p className="text-sm sm:text-base text-brand-gray-650 max-w-[720px]">
-            {content.intro}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="mt-6 h-px w-full bg-brand-gray-170" />
-
-      <div className="divide-y divide-brand-gray-175 overflow-hidden mt-8">
-        {items.map((faq, i) => (
-          <details
-            key={`${faq.question}-${i}`}
-            className="group bg-white py-3 sm:py-6"
-          >
-            <summary className="flex items-start justify-between gap-3 cursor-pointer list-none">
-              <span className="text-sm sm:text-base font-semibold text-brand-ink-900">
-                {faq.question}
-              </span>
-              <ChevronDown className="h-4 w-4 text-brand-gray-650 transition-transform group-open:rotate-180" />
-            </summary>
-            <p className="mt-2 text-sm sm:text-base text-brand-gray-650">
-              {faq.answer}
-            </p>
-          </details>
-        ))}
-      </div>
-    </section>
+    <FaqSection
+      eyebrow={content?.eyebrow || "FAQ section"}
+      title={content?.title || "Frequently asked questions"}
+      intro={content?.intro}
+      items={items}
+      headingAs="h2"
+      name="faq"
+    />
   );
 }
