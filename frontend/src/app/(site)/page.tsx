@@ -7,6 +7,7 @@ import type { PageBlock } from "@/lib/blocks/types";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { SEO_STATIC } from "@/lib/seo-static";
+import { buildSeoTitle } from "@/lib/seo";
 import { resolveCanonical } from "@/lib/canonical";
 
 const TopPicksSection = dynamic(
@@ -61,7 +62,7 @@ import { fetchPageContent } from "@/lib/pageContent";
 export async function generateMetadata(): Promise<Metadata> {
   const cms = await fetchPageContent("core", "home");
 
-  const title = cms?.metaTitle || DEFAULT_TITLE;
+  const title = buildSeoTitle(cms?.metaTitle || DEFAULT_TITLE, SEO_STATIC.SITE_NAME);
   const description = cms?.metaDescription || DEFAULT_DESCRIPTION;
 
   // Always emit a canonical. Returning `undefined` here clobbered the root

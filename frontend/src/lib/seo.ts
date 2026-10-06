@@ -142,10 +142,10 @@ function trimToLength(value: string, maxLength: number) {
 export function buildSeoTitle(rawTitle: string, siteName: string) {
   const input = normalizeSpace(rawTitle);
   const aliases = getBrandAliases(siteName);
-  const preferredBrand = normalizeSpace(siteName).split(" ")[0] || "YMA";
-  const brandLower = preferredBrand.toLowerCase();
 
-  // Remove existing brand mentions from segments so we can append exactly once.
+  // Drop standalone brand segments (e.g. "... | YMA Bouncy Castles") so the
+  // brand is never repeated. The site name is intentionally NOT appended here:
+  // page titles stand on their own.
   const cleanedSegments = input
     .split("|")
     .map((segment) => normalizeSpace(segment))
@@ -156,25 +156,9 @@ export function buildSeoTitle(rawTitle: string, siteName: string) {
     new Set(cleanedSegments.map((segment) => segment.toLowerCase())),
   ).map((lower) => cleanedSegments.find((segment) => segment.toLowerCase() === lower)!);
 
-  let base = normalizeSpace(uniqueSegments.join(" | "));
-  if (!base) base = preferredBrand;
+  const base = uniqueSegments.length
+    ? normalizeSpace(uniqueSegments.join(" | "))
+    : input;
 
-  const suffix = ` | ${preferredBrand}`;
-  let candidate =
-    base.toLowerCase().endsWith(`| ${brandLower}`) ||
-    base.toLowerCase() === brandLower
-      ? base
-      : `${base}${suffix}`;
-
-  if (candidate.length <= SEO_TITLE_MAX_LENGTH) return candidate;
-
-  const maxBaseLength = SEO_TITLE_MAX_LENGTH - suffix.length;
-  const shortenedBase = trimToLength(base, Math.max(10, maxBaseLength));
-  candidate =
-    shortenedBase.toLowerCase().endsWith(`| ${brandLower}`) ||
-    shortenedBase.toLowerCase() === brandLower
-      ? shortenedBase
-      : `${shortenedBase}${suffix}`;
-
-  return trimToLength(candidate, SEO_TITLE_MAX_LENGTH);
+  return trimToLength(base, SEO_TITLE_MAX_LENGTH);
 }

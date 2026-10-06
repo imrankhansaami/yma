@@ -4,7 +4,7 @@ import { AlertTriangle, Home, RefreshCw } from "lucide-react";
 import { noIndexCanonical } from "@/lib/canonical";
 
 export const metadata: Metadata = {
-  title: "Something Went Wrong | YMA",
+  title: "Something Went Wrong",
   description:
     "An unexpected error occurred while loading this page. Please try again.",
   ...noIndexCanonical("/unexpected-error"),

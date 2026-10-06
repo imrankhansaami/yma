@@ -9,6 +9,7 @@ import { PageBlocks } from "@/components/blocks/PageBlocks";
 import { FaqSection } from "@/components/blocks/FaqAccordion";
 import type { FaqItem, PageBlock } from "@/lib/blocks/types";
 import { SEO_STATIC } from "@/lib/seo-static";
+import { buildSeoTitle } from "@/lib/seo";
 import { fetchPageContent } from "@/lib/pageContent";
 import { resolveCanonical } from "@/lib/canonical";
 
@@ -19,7 +20,7 @@ const DEFAULT_DESCRIPTION =
 export async function generateMetadata(): Promise<Metadata> {
   const cms = await fetchPageContent("core", "faqs");
 
-  const title = cms?.metaTitle || DEFAULT_TITLE;
+  const title = buildSeoTitle(cms?.metaTitle || DEFAULT_TITLE, SEO_STATIC.SITE_NAME);
   const description = cms?.metaDescription || DEFAULT_DESCRIPTION;
   const canonical = resolveCanonical(cms?.canonicalUrl, "/faqs");
 

@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { publicCanonical } from "@/lib/canonical";
 
 export const metadata: Metadata = {
-  title: { absolute: "Page Not Found | YMA" },
+  title: { absolute: "Page Not Found" },
   description: "The page you are looking for could not be found.",
   ...publicCanonical("/404"),
   robots: {

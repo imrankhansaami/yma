@@ -39,7 +39,6 @@ const inter = Inter({
 export async function generateMetadata(): Promise<Metadata> {
   const defaults = await getSeoDefaults();
   const siteName = defaults.siteName;
-  const brandSuffix = siteName.trim().split(/\s+/)[0] || "YMA";
   const canonicalBase = defaults.defaultCanonicalBaseUrl;
   const defaultTitle = buildSeoTitle(defaults.defaultMetaTitle, siteName);
   const defaultDescription = defaults.defaultMetaDescription;
@@ -49,10 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const robots = parseRobots(defaults.defaultRobots);
 
   return {
-    title: {
-      default: defaultTitle,
-      template: `%s | ${brandSuffix}`,
-    },
+    title: defaultTitle,
     description: defaultDescription,
     keywords: defaultKeywords
       .split(",")

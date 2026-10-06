@@ -55,7 +55,7 @@ export async function generateMetadata({
   const product = await fetchProductBySlug(slug);
   if (!product) {
     return {
-      title: { absolute: "Product Not Found | YMA" },
+      title: { absolute: "Product Not Found" },
       description: "The requested product could not be found.",
     };
   }

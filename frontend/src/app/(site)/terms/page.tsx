@@ -7,6 +7,7 @@ import type { PageBlock } from "@/lib/blocks/types";
 import { resolveCanonical } from "@/lib/canonical";
 import { fetchPageContent } from "@/lib/pageContent";
 import { SEO_STATIC } from "@/lib/seo-static";
+import { buildSeoTitle } from "@/lib/seo";
 
 const DEFAULT_TITLE = "Terms & Conditions";
 const DEFAULT_DESCRIPTION =
@@ -16,7 +17,7 @@ const DEFAULT_CANONICAL = "/terms";
 export async function generateMetadata(): Promise<Metadata> {
   const cms = await fetchPageContent("core", "terms");
 
-  const title = cms?.metaTitle || DEFAULT_TITLE;
+  const title = buildSeoTitle(cms?.metaTitle || DEFAULT_TITLE, SEO_STATIC.SITE_NAME);
   const description = cms?.metaDescription || DEFAULT_DESCRIPTION;
   const canonical = resolveCanonical(cms?.canonicalUrl, DEFAULT_CANONICAL);
 

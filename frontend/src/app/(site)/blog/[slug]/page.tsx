@@ -93,7 +93,7 @@ export async function generateMetadata({
   const blog = await fetchBlog(slug);
   if (!blog) {
     return {
-      title: { absolute: "Blog Not Found | YMA" },
+      title: { absolute: "Blog Not Found" },
       description: "The requested blog could not be found.",
     };
   }
@@ -103,7 +103,7 @@ export async function generateMetadata({
     (blog.status ?? "").toLowerCase() === "published";
   if (!isPublished) {
     return {
-      title: { absolute: "Blog Not Found | YMA" },
+      title: { absolute: "Blog Not Found" },
       description: "The requested blog could not be found.",
     };
   }
