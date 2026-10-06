@@ -188,19 +188,20 @@ export const renamePageContentByKey = asyncHandler(
  */
 export const deletePageContent = asyncHandler(
   async (req: Request, res: Response) => {
-    await pageContentService.deletePageContent(req.params.id);
+    const deleted = await pageContentService.deletePageContent(req.params.id);
 
-    // The record is gone, so we can no longer derive its paths; revalidate the
-    // common CMS-backed routes so the page reverts to its defaults promptly.
-    revalidatePaths([
-      "/",
-      "/faqs",
-      "/contact",
-      "/privacy-policy",
-      "/terms",
-      "/booking-catalog",
-      "/locations",
-    ]);
+    // Revalidate the path the record was served at, so the page stops serving
+    // its cached copy and falls back to the built-in content (or 404s).
+    revalidatePaths(
+      [
+        ...pageContentPaths((deleted as any)?.pageType, (deleted as any)?.pageKey),
+        "/sitemap.xml",
+      ],
+      [
+        pageContentTag((deleted as any)?.pageType, (deleted as any)?.pageKey),
+        "redirects",
+      ].filter(Boolean),
+    );
 
     res.status(200).json({
       success: true,

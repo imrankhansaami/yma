@@ -201,12 +201,17 @@ export const renamePageContentKey = async (
 };
 
 /**
- * Delete page content by ID
+ * Delete page content by ID. Returns the removed record so the caller can
+ * revalidate the path it used to be served at.
  */
-export const deletePageContent = async (id: string): Promise<void> => {
+export const deletePageContent = async (
+  id: string,
+): Promise<IPageContentDocument> => {
   const pageContent = await PageContent.findByIdAndDelete(id);
 
   if (!pageContent) {
     throw new ApiError("Page content not found", 404);
   }
+
+  return pageContent;
 };
