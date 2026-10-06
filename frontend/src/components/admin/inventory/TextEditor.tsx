@@ -15,7 +15,7 @@ import {
   Quote,
   Upload,
 } from "lucide-react";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./textEditor.css";
 import api from "@/api/api";
 
@@ -68,34 +68,77 @@ const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, error }) => {
     }
   };
 
-  const insertLink = () => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep the caret so an image or link lands where it was, even after the file
+  // dialog or a text input has taken focus.
+  const savedSelection = useRef<{ from: number; to: number } | null>(null);
+  const rememberSelection = () => {
     if (editor) {
-      const url = prompt("Enter URL:");
-      if (url) {
-        const isExternal =
-          url.startsWith("http") && !url.includes(SITE_HOST);
-        if (isExternal) {
-          editor.chain().focus().setLink({ href: url, target: "_blank", rel: "noopener noreferrer" }).run();
-        } else {
-          editor.chain().focus().setLink({ href: url }).run();
-        }
-      }
+      const { from, to } = editor.state.selection;
+      savedSelection.current = { from, to };
+    }
+  };
+  const restoreSelection = () => {
+    const range = savedSelection.current;
+    if (editor && range) {
+      editor.chain().focus().setTextSelection(range).run();
+    } else {
+      editor?.chain().focus().run();
     }
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showImageBar, setShowImageBar] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [showLinkBar, setShowLinkBar] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
-  const insertImage = () => {
-    if (editor) {
-      const url = prompt("Enter image URL:");
-      if (url) {
-        editor.chain().focus().setImage({ src: url }).run();
-      }
-    }
+  const openPanel = (kind: "image" | "link") => {
+    rememberSelection();
+    setUploadError("");
+    setShowImageBar(kind === "image");
+    setShowLinkBar(kind === "link");
+  };
+
+  const closePanels = () => {
+    setShowImageBar(false);
+    setShowLinkBar(false);
+  };
+
+  const insertImageUrl = () => {
+    const url = imageUrl.trim();
+    if (!url || !editor) return;
+    restoreSelection();
+    editor.chain().focus().setImage({ src: url }).run();
+    setImageUrl("");
+    setShowImageBar(false);
+  };
+
+  const insertLink = () => {
+    const url = linkUrl.trim();
+    if (!url || !editor) return;
+    restoreSelection();
+    const isExternal = url.startsWith("http") && !url.includes(SITE_HOST);
+    editor
+      .chain()
+      .focus()
+      .extendMarkRange("link")
+      .setLink(
+        isExternal
+          ? { href: url, target: "_blank", rel: "noopener noreferrer" }
+          : { href: url },
+      )
+      .run();
+    setLinkUrl("");
+    setShowLinkBar(false);
   };
 
   const uploadImage = async (file: File) => {
     if (!editor) return;
+    setUploading(true);
+    setUploadError("");
     const formData = new FormData();
     formData.append("image", file);
     try {
@@ -103,19 +146,22 @@ const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, error }) => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const url = data?.data?.url || data?.url;
-      if (url) {
-        editor.chain().focus().setImage({ src: url }).run();
-      }
+      if (!url) throw new Error("No URL returned");
+      restoreSelection();
+      editor.chain().focus().setImage({ src: url }).run();
+      setShowImageBar(false);
     } catch (err) {
       console.error("Image upload failed:", err);
-      alert("Image upload failed. Please try again.");
+      setUploadError("Upload failed. Please try a different image.");
+    } finally {
+      setUploading(false);
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      uploadImage(file);
+      void uploadImage(file);
       e.target.value = "";
     }
   };
@@ -235,9 +281,9 @@ const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, error }) => {
           {/* Link */}
           <button
             type="button"
-            onClick={insertLink}
+            onClick={() => openPanel("link")}
             className={`${iconButtonClass} ${
-              editor.isActive("link") ? activeIconClass : ""
+              showLinkBar || editor.isActive("link") ? activeIconClass : ""
             }`}
             title="Insert Link"
           >
@@ -247,12 +293,14 @@ const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, error }) => {
             />
           </button>
 
-          {/* Image by URL */}
+          {/* Insert image (upload or URL) */}
           <button
             type="button"
-            onClick={insertImage}
-            className={iconButtonClass}
-            title="Insert Image by URL"
+            onClick={() => openPanel("image")}
+            className={`${iconButtonClass} ${
+              showImageBar ? activeIconClass : ""
+            }`}
+            title="Insert Image"
           >
             <ImageIcon
               className="w-[14px] h-[14px] text-brand-zinc-700"
@@ -260,7 +308,6 @@ const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, error }) => {
             />
           </button>
 
-          {/* Upload Image */}
           <input
             ref={fileInputRef}
             type="file"
@@ -268,17 +315,6 @@ const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, error }) => {
             onChange={handleFileSelect}
             className="hidden"
           />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className={iconButtonClass}
-            title="Upload Image"
-          >
-            <Upload
-              className="w-[14px] h-[14px] text-brand-zinc-700"
-              strokeWidth={2.5}
-            />
-          </button>
 
           {/* Bullet List */}
           <button
@@ -310,6 +346,100 @@ const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, error }) => {
             />
           </button>
         </div>
+
+        {/* Link bar */}
+        {showLinkBar && (
+          <div className="border-b border-brand-gray-150 bg-brand-gray-25 px-[12px] py-[10px] flex flex-wrap items-center gap-[8px]">
+            <input
+              type="text"
+              autoFocus
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  insertLink();
+                }
+                if (e.key === "Escape") closePanels();
+              }}
+              placeholder="https://example.com"
+              className="flex-1 min-w-[200px] rounded-[6px] border border-brand-gray-150 bg-white px-[10px] py-[6px] text-[13px] focus:outline-none focus:border-brand-orange-500"
+            />
+            <button
+              type="button"
+              onClick={insertLink}
+              className="rounded-[6px] bg-brand-black-950 px-[12px] py-[6px] text-[13px] font-medium text-white hover:bg-brand-black-900"
+            >
+              Insert
+            </button>
+            <button
+              type="button"
+              onClick={closePanels}
+              className="rounded-[6px] px-[8px] py-[6px] text-[13px] text-brand-gray-600 hover:bg-brand-gray-100"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Image bar */}
+        {showImageBar && (
+          <div className="border-b border-brand-gray-150 bg-brand-gray-25 px-[12px] py-[10px] flex flex-col gap-[8px]">
+            <div className="flex flex-wrap items-center gap-[8px]">
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => {
+                  rememberSelection();
+                  fileInputRef.current?.click();
+                }}
+                className="inline-flex items-center gap-[6px] rounded-[6px] border border-brand-gray-150 bg-white px-[10px] py-[6px] text-[13px] font-medium text-brand-black-950 hover:bg-brand-gray-100 disabled:opacity-60"
+              >
+                <Upload className="w-[14px] h-[14px]" strokeWidth={2.5} />
+                {uploading ? "Uploading…" : "Upload from computer"}
+              </button>
+              <span className="text-[12px] text-brand-gray-500">
+                or paste an image URL
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-[8px]">
+              <input
+                type="text"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    insertImageUrl();
+                  }
+                  if (e.key === "Escape") closePanels();
+                }}
+                placeholder="https://example.com/image.jpg"
+                className="flex-1 min-w-[200px] rounded-[6px] border border-brand-gray-150 bg-white px-[10px] py-[6px] text-[13px] focus:outline-none focus:border-brand-orange-500"
+              />
+              <button
+                type="button"
+                onClick={insertImageUrl}
+                className="rounded-[6px] bg-brand-black-950 px-[12px] py-[6px] text-[13px] font-medium text-white hover:bg-brand-black-900"
+              >
+                Insert
+              </button>
+              <button
+                type="button"
+                onClick={closePanels}
+                className="rounded-[6px] px-[8px] py-[6px] text-[13px] text-brand-gray-600 hover:bg-brand-gray-100"
+              >
+                Cancel
+              </button>
+            </div>
+            <p className="text-[12px] text-brand-gray-500">
+              JPEG, PNG, GIF or WebP, up to 10&nbsp;MB.
+            </p>
+            {uploadError && (
+              <p className="text-[12px] text-brand-red-700">{uploadError}</p>
+            )}
+          </div>
+        )}
 
         {/* Editor Content */}
         <div className="bg-white px-[16px] py-[12px] min-h-[134px] relative resize-y overflow-auto tiptap-editor">
