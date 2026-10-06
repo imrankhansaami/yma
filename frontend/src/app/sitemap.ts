@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { CATEGORY_PAGES } from "@/lib/category-pages";
+import { isBuiltInCorePageKey } from "@/lib/core-pages";
 import { SITE_URL } from "@/lib/site-url";
 
 const BASE_URL = SITE_URL;
@@ -113,21 +114,6 @@ async function getLocations(): Promise<{ slug: string }[]> {
   }
 }
 /***********Nahuid */
-/** Page keys that already have a hand-built route (listed above). */
-const BUILT_IN_PAGE_KEYS = new Set([
-  "home",
-  "contact",
-  "faqs",
-  "privacy-policy",
-  "terms",
-  "booking-catalog",
-  "locations",
-  "blog",
-  "cart",
-  "checkout",
-  "profile",
-]);
-
 /** Marketing / area pages managed as `core` PageContent records. */
 async function getCorePages(): Promise<{ key: string; updatedAt?: string }[]> {
   try {
@@ -147,7 +133,7 @@ async function getCorePages(): Promise<{ key: string; updatedAt?: string }[]> {
         (p: any) =>
           p?.isActive !== false &&
           p?.pageKey &&
-          !BUILT_IN_PAGE_KEYS.has(String(p.pageKey)),
+          !isBuiltInCorePageKey(String(p.pageKey)),
       )
       .map((p: any) => ({
         key: String(p.pageKey),

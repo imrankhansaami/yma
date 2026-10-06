@@ -1,14 +1,17 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getPageContentByKey,
+  renamePageContent,
   upsertPageContent,
   PageSection,
 } from "@/services/pageContent.service";
 import BlockEditor from "@/components/admin/pages/BlockEditor";
 import { useAdminToast } from "@/components/ui/admin-toast";
+import { normalizeCanonicalSlug } from "@/lib/canonical";
+import { isBuiltInCorePageKey } from "@/lib/core-pages";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -24,6 +27,7 @@ const PAGE_TITLES: Record<string, string> = {
 
 export default function EditCorePage() {
   const { pageKey } = useParams<{ pageKey: string }>();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { notify } = useAdminToast();
 
@@ -35,6 +39,7 @@ export default function EditCorePage() {
 
   const [metaTitle, setMetaTitle] = useState("");
   const [pageTitleValue, setPageTitleValue] = useState("");
+  const [urlKey, setUrlKey] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [metaDescription, setMetaDescription] = useState("");
   const [metaKeywords, setMetaKeywords] = useState("");
@@ -42,10 +47,13 @@ export default function EditCorePage() {
   const [customJsonLd, setCustomJsonLd] = useState("");
   const [sections, setSections] = useState<PageSection[]>([]);
 
+  const urlIsFixed = isBuiltInCorePageKey(pageKey);
+
   useEffect(() => {
     if (pageContent) {
       setMetaTitle(pageContent.metaTitle || "");
       setPageTitleValue(pageContent.title || "");
+      setUrlKey(pageContent.pageKey || pageKey);
       setIsActive(pageContent.isActive !== false);
       setMetaDescription(pageContent.metaDescription || "");
       setMetaKeywords(pageContent.metaKeywords || "");
@@ -53,11 +61,15 @@ export default function EditCorePage() {
       setCustomJsonLd(pageContent.customJsonLd || "");
       setSections(pageContent.sections || []);
     }
-  }, [pageContent]);
+  }, [pageContent, pageKey]);
 
   const mutation = useMutation({
-    mutationFn: () =>
-      upsertPageContent("core", pageKey, {
+    mutationFn: async () => {
+      const targetKey = normalizeCanonicalSlug(urlKey) || pageKey;
+      if (targetKey !== pageKey) {
+        await renamePageContent("core", pageKey, targetKey);
+      }
+      const saved = await upsertPageContent("core", targetKey, {
         title: pageTitleValue,
         metaTitle,
         metaDescription,
@@ -66,13 +78,33 @@ export default function EditCorePage() {
         customJsonLd,
         sections,
         isActive,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pageContent"] });
-      notify({ title: "Success", message: "Page saved successfully", variant: "success" });
+      });
+      return { saved, targetKey };
     },
-    onError: () => {
-      notify({ title: "Error", message: "Failed to save page", variant: "error" });
+    onSuccess: ({ targetKey }) => {
+      queryClient.invalidateQueries({ queryKey: ["pageContent"] });
+      queryClient.invalidateQueries({ queryKey: ["redirects"] });
+      notify({
+        title: "Success",
+        message:
+          targetKey !== pageKey
+            ? `Page moved to /${targetKey}. A redirect was added from /${pageKey}.`
+            : "Page saved successfully",
+        variant: "success",
+      });
+      if (targetKey !== pageKey) {
+        router.replace(`/admin/pages/core/${targetKey}`);
+      }
+    },
+    onError: (err: any) => {
+      notify({
+        title: "Error",
+        message:
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          "Failed to save page",
+        variant: "error",
+      });
     },
   });
 
@@ -111,9 +143,47 @@ export default function EditCorePage() {
               maxLength={200}
             />
             <p className="mt-1 text-xs text-slate-500">
-              Shown as the H1 on pages the site renders from this content —
-              e.g. /{pageKey}
+              Shown as the H1 on pages the site renders from this content.
             </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              URL
+            </label>
+            {urlIsFixed ? (
+              <>
+                <input
+                  type="text"
+                  value={`/${pageKey}`}
+                  readOnly
+                  className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  This page has a built-in address, so it cannot be changed here.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-stretch">
+                  <span className="inline-flex items-center rounded-l-md border border-r-0 border-slate-200 bg-slate-50 px-3 text-sm text-slate-500">
+                    /
+                  </span>
+                  <input
+                    type="text"
+                    value={urlKey}
+                    onChange={(e) => setUrlKey(e.target.value)}
+                    onBlur={() => setUrlKey(normalizeCanonicalSlug(urlKey))}
+                    placeholder="page-address"
+                    className="w-full rounded-r-md border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  Moving the page adds a redirect from /{pageKey} to the new
+                  address, so existing links keep working.
+                </p>
+              </>
+            )}
           </div>
 
           <label className="flex items-start gap-3">

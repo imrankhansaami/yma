@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { ChevronRight, Home } from "lucide-react";
 
 import { CmsJsonLd } from "@/components/common/CmsJsonLd";
@@ -9,6 +9,7 @@ import CtaReadySection from "@/components/sections/CtaReadySection";
 import DynamicOneStopPartyShop from "@/components/sections/DynamicOneStopPartyShop";
 import { normalizeCanonicalSlug } from "@/lib/canonical";
 import { fetchPageContent } from "@/lib/pageContent";
+import { fetchRedirectTarget } from "@/lib/redirects";
 import { buildSeoTitle, getSeoDefaults } from "@/lib/seo";
 
 export const revalidate = 300;
@@ -110,7 +111,13 @@ export default async function CmsPage({
   const { slug } = await params;
   const key = normalizeCanonicalSlug(decodeURIComponent(slug || ""));
   const cms = await fetchPageContent("core", key);
-  if (!cms) notFound();
+  if (!cms) {
+    // The page may have been moved. Forward through the redirect table even if
+    // the middleware's cached list has not caught up yet.
+    const target = await fetchRedirectTarget(`/${key}`);
+    if (target) permanentRedirect(target as `/${string}`);
+    notFound();
+  }
 
   if (cms.isActive === false) notFound();
 

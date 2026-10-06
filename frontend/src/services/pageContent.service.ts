@@ -69,6 +69,22 @@ export async function upsertPageContent(
   return data?.data?.pageContent ?? data?.data;
 }
 
+/**
+ * Move a core page to a new address. The backend renames the record and writes
+ * a 301 from the old path to the new one.
+ */
+export async function renamePageContent(
+  pageType: string,
+  pageKey: string,
+  newPageKey: string
+): Promise<PageContent> {
+  const { data } = await api.put(
+    `/page-content/key/${pageType}/${pageKey}/rename`,
+    { newPageKey }
+  );
+  return data?.data?.pageContent ?? data?.data;
+}
+
 export async function deletePageContent(id: string): Promise<void> {
   await api.delete(`/page-content/${id}`);
 }

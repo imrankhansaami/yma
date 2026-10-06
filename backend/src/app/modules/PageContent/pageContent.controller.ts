@@ -144,6 +144,46 @@ export const upsertPageContentByKey = asyncHandler(
 );
 
 /**
+ * Change a core page's address. Writes a 301 from the old path to the new one,
+ * so old links and rankings carry over.
+ */
+export const renamePageContentByKey = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { pageType, pageKey } = req.params;
+    const newPageKey = String(req.body?.newPageKey || "");
+
+    const pageContent = await pageContentService.renamePageContentKey(
+      pageType,
+      pageKey,
+      newPageKey,
+    );
+
+    const oldKey = String(pageKey).toLowerCase();
+    const newKey = String(pageContent.pageKey).toLowerCase();
+
+    revalidatePaths(
+      [
+        ...pageContentPaths(pageType, oldKey),
+        ...pageContentPaths(pageType, newKey),
+        // The sitemap lists core pages by key, so it changes with the move.
+        "/sitemap.xml",
+      ],
+      [
+        pageContentTag(pageType, oldKey),
+        pageContentTag(pageType, newKey),
+        "redirects",
+      ].filter(Boolean),
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Page address changed successfully",
+      data: { pageContent, previousPath: `/${oldKey}`, path: `/${newKey}` },
+    });
+  },
+);
+
+/**
  * Delete page content by ID
  */
 export const deletePageContent = asyncHandler(

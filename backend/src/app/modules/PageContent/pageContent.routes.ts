@@ -19,6 +19,10 @@ router.get("/", pageContentController.getAllPageContent);
 router.post("/", pageContentController.createPageContent);
 router.put("/:id", pageContentController.updatePageContent);
 router.put(
+  "/key/:pageType/:pageKey/rename",
+  pageContentController.renamePageContentByKey,
+);
+router.put(
   "/key/:pageType/:pageKey",
   pageContentController.upsertPageContentByKey,
 );
