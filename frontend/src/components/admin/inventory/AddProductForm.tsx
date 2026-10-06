@@ -385,12 +385,20 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     }
 
     // Gallery Images
-    galleryImages.forEach((img) => {
-      if (img instanceof File) {
-        formData.append("images", img);
-      } else if (typeof img === "string") {
-        formData.append("images", img);
-      }
+    // Existing images are sent as an ordered JSON list the backend keeps; new
+    // files are uploaded and appended. Sending the list even when empty is what
+    // lets the backend clear a gallery that was emptied in the editor.
+    const existingGallery = galleryImages.filter(
+      (img): img is string => typeof img === "string",
+    );
+    const newGalleryFiles = galleryImages.filter(
+      (img): img is File => img instanceof File,
+    );
+    if (isEdit) {
+      formData.append("existingImages", JSON.stringify(existingGallery));
+    }
+    newGalleryFiles.forEach((file) => {
+      formData.append("images", file);
     });
 
     (data.imageAltTexts || []).forEach((alt, index) => {

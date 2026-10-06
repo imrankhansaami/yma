@@ -11,6 +11,40 @@ import { revalidatePaths, PRODUCTS_TAG, productTag } from "../../utils/revalidat
 import { expandBracketedFields } from "../../utils/expandFormFields";
 import type { IExtraOption } from "./product.interface";
 
+/** Gallery files can arrive under either field name the route allows. */
+const collectGalleryFiles = (
+  files: { [fieldname: string]: Express.Multer.File[] } | undefined,
+): Express.Multer.File[] => [
+  ...(files?.["images"] || []),
+  ...(files?.["images[]"] || []),
+];
+
+/** Upload each gallery file and return the secure URLs, in order. */
+const uploadGalleryFiles = async (galleryFiles: Express.Multer.File[]) =>
+  Promise.all(
+    galleryFiles.map((file) => uploadToCloudinary(file.buffer, "products/gallery")),
+  );
+
+/**
+ * Parse the `existingImages` field (a JSON array of kept image URLs) sent by the
+ * product editor. Falls back to a single URL or an empty list.
+ */
+const parseExistingImages = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.flatMap(parseExistingImages);
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+      return typeof parsed === "string" && parsed ? [parsed] : [];
+    } catch {
+      return [trimmed];
+    }
+  }
+  return [];
+};
+
 // Add these functions to your existing product.controller.ts
 
 /* =========================
@@ -454,6 +488,12 @@ export const createProduct = asyncHandler(
       );
     }
 
+    // Gallery images: upload any new files, in order.
+    const createGalleryFiles = collectGalleryFiles(files);
+    if (createGalleryFiles.length > 0) {
+      productData.images = await uploadGalleryFiles(createGalleryFiles);
+    }
+
     // ২. সার্টিফিকেট প্রসেসিং (Direct MongoDB with Compression)
     const certFiles = files?.["certificates"] || files?.["certificates[]"];
     if (certFiles) {
@@ -543,6 +583,27 @@ export const updateProduct = asyncHandler(
         files["imageCover"][0].buffer,
         "products/covers",
       );
+    }
+
+    // Gallery images: keep the URLs the editor retained and append new uploads,
+    // so removals persist (including clearing the gallery to empty) and additions
+    // save. `existingImages` is the editor's ordered list of kept URLs.
+    const hasExistingImages = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "existingImages",
+    );
+    const updateGalleryFiles = collectGalleryFiles(files);
+    if (hasExistingImages || updateGalleryFiles.length > 0) {
+      const keptGallery = hasExistingImages
+        ? parseExistingImages(req.body.existingImages)
+        : [];
+      const uploadedGallery =
+        updateGalleryFiles.length > 0
+          ? await uploadGalleryFiles(updateGalleryFiles)
+          : [];
+      delete updateData.existingImages;
+      delete updateData.images;
+      updateData.images = [...keptGallery, ...uploadedGallery];
     }
 
     // ২. নতুন সার্টিফিকেট যুক্ত করা (Direct MongoDB)
