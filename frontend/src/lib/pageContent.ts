@@ -29,7 +29,16 @@ export async function fetchPageContent(
     if (!baseUrl) return null;
     const res = await fetch(
       `${baseUrl}/api/v1/page-content/${pageType}/${pageKey}`,
-      { next: { revalidate: 300 } }
+      {
+        next: {
+          revalidate: 300,
+          // Tagged so an admin save can purge this exact entry through
+          // /api/revalidate. Without the tag, revalidatePath rebuilds the page
+          // but this fetch can still serve its own cached copy for up to 300s,
+          // so a second edit inside that window would not appear.
+          tags: [`page-content:${pageType}:${pageKey}`],
+        },
+      }
     );
     if (!res.ok) return null;
     const json = await res.json();

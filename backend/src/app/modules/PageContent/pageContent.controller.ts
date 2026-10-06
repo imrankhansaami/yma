@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHandler";
 import * as pageContentService from "./pageContent.service";
-import { revalidatePaths } from "../../utils/revalidate";
+import { pageContentTag, revalidatePaths } from "../../utils/revalidate";
 
 /**
  * Map a PageContent record to the public paths whose ISR cache it affects.
@@ -27,11 +27,11 @@ export const createPageContent = asyncHandler(
   async (req: Request, res: Response) => {
     const pageContent = await pageContentService.createPageContent(req.body);
 
+    const pageType = (pageContent as any)?.pageType ?? req.body.pageType;
+    const pageKey = (pageContent as any)?.pageKey ?? req.body.pageKey;
     revalidatePaths(
-      pageContentPaths(
-        (pageContent as any)?.pageType ?? req.body.pageType,
-        (pageContent as any)?.pageKey ?? req.body.pageKey,
-      ),
+      pageContentPaths(pageType, pageKey),
+      [pageContentTag(pageType, pageKey)].filter(Boolean),
     );
 
     res.status(201).json({
@@ -107,12 +107,9 @@ export const updatePageContent = asyncHandler(
       req.body,
     );
 
-    revalidatePaths(
-      pageContentPaths(
-        (pageContent as any)?.pageType,
-        (pageContent as any)?.pageKey,
-      ),
-    );
+    const pt = (pageContent as any)?.pageType;
+    const pk = (pageContent as any)?.pageKey;
+    revalidatePaths(pageContentPaths(pt, pk), [pageContentTag(pt, pk)].filter(Boolean));
 
     res.status(200).json({
       success: true,
@@ -135,6 +132,7 @@ export const upsertPageContentByKey = asyncHandler(
 
     revalidatePaths(
       pageContentPaths(req.params.pageType, req.params.pageKey),
+      [pageContentTag(req.params.pageType, req.params.pageKey)].filter(Boolean),
     );
 
     res.status(200).json({
