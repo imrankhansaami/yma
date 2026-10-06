@@ -9,11 +9,17 @@ type Redirect = {
 
 let cachedRedirects: Redirect[] = [];
 let cacheTimestamp = 0;
-const CACHE_TTL_MS = 60_000; // 60 seconds
+// Short on purpose. The cache cannot be purged from outside the process, so a
+// redirect written by a page move (or a hand-edited one) is only visible here
+// after it expires. Keep it short so a move takes effect promptly and a
+// just-deleted redirect stops firing quickly.
+const CACHE_TTL_MS = 5_000;
 
 async function getActiveRedirects(): Promise<Redirect[]> {
   const now = Date.now();
-  if (cachedRedirects.length > 0 && now - cacheTimestamp < CACHE_TTL_MS) {
+  // Cache the empty list too: otherwise every request refetches until the first
+  // redirect exists, which is the common case.
+  if (now - cacheTimestamp < CACHE_TTL_MS) {
     return cachedRedirects;
   }
 
@@ -41,11 +47,14 @@ async function getActiveRedirects(): Promise<Redirect[]> {
 
     if (ok && Array.isArray(list)) {
       cachedRedirects = list;
-      cacheTimestamp = now;
     }
   } catch {
-    // On fetch failure, continue using stale cache (or empty list)
+    // On fetch failure, continue using the stale cache.
   }
+
+  // Record the attempt either way, so a failing backend is not hit on every
+  // single request.
+  cacheTimestamp = now;
 
   return cachedRedirects;
 }
