@@ -42,7 +42,15 @@ fi
 
 log "Building frontend"
 cd "$FRONTEND_DIR"
-npm run build
+# This droplet is small (~2 GB RAM). Cap the build heap so `next build` does
+# not get OOM-killed, and recover from a stale `.next/types` if it appears.
+export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=1200}"
+export NEXT_TELEMETRY_DISABLED=1
+if ! npm run build; then
+  log "Build failed - clearing stale .next and retrying once"
+  rm -rf .next
+  npm run build
+fi
 
 log "Reloading PM2 ($PM2_APP)"
 pm2 restart "$PM2_APP" --update-env
@@ -59,6 +67,14 @@ fi
 code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000${HEALTH_PATH}")"
 echo "    GET ${HEALTH_PATH} -> ${code}"
 [ "$code" = "200" ] || die "health check failed (HTTP $code)"
+
+# A partial .next still serves HTML but 404s/400s its JS chunks, so check one.
+chunk="$(curl -s "http://127.0.0.1:3000/" | grep -oE '/_next/static/chunks/[^"]+\.js' | head -1 || true)"
+if [ -n "$chunk" ]; then
+  asset_code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000${chunk}")"
+  echo "    asset ${chunk} -> ${asset_code}"
+  [ "$asset_code" = "200" ] || die "static asset check failed (HTTP $asset_code)"
+fi
 
 echo "    BUILD_ID: $(cat "$FRONTEND_DIR/.next/BUILD_ID" 2>/dev/null || echo unknown)"
 
