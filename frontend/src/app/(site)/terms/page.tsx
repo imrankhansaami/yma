@@ -40,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
     category: "Legal",
     referrer: "origin-when-cross-origin",
     openGraph: {
-      title: cms?.metaTitle || "Terms & Conditions",
+      title,
       description,
       url: canonical.startsWith("http") ? canonical : `${SEO_STATIC.BASE_URL}${canonical}`,
       type: "website",
@@ -57,7 +57,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: cms?.metaTitle || "Terms & Conditions",
+      title,
       description,
       images: ["/og-image.jpg"],
     },

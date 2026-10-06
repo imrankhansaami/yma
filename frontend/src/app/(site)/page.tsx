@@ -91,7 +91,7 @@ export async function generateMetadata(): Promise<Metadata> {
     referrer: "origin-when-cross-origin",
     alternates: { canonical },
     openGraph: {
-      title: cms?.metaTitle || "Premium Party Hire",
+      title,
       description,
       url:
         canonical === "/"
@@ -113,7 +113,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: cms?.metaTitle || "Premium Party Hire",
+      title,
       description,
       images: ["/og-image.jpg"],
     },
