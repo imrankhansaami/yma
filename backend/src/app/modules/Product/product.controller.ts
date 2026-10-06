@@ -484,7 +484,7 @@ export const createProduct = asyncHandler(
     const product = await productService.createProduct(productData);
 
     // Trigger ISR revalidation
-    revalidatePaths(["/booking-catalog", "/"]);
+    revalidatePaths(["/booking-catalog", "/"], [PRODUCTS_TAG]);
 
     res.status(201).json({
       status: "success",
@@ -687,10 +687,16 @@ export const getProductBySlug = asyncHandler(
 export const deleteProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const productId = req.params.id;
+    const existing = await productService.getProductById(productId);
     await productService.deleteProduct(productId);
 
-    // Trigger ISR revalidation
-    revalidatePaths(["/booking-catalog", "/"]);
+    // Trigger ISR revalidation. Purge the product's own page too so a bookmarked
+    // URL stops serving the deleted product.
+    const slug = existing?.slug;
+    revalidatePaths(
+      ["/booking-catalog", "/", ...(slug ? [`/product/${slug}`] : [])],
+      [PRODUCTS_TAG, ...(slug ? [productTag(slug)] : [])],
+    );
 
     res.status(200).json({
       status: "success",
