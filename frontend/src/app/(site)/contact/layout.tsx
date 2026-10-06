@@ -16,7 +16,10 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     alternates: {
-      canonical: cms?.canonicalUrl || "/contact",
+      canonical:
+        typeof cms?.canonicalUrl === "string" && cms.canonicalUrl.trim().startsWith("/")
+          ? cms.canonicalUrl.trim()
+          : "/contact",
     },
     authors: [{ name: SEO_STATIC.SITE_NAME }],
     creator: SEO_STATIC.CREATOR,
@@ -27,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: cms?.metaTitle || "Contact YMA Bouncy Castles",
       description,
-      url: `${SEO_STATIC.BASE_URL}/contact`,
+      url: `${SEO_STATIC.BASE_URL}${cms?.canonicalUrl?.startsWith("/") ? cms.canonicalUrl.trim() : "/contact"}`,
       type: "website",
       siteName: SEO_STATIC.SITE_NAME,
       locale: SEO_STATIC.LOCALE,

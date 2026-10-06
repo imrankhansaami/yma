@@ -24,7 +24,10 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     alternates: {
-      canonical: cms?.canonicalUrl || "/faqs",
+      canonical:
+        typeof cms?.canonicalUrl === "string" && cms.canonicalUrl.trim().startsWith("/")
+          ? cms.canonicalUrl.trim()
+          : "/faqs",
     },
     keywords: [
       "bouncy castle FAQs",

@@ -7,50 +7,63 @@ import type { PageBlock } from "@/lib/blocks/types";
 import { fetchPageContent } from "@/lib/pageContent";
 import { SEO_STATIC } from "@/lib/seo-static";
 
-export const metadata: Metadata = {
-  title: "Terms & Conditions",
-  description:
-    "Read the YMA Bouncy Castles terms and conditions for bouncy castle hire. Understand our booking, cancellation, and safety policies.",
-  alternates: {
-    canonical: "/terms",
-  },
-  keywords: [
-    "terms and conditions",
-    "rental policy",
-    "booking terms",
-    "YMA Bouncy Castles",
-  ],
-  authors: [{ name: SEO_STATIC.SITE_NAME }],
-  creator: SEO_STATIC.CREATOR,
-  publisher: SEO_STATIC.PUBLISHER,
-  applicationName: SEO_STATIC.SITE_NAME,
-  category: "Legal",
-  referrer: "origin-when-cross-origin",
-  openGraph: {
-    title: "Terms & Conditions | YMA Bouncy Castles",
-    description:
-      "Read the YMA Bouncy Castles terms and conditions for bouncy castle hire. Understand our booking, cancellation, and safety policies.",
-    url: `${SEO_STATIC.BASE_URL}/terms`,
-    type: "website",
-    siteName: SEO_STATIC.SITE_NAME,
-    locale: SEO_STATIC.LOCALE,
-    images: [
-      {
-        url: SEO_STATIC.OG_IMAGE,
-        width: 1200,
-        height: 630,
-        alt: "YMA Bouncy Castles Terms & Conditions",
-      },
+const DEFAULT_TITLE = "Terms & Conditions";
+const DEFAULT_DESCRIPTION =
+  "Read the YMA Bouncy Castles terms and conditions for bouncy castle hire. Understand our booking, cancellation, and safety policies.";
+const DEFAULT_CANONICAL = "/terms";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const cms = await fetchPageContent("core", "terms");
+
+  const title = cms?.metaTitle || DEFAULT_TITLE;
+  const description = cms?.metaDescription || DEFAULT_DESCRIPTION;
+  const canonical =
+    typeof cms?.canonicalUrl === "string" && cms.canonicalUrl.trim().startsWith("/")
+      ? cms.canonicalUrl.trim()
+      : DEFAULT_CANONICAL;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    keywords: [
+      "terms and conditions",
+      "rental policy",
+      "booking terms",
+      "YMA Bouncy Castles",
     ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Terms & Conditions | YMA Bouncy Castles",
-    description:
-      "Read the YMA Bouncy Castles terms and conditions for bouncy castle hire. Understand our booking, cancellation, and safety policies.",
-    images: ["/og-image.jpg"],
-  },
-};
+    authors: [{ name: SEO_STATIC.SITE_NAME }],
+    creator: SEO_STATIC.CREATOR,
+    publisher: SEO_STATIC.PUBLISHER,
+    applicationName: SEO_STATIC.SITE_NAME,
+    category: "Legal",
+    referrer: "origin-when-cross-origin",
+    openGraph: {
+      title: cms?.metaTitle || "Terms & Conditions | YMA Bouncy Castles",
+      description,
+      url: `${SEO_STATIC.BASE_URL}${canonical}`,
+      type: "website",
+      siteName: SEO_STATIC.SITE_NAME,
+      locale: SEO_STATIC.LOCALE,
+      images: [
+        {
+          url: SEO_STATIC.OG_IMAGE,
+          width: 1200,
+          height: 630,
+          alt: "YMA Bouncy Castles Terms & Conditions",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: cms?.metaTitle || "Terms & Conditions | YMA Bouncy Castles",
+      description,
+      images: ["/og-image.jpg"],
+    },
+  };
+}
 
 export default async function TermsPage() {
   const cms = await fetchPageContent("core", "terms");

@@ -7,45 +7,58 @@ import type { PageBlock } from "@/lib/blocks/types";
 import { fetchPageContent } from "@/lib/pageContent";
 import { SEO_STATIC } from "@/lib/seo-static";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description:
-    "Read the YMA Bouncy Castles privacy policy. Learn how we collect, use, and protect your personal information.",
-  alternates: {
-    canonical: "/privacy-policy",
-  },
-  keywords: ["privacy policy", "data protection", "GDPR", "YMA Bouncy Castles"],
-  authors: [{ name: SEO_STATIC.SITE_NAME }],
-  creator: SEO_STATIC.CREATOR,
-  publisher: SEO_STATIC.PUBLISHER,
-  applicationName: SEO_STATIC.SITE_NAME,
-  category: "Legal",
-  referrer: "origin-when-cross-origin",
-  openGraph: {
-    title: "Privacy Policy | YMA Bouncy Castles",
-    description:
-      "Read the YMA Bouncy Castles privacy policy. Learn how we collect, use, and protect your personal information.",
-    url: `${SEO_STATIC.BASE_URL}/privacy-policy`,
-    type: "website",
-    siteName: SEO_STATIC.SITE_NAME,
-    locale: SEO_STATIC.LOCALE,
-    images: [
-      {
-        url: SEO_STATIC.OG_IMAGE,
-        width: 1200,
-        height: 630,
-        alt: "YMA Bouncy Castles Privacy Policy",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Privacy Policy | YMA Bouncy Castles",
-    description:
-      "Read the YMA Bouncy Castles privacy policy. Learn how we collect, use, and protect your personal information.",
-    images: ["/og-image.jpg"],
-  },
-};
+const DEFAULT_TITLE = "Privacy Policy";
+const DEFAULT_DESCRIPTION =
+  "Read the YMA Bouncy Castles privacy policy. Learn how we collect, use, and protect your personal information.";
+const DEFAULT_CANONICAL = "/privacy-policy";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const cms = await fetchPageContent("core", "privacy-policy");
+
+  const title = cms?.metaTitle || DEFAULT_TITLE;
+  const description = cms?.metaDescription || DEFAULT_DESCRIPTION;
+  const canonical =
+    typeof cms?.canonicalUrl === "string" && cms.canonicalUrl.trim().startsWith("/")
+      ? cms.canonicalUrl.trim()
+      : DEFAULT_CANONICAL;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    keywords: ["privacy policy", "data protection", "GDPR", "YMA Bouncy Castles"],
+    authors: [{ name: SEO_STATIC.SITE_NAME }],
+    creator: SEO_STATIC.CREATOR,
+    publisher: SEO_STATIC.PUBLISHER,
+    applicationName: SEO_STATIC.SITE_NAME,
+    category: "Legal",
+    referrer: "origin-when-cross-origin",
+    openGraph: {
+      title: cms?.metaTitle || "Privacy Policy | YMA Bouncy Castles",
+      description,
+      url: `${SEO_STATIC.BASE_URL}${canonical}`,
+      type: "website",
+      siteName: SEO_STATIC.SITE_NAME,
+      locale: SEO_STATIC.LOCALE,
+      images: [
+        {
+          url: SEO_STATIC.OG_IMAGE,
+          width: 1200,
+          height: 630,
+          alt: "YMA Bouncy Castles Privacy Policy",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: cms?.metaTitle || "Privacy Policy | YMA Bouncy Castles",
+      description,
+      images: ["/og-image.jpg"],
+    },
+  };
+}
 
 export default async function PrivacyPolicyPage() {
   const cms = await fetchPageContent("core", "privacy-policy");
