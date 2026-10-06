@@ -26,8 +26,11 @@ export async function fetchActiveRedirects(): Promise<ActiveRedirect[]> {
     if (!res.ok) return [];
 
     const json = await res.json();
-    const data = json?.data;
-    return Array.isArray(data) ? (data as ActiveRedirect[]) : [];
+    // API shape: { success: true, count, data: { redirects: [...] } }.
+    // Accept a bare array too, in case the shape is ever flattened.
+    const payload = json?.data;
+    const list = Array.isArray(payload) ? payload : payload?.redirects;
+    return Array.isArray(list) ? (list as ActiveRedirect[]) : [];
   } catch {
     return [];
   }

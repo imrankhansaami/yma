@@ -27,12 +27,19 @@ async function getActiveRedirects(): Promise<Redirect[]> {
     if (!res.ok) return cachedRedirects;
 
     const json = (await res.json()) as {
-      status: string;
-      data: Redirect[];
+      success?: boolean;
+      status?: string;
+      data?: Redirect[] | { redirects?: Redirect[] };
     };
 
-    if (json.status === "success" && Array.isArray(json.data)) {
-      cachedRedirects = json.data;
+    // The API answers { success: true, count, data: { redirects: [...] } }.
+    // Accept a bare array too, in case the shape is ever flattened.
+    const payload = json?.data;
+    const list = Array.isArray(payload) ? payload : payload?.redirects;
+    const ok = json?.success === true || json?.status === "success";
+
+    if (ok && Array.isArray(list)) {
+      cachedRedirects = list;
       cacheTimestamp = now;
     }
   } catch {
