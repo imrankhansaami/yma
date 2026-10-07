@@ -1,5 +1,3 @@
-import Script from "next/script";
-
 /**
  * Renders the custom JSON-LD structured data saved in Admin → Pages (Core /
  * Category). Renders nothing when empty.
@@ -13,10 +11,10 @@ export function CmsJsonLd({
 }) {
   if (!jsonLd || !String(jsonLd).trim()) return null;
   return (
-    <Script
+    <script
       id={id}
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: jsonLd }}
+      dangerouslySetInnerHTML={{ __html: String(jsonLd).replace(/</g, "\\u003c") }}
     />
   );
 }

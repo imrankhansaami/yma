@@ -1,4 +1,3 @@
-import Script from "next/script";
 import { SITE_URL } from "@/lib/site-url";
 
 export interface OrganizationJsonLdProps {
@@ -45,10 +44,10 @@ export function OrganizationJsonLd({
   };
 
   return (
-    <Script
+    <script
       id="organization-jsonld"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
     />
   );
 }
@@ -120,10 +119,10 @@ export function LocalBusinessJsonLd({
   };
 
   return (
-    <Script
+    <script
       id="local-business-jsonld"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
     />
   );
 }
@@ -187,10 +186,10 @@ export function ProductJsonLd({
   }
 
   return (
-    <Script
+    <script
       id="product-jsonld"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
     />
   );
 }
@@ -215,10 +214,10 @@ export function BreadcrumbJsonLd({ items }: BreadcrumbJsonLdProps) {
   };
 
   return (
-    <Script
+    <script
       id="breadcrumb-jsonld"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
     />
   );
 }
@@ -250,10 +249,10 @@ export function ItemListJsonLd({ name, items }: ItemListJsonLdProps) {
   };
 
   return (
-    <Script
+    <script
       id="itemlist-jsonld"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
     />
   );
 }
@@ -286,10 +285,10 @@ export function WebsiteJsonLd({
   };
 
   return (
-    <Script
+    <script
       id="website-jsonld"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
     />
   );
 }
@@ -316,10 +315,10 @@ export function FAQPageJsonLd({ questions }: FAQPageJsonLdProps) {
   };
 
   return (
-    <Script
+    <script
       id="faqpage-jsonld"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
     />
   );
 }
@@ -389,10 +388,10 @@ export function BlogPostingJsonLd({
   if (dateModified) jsonLd.dateModified = dateModified;
 
   return (
-    <Script
+    <script
       id="blogposting-jsonld"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
     />
   );
 }
@@ -429,10 +428,10 @@ export function AggregateOfferJsonLd({
   };
 
   return (
-    <Script
+    <script
       id="aggregateoffer-jsonld"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
     />
   );
 }
