@@ -127,10 +127,14 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       }
       return createProduct(formData);
     },
-    onSuccess: () => {
+    onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       if (isEdit) {
+        // Show the slug the server actually stored (it may differ if the
+        // requested one collided and was made unique).
+        const savedSlug = (saved as any)?.slug;
+        if (savedSlug) setValue("slug", savedSlug, { shouldValidate: false });
         setShowSuccessModal(true);
         return;
       }
@@ -255,9 +259,11 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const watchedSlug = watch("slug");
 
-  // Auto-generate slug from product name (only if user hasn't manually edited it)
+  // Auto-generate slug from product name (only if user hasn't manually edited it).
+  // On edit we keep the stored slug so the field reflects what the URL actually
+  // is — the admin can still change it by hand.
   useEffect(() => {
-    if (slugManuallyEdited) return;
+    if (isEdit || slugManuallyEdited) return;
     const generated = (watchedName || "")
       .toLowerCase()
       .trim()
@@ -265,7 +271,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-");
     setValue("slug", generated, { shouldValidate: false });
-  }, [watchedName, slugManuallyEdited, setValue]);
+  }, [watchedName, slugManuallyEdited, setValue, isEdit]);
 
   useEffect(() => {
     const currentAltTexts = watchedImageAltTexts ?? [];

@@ -596,22 +596,20 @@ productSchema.pre("save", async function (next) {
     doc.metaTitle = sanitizeSeoMetaTitle(doc.metaTitle);
   }
   const previousSlug = normalizeSlug(doc.slug);
-  const hasSlug = previousSlug.length > 0;
-  const shouldRegenerate = !hasSlug || doc.isModified("name");
-  if (shouldRegenerate) {
-    doc.slug = await createUniqueSlug(
-      String(doc.name || ""),
-      doc.constructor as Model<IProductModel>,
-      doc._id?.toString(),
-    );
-  } else {
-    doc.slug = previousSlug;
-  }
+  // Honour an explicitly provided slug (from the admin "URL Slug" field); only
+  // derive one from the name when none was supplied. Either way the result is
+  // made unique, so a genuinely taken slug still gets a "-2" suffix.
+  const base = previousSlug || String(doc.name || "");
+  doc.slug = await createUniqueSlug(
+    base,
+    doc.constructor as Model<IProductModel>,
+    doc._id?.toString(),
+  );
 
   const aliases = Array.isArray(doc.slugAliases) ? doc.slugAliases : [];
   doc.slugAliases = normalizeSlugList([
     ...aliases,
-    shouldRegenerate ? previousSlug : undefined,
+    previousSlug && previousSlug !== doc.slug ? previousSlug : undefined,
   ]).filter((item) => item !== doc.slug);
 
   // Keep the internal numeric size in step with the typed size / dimensions.
@@ -657,7 +655,9 @@ productSchema.pre("findOneAndUpdate", async function (next) {
 
   const name = update?.name ?? update?.$set?.name;
   const incomingSlug = update?.slug ?? update?.$set?.slug;
-  const candidate = String(name || incomingSlug || "").trim();
+  // The "URL Slug" field wins when supplied; fall back to the product name only
+  // when no slug was provided (e.g. an API caller that omits it).
+  const candidate = String(incomingSlug || name || "").trim();
   const normalizedIncomingSlug = incomingSlug ? normalizeSlug(incomingSlug) : "";
   if (incomingSlug && !normalizedIncomingSlug) {
     const err = new Error("Invalid slug format");
