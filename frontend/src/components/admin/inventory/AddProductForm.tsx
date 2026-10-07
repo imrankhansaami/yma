@@ -581,6 +581,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                 <input
                     {...register("dimensions.length")}
                     type="number"
+                    step="any"
+                    inputMode="decimal"
                     className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] focus:outline-none focus:border-brand-orange-500"
                 />
             </div>
@@ -589,6 +591,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                 <input
                     {...register("dimensions.width")}
                     type="number"
+                    step="any"
+                    inputMode="decimal"
                     className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] focus:outline-none focus:border-brand-orange-500"
                 />
             </div>
@@ -597,6 +601,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                 <input
                     {...register("dimensions.height")}
                     type="number"
+                    step="any"
+                    inputMode="decimal"
                     className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] focus:outline-none focus:border-brand-orange-500"
                 />
             </div>
