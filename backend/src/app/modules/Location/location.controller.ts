@@ -108,6 +108,9 @@ export const createLocationHandler = asyncHandler(
       metaTitle: req.body.metaTitle || "",
       metaDescription: req.body.metaDescription || "",
       content: req.body.content || "",
+      mapQuery: req.body.mapQuery || "",
+      mapZoom:
+        typeof req.body.mapZoom === "number" ? req.body.mapZoom : 12,
       isActive: req.body.isActive ?? true,
       metadata: req.body.metadata || {},
     });

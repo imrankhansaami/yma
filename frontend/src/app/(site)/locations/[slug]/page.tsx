@@ -33,6 +33,8 @@ type ApiLocation = {
   metaDescription?: string;
   description?: string;
   content?: string;
+  mapQuery?: string;
+  mapZoom?: number;
   isActive?: boolean;
 };
 
@@ -270,6 +272,15 @@ export default async function LocationDetailPage({
     resolvedLocation?.slugAliases,
   );
   const locationQuery = locationQueryValue(resolvedLocation?.name, canonicalSlug);
+
+  // The map defaults to the page's place name; admins can override it with an
+  // address, a place, or "lat,lng" (Admin → Pages → Locations → Map).
+  const mapQuery =
+    String(resolvedLocation?.mapQuery || "").trim() || locationName;
+  const mapZoom =
+    typeof resolvedLocation?.mapZoom === "number" && resolvedLocation.mapZoom > 0
+      ? resolvedLocation.mapZoom
+      : 12;
   const defaults = await getSeoDefaults();
 
   // CMS-managed copy (edited in Admin → Pages → Locations).
@@ -366,8 +377,8 @@ export default async function LocationDetailPage({
             <iframe
               title={`${locationName} map`}
               src={`https://www.google.com/maps?q=${encodeURIComponent(
-                locationName,
-              )}&z=12&output=embed`}
+                mapQuery,
+              )}&z=${mapZoom}&output=embed`}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               className="h-full w-full border-0 min-h-[280px]"

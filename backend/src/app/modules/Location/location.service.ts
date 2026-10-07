@@ -212,6 +212,8 @@ export const createLocation = async (
     metaTitle: data.metaTitle || "",
     metaDescription: data.metaDescription || "",
     content: data.content || "",
+    mapQuery: data.mapQuery || "",
+    mapZoom: typeof data.mapZoom === "number" ? data.mapZoom : 12,
     isActive: data.isActive ?? true,
     metadata: data.metadata || {},
     ...(Array.isArray(data.slugAliases) ? { slugAliases: data.slugAliases } : {}),
@@ -276,6 +278,8 @@ export const updateLocation = async (
   if (data.metaDescription !== undefined)
     updateData.metaDescription = data.metaDescription;
   if (data.content !== undefined) updateData.content = data.content;
+  if (data.mapQuery !== undefined) updateData.mapQuery = data.mapQuery;
+  if (data.mapZoom !== undefined) updateData.mapZoom = data.mapZoom;
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
   if (data.metadata !== undefined) updateData.metadata = data.metadata;
 

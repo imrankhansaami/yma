@@ -43,6 +43,8 @@ export default function EditLocationPage() {
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [mapQuery, setMapQuery] = useState("");
+  const [mapZoom, setMapZoom] = useState(12);
 
   // CMS page blocks for this location's long-form copy.
   const { data: pageContent } = useQuery({
@@ -69,6 +71,12 @@ export default function EditLocationPage() {
       setMetaTitle(location.metaTitle || "");
       setMetaDescription(location.metaDescription || "");
       setIsActive(location.isActive ?? true);
+      setMapQuery(location.mapQuery || "");
+      setMapZoom(
+        typeof location.mapZoom === "number" && location.mapZoom > 0
+          ? location.mapZoom
+          : 12,
+      );
     }
   }, [location]);
 
@@ -81,6 +89,8 @@ export default function EditLocationPage() {
         metaTitle,
         metaDescription,
         isActive,
+        mapQuery,
+        mapZoom,
       });
       return data;
     },
@@ -174,6 +184,56 @@ export default function EditLocationPage() {
               onChange={(e) => setDescription(e.target.value)}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
               rows={2}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-slate-200 p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-brand-black-950 uppercase tracking-wide">
+            Map
+          </h2>
+          <p className="text-xs text-slate-500">
+            Sets the pin shown in this page&apos;s map. Enter a place, a full
+            address, or coordinates like{" "}
+            <span className="font-mono">51.7786,0.1307</span>. Leave it blank to
+            use the page&apos;s place name automatically.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Map location
+              </label>
+              <input
+                type="text"
+                value={mapQuery}
+                onChange={(e) => setMapQuery(e.target.value)}
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                placeholder="e.g. Old Harlow, or 51.7786,0.1307"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Zoom
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={21}
+                value={mapZoom}
+                onChange={(e) => setMapZoom(Number(e.target.value) || 12)}
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-md border border-slate-200">
+            <iframe
+              title="Map preview"
+              src={`https://www.google.com/maps?q=${encodeURIComponent(
+                mapQuery.trim() || location.name || "",
+              )}&z=${mapZoom}&output=embed`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="h-64 w-full border-0"
             />
           </div>
         </div>

@@ -151,6 +151,20 @@ const LocationSchema = new Schema<ILocation>(
       type: String,
     },
 
+    /** Google Maps query shown on the location page: place, address, or "lat,lng". */
+    mapQuery: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    /** Google Maps zoom level for the location page map. */
+    mapZoom: {
+      type: Number,
+      min: 1,
+      max: 21,
+      default: 12,
+    },
+
     isActive: {
       type: Boolean,
       default: true,
