@@ -2,7 +2,7 @@ import ReserveNowBtn from "@/components/common/btn/ReserveNowBtn";
 import CtaReadySection from "@/components/sections/CtaReadySection";
 import DynamicOneStopPartyShop from "@/components/sections/DynamicOneStopPartyShop";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
-import { CheckCircle2, Home } from "lucide-react";
+import { Home } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
