@@ -26,7 +26,10 @@ const eslintConfig = [
 
       // (optional) turn off other TS-specific type checking rules if needed
       "@typescript-eslint/explicit-module-boundary-types": "off",
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
     },
   },
 ];

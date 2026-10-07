@@ -39,8 +39,6 @@ type SeoSettingsResponse = {
 
 export type SeoDefaults = typeof fallbackMeta;
 
-const SEO_TITLE_MAX_LENGTH = 60;
-
 export async function getSeoDefaults(): Promise<SeoDefaults> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SERVER_URI;
@@ -114,51 +112,13 @@ function normalizeSpace(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
-function getBrandAliases(siteName: string) {
-  const normalizedSite = normalizeSpace(siteName);
-  const firstToken = normalizedSite.split(" ")[0] || normalizedSite;
-  const acronym =
-    normalizedSite
-      .split(" ")
-      .map((part) => part[0] || "")
-      .join("")
-      .toUpperCase() || firstToken.toUpperCase();
-
-  const aliases = new Set<string>();
-  if (normalizedSite) aliases.add(normalizedSite.toLowerCase());
-  if (firstToken) aliases.add(firstToken.toLowerCase());
-  if (acronym) aliases.add(acronym.toLowerCase());
-  return aliases;
-}
-
-function trimToLength(value: string, maxLength: number) {
-  if (value.length <= maxLength) return value;
-  const cutoff = Math.max(0, maxLength - 1);
-  const compact = value.slice(0, cutoff).trim().replace(/[|:,\-\/\s]+$/, "");
-  if (!compact) return value.slice(0, maxLength);
-  return `${compact}...`;
-}
-
-export function buildSeoTitle(rawTitle: string, siteName: string) {
-  const input = normalizeSpace(rawTitle);
-  const aliases = getBrandAliases(siteName);
-
-  // Drop standalone brand segments (e.g. "... | YMA Bouncy Castles") so the
-  // brand is never repeated. The site name is intentionally NOT appended here:
-  // page titles stand on their own.
-  const cleanedSegments = input
-    .split("|")
-    .map((segment) => normalizeSpace(segment))
-    .filter(Boolean)
-    .filter((segment) => !aliases.has(segment.toLowerCase()));
-
-  const uniqueSegments = Array.from(
-    new Set(cleanedSegments.map((segment) => segment.toLowerCase())),
-  ).map((lower) => cleanedSegments.find((segment) => segment.toLowerCase() === lower)!);
-
-  const base = uniqueSegments.length
-    ? normalizeSpace(uniqueSegments.join(" | "))
-    : input;
-
-  return trimToLength(base, SEO_TITLE_MAX_LENGTH);
+/**
+ * Resolve a page's SEO title. An explicitly authored meta title is used exactly
+ * as entered: we do NOT strip brand segments or append a site-name suffix, so
+ * the rendered <title> matches the admin field verbatim (whitespace aside).
+ * Callers pass an already-resolved fallback (e.g. the product name or a CMS
+ * heading) for pages without a custom meta title.
+ */
+export function buildSeoTitle(rawTitle: string, _siteName?: string) {
+  return normalizeSpace(rawTitle);
 }

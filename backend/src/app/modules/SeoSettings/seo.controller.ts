@@ -27,19 +27,12 @@ const getDefaultsWithoutKey = () => {
 
 const normalizePayload = (payload: SeoPayload) => {
   const cleaned: SeoPayload = {};
-  const nextSiteName =
-    typeof payload.siteName === "string" && payload.siteName.trim()
-      ? payload.siteName.trim()
-      : undefined;
 
   if (typeof payload.siteName === "string") {
     cleaned.siteName = payload.siteName.trim();
   }
   if (typeof payload.defaultMetaTitle === "string") {
-    cleaned.defaultMetaTitle = sanitizeSeoMetaTitle(
-      payload.defaultMetaTitle,
-      nextSiteName,
-    );
+    cleaned.defaultMetaTitle = sanitizeSeoMetaTitle(payload.defaultMetaTitle);
   }
   if (typeof payload.defaultMetaDescription === "string") {
     cleaned.defaultMetaDescription = payload.defaultMetaDescription.trim();
@@ -53,7 +46,6 @@ const normalizePayload = (payload: SeoPayload) => {
   if (typeof payload.defaultOpenGraphTitle === "string") {
     cleaned.defaultOpenGraphTitle = sanitizeSeoMetaTitle(
       payload.defaultOpenGraphTitle,
-      nextSiteName,
     );
   }
   if (typeof payload.defaultOpenGraphDescription === "string") {
