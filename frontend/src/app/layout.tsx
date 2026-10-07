@@ -100,10 +100,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: siteName,
     },
     icons: {
-      icon: [
-        { url: "/favicon-96x96.png", type: "image/png", sizes: "96x96" },
-        { url: "/favicon.svg", type: "image/svg+xml" },
-      ],
+      icon: [{ url: "/favicon-96x96.png", type: "image/png", sizes: "96x96" }],
       shortcut: "/favicon.ico",
       apple: "/apple-touch-icon.png",
     },
@@ -127,7 +124,6 @@ export default function RootLayout({
           href="/favicon-96x96.png"
           sizes="96x96"
         />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link
           rel="apple-touch-icon"
