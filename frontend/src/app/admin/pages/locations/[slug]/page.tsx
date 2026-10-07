@@ -74,7 +74,7 @@ export default function EditLocationPage() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const { data } = await api.put(`/locations/${location._id}`, {
+      const { data } = await api.patch(`/locations/${location._id}`, {
         name,
         description,
         content,
