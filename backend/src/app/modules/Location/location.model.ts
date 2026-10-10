@@ -222,19 +222,15 @@ async function createUniqueLocationSlug(baseName: string, excludeId?: string) {
 LocationSchema.pre("save", async function (next) {
   const doc = this as any;
   const previousSlug = normalizeSlug(doc.slug);
-  const hasSlug = previousSlug.length > 0;
-  const shouldRegenerate = !hasSlug || doc.isModified("name");
-
-  if (shouldRegenerate) {
-    doc.slug = await createUniqueLocationSlug(String(doc.name || ""), doc._id?.toString());
-  } else {
-    doc.slug = previousSlug;
-  }
+  // Honour a slug supplied by the admin; only derive one from the name when
+  // none was given. The result is always made unique.
+  const base = previousSlug || String(doc.name || "");
+  doc.slug = await createUniqueLocationSlug(base, doc._id?.toString());
 
   const aliases = Array.isArray(doc.slugAliases) ? doc.slugAliases : [];
   doc.slugAliases = normalizeSlugList([
     ...aliases,
-    shouldRegenerate ? previousSlug : undefined,
+    previousSlug && previousSlug !== doc.slug ? previousSlug : undefined,
   ]).filter((item) => item !== doc.slug);
 
   next();
@@ -250,7 +246,8 @@ LocationSchema.pre("findOneAndUpdate", async function (next) {
 
   const name = update?.name ?? update?.$set?.name;
   const incomingSlug = update?.slug ?? update?.$set?.slug;
-  const candidate = String(name || incomingSlug || "").trim();
+  // An explicit slug (the admin's URL field) wins; fall back to the name.
+  const candidate = String(incomingSlug || name || "").trim();
 
   if (incomingSlug) {
     const normalizedIncoming = normalizeSlug(incomingSlug);

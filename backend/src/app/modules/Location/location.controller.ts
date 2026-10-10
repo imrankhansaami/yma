@@ -5,6 +5,8 @@ import * as LocationService from "./location.service";
 import asyncHandler from "../../utils/asyncHandler";
 import ApiError from "../../utils/apiError";
 import { revalidatePaths } from "../../utils/revalidate";
+import PageContent from "../PageContent/pageContent.model";
+import { normalizeSlug } from "../../utils/slug";
 
 // Create location
 export const createLocationHandler = asyncHandler(
@@ -86,6 +88,7 @@ export const createLocationHandler = asyncHandler(
     // Create location
     const location = await LocationModel.create({
       name,
+      ...(req.body.slug ? { slug: normalizeSlug(req.body.slug) } : {}),
       type,
       country,
       state,
@@ -174,6 +177,12 @@ export const updateLocationHandler = asyncHandler(
     const { id } = req.params;
     const { name, postcode, state, city } = req.body;
 
+    const before = await LocationModel.findById(id).select("slug");
+    if (!before) {
+      throw new ApiError("Location not found", 404);
+    }
+    const previousSlug = normalizeSlug(before.slug);
+
     // Check for duplicate location when updating
     if (name || postcode || state || city) {
       const existingLocation =
@@ -198,7 +207,38 @@ export const updateLocationHandler = asyncHandler(
       throw new ApiError("Location not found", 404);
     }
 
-    revalidatePaths(["/locations", `/locations/${location.slug}`]);
+    const nextSlug = normalizeSlug(location.slug);
+
+    // When the page address changes, carry the location's CMS sections to the
+    // new key so the page keeps its custom blocks. The old URL keeps working
+    // through the slug alias the model records.
+    if (previousSlug && nextSlug && previousSlug !== nextSlug) {
+      const clash = await PageContent.findOne({
+        pageType: "location",
+        pageKey: nextSlug,
+      });
+      if (!clash) {
+        await PageContent.updateOne(
+          { pageType: "location", pageKey: previousSlug },
+          { $set: { pageKey: nextSlug } },
+        );
+      }
+    }
+
+    revalidatePaths(
+      [
+        "/locations",
+        "/sitemap.xml",
+        ...(previousSlug ? [`/locations/${previousSlug}`] : []),
+        `/locations/${nextSlug}`,
+      ],
+      [
+        ...(previousSlug
+          ? [`page-content:location:${previousSlug}`]
+          : []),
+        `page-content:location:${nextSlug}`,
+      ],
+    );
 
     res.status(200).json({
       success: true,

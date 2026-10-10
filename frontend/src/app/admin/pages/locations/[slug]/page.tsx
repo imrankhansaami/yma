@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminToast } from "@/components/ui/admin-toast";
 import TextEditor from "@/components/admin/inventory/TextEditor";
@@ -25,6 +25,7 @@ const LOCATION_BLOCK_TYPES = [
 
 export default function EditLocationPage() {
   const { slug } = useParams<{ slug: string }>();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { notify } = useAdminToast();
 
@@ -45,6 +46,7 @@ export default function EditLocationPage() {
   const [isActive, setIsActive] = useState(true);
   const [mapQuery, setMapQuery] = useState("");
   const [mapZoom, setMapZoom] = useState(12);
+  const [urlSlug, setUrlSlug] = useState("");
 
   // CMS page blocks for this location's long-form copy.
   const { data: pageContent } = useQuery({
@@ -72,6 +74,7 @@ export default function EditLocationPage() {
       setMetaDescription(location.metaDescription || "");
       setIsActive(location.isActive ?? true);
       setMapQuery(location.mapQuery || "");
+      setUrlSlug(location.slug || "");
       setMapZoom(
         typeof location.mapZoom === "number" && location.mapZoom > 0
           ? location.mapZoom
@@ -91,13 +94,22 @@ export default function EditLocationPage() {
         isActive,
         mapQuery,
         mapZoom,
+        ...(urlSlug.trim() ? { slug: urlSlug.trim() } : {}),
       });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["locations"] });
       queryClient.invalidateQueries({ queryKey: ["location", slug] });
       notify({ title: "Success", message: "Location updated successfully", variant: "success" });
+
+      // The address is part of this editor's own URL, so follow the location to
+      // its new admin path when the slug changes.
+      const savedSlug = (data as any)?.data?.slug ?? (data as any)?.slug;
+      if (savedSlug && savedSlug !== slug) {
+        setUrlSlug(savedSlug);
+        router.replace(`/admin/pages/locations/${savedSlug}`);
+      }
     },
     onError: () => {
       notify({ title: "Error", message: "Failed to update location", variant: "error" });
@@ -174,6 +186,27 @@ export default function EditLocationPage() {
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              URL slug
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-sm text-slate-400">
+                /locations/
+              </span>
+              <input
+                type="text"
+                value={urlSlug}
+                onChange={(e) => setUrlSlug(e.target.value)}
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                placeholder="e.g. cm17"
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              The page address. Changing it keeps old links working — they
+              redirect to the new URL.
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">

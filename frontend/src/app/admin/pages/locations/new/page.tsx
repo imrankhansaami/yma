@@ -25,6 +25,7 @@ export default function NewLocationPage() {
   const [metaDescription, setMetaDescription] = useState("");
   const [mapQuery, setMapQuery] = useState("");
   const [mapZoom, setMapZoom] = useState(12);
+  const [urlSlug, setUrlSlug] = useState("");
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -40,6 +41,7 @@ export default function NewLocationPage() {
         metaDescription,
         mapQuery,
         mapZoom,
+        ...(urlSlug.trim() ? { slug: urlSlug.trim() } : {}),
         isActive: true,
       });
       return data;
@@ -133,6 +135,23 @@ export default function NewLocationPage() {
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              URL slug
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-sm text-slate-400">
+                /locations/
+              </span>
+              <input
+                type="text"
+                value={urlSlug}
+                onChange={(e) => setUrlSlug(e.target.value)}
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                placeholder="Leave blank to derive from the name"
               />
             </div>
           </div>
