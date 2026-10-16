@@ -114,7 +114,7 @@ export default async function LocationsPage() {
     showcases[index] || DEFAULT_SHOWCASE_COPY[index];
 
   return (
-    <main className="bg-white text-brand-ink-900 mt-16 md:mt-32 font-inter">
+    <main className="cms-page bg-white text-brand-ink-900 mt-16 md:mt-32 font-inter">
       <section className="relative overflow-hidden">
         <div className="relative mx-auto max-w-[1280px] px-4  py-12  md:py-16 text-center">
           <p className="text-[11px] sm:text-sm capitalize text-brand-gray-500 font-medium mb-4 sm:mb-5 font-inter">

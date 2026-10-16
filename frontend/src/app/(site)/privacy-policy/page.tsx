@@ -63,7 +63,7 @@ export default async function PrivacyPolicyPage() {
   const cms = await fetchPageContent("core", "privacy-policy");
   const blocks = (cms?.sections || []) as PageBlock[];
   return (
-    <main className="w-full bg-white text-brand-ink-900 font-inter mt-24 md:mt-36">
+    <main className="cms-page w-full bg-white text-brand-ink-900 font-inter mt-24 md:mt-36">
       <div className="mx-auto w-full max-w-[900px] px-6 md:px-8 pb-16">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 pt-6 text-[13px] leading-none text-brand-gray-600">

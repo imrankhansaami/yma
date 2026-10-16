@@ -120,7 +120,7 @@ export default async function FaqsPage() {
     : faqs;
 
   return (
-    <main className="w-full bg-white text-brand-ink-900 font-inter mt-24 md:mt-36">
+    <main className="cms-page w-full bg-white text-brand-ink-900 font-inter mt-24 md:mt-36">
       <FAQPageJsonLd questions={faqItems} />
       <div className="mx-auto w-full max-w-[1000px] px-6 md:px-8 pb-16">
         {/* Breadcrumb */}

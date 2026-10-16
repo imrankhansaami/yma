@@ -125,7 +125,7 @@ export default async function CmsPage({
   const showCatalogue = key.startsWith("bouncy-castles-hire");
 
   return (
-    <main className="bg-white text-brand-ink-900 font-inter mt-16 md:mt-28">
+    <main className="cms-page bg-white text-brand-ink-900 font-inter mt-16 md:mt-28">
       <CmsJsonLd jsonLd={cms.customJsonLd} id={`custom-jsonld-${key}`} />
 
       <div className="mx-auto w-full max-w-[1100px] px-4 sm:px-6 py-10 sm:py-14">

@@ -126,7 +126,7 @@ const Page = async () => {
   const hasBlocks = blocks.length > 0;
 
   return (
-    <div>
+    <div className="cms-page">
       {hasBlocks ? (
         <PageBlocks blocks={blocks} />
       ) : (
