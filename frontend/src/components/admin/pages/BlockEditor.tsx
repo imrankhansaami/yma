@@ -197,6 +197,25 @@ function InsertPoint({ onAdd }: { onAdd: () => void }) {
 
 type OutlineItem = { level: number; text: string };
 
+/** Headings written inside a block's rich text, in document order. */
+function htmlOutline(html: unknown): OutlineItem[] {
+  const source = String(html ?? "");
+  if (!source || !/<h[1-6][\s>]/i.test(source)) return [];
+
+  const out: OutlineItem[] = [];
+  const pattern = /<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(source)) !== null) {
+    const text = stripTags(match[2])
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (text) out.push({ level: Number(match[1]), text });
+  }
+  return out;
+}
+
 /** The headings a single block contributes to the page outline, in order. */
 function blockOutline(block: PageSection): OutlineItem[] {
   const data = (block.data as AnyRecord) || {};
@@ -237,18 +256,76 @@ function blockOutline(block: PageSection): OutlineItem[] {
       add(2, data.occasionsTitle);
       break;
     case "columns":
-      (data.columns || []).forEach((column: AnyRecord) => add(3, column?.heading));
+      (data.columns || []).forEach((column: AnyRecord) => {
+        add(3, column?.heading);
+        out.push(...htmlOutline(column?.html));
+        (column?.blocks || []).forEach((nested: PageSection) =>
+          out.push(...blockOutline(nested)),
+        );
+      });
       break;
     case "richText":
       add(2, block.title);
+      out.push(...htmlOutline(block.content));
+      break;
+    case "paragraph":
+      out.push(...htmlOutline(data.html));
+      break;
+    case "html":
+      out.push(...htmlOutline(data.html));
       break;
     default:
       // Section blocks (hero, faq, featureGrid, ...) render their title as an H2.
       add(2, data.title ?? data.heading ?? block.title);
+      out.push(...htmlOutline(data.html));
       break;
   }
 
   return out;
+}
+
+/** SEO checks over the finished outline. */
+function outlineIssues(outline: OutlineItem[]): {
+  level: "error" | "warn";
+  message: string;
+}[] {
+  const issues: { level: "error" | "warn"; message: string }[] = [];
+
+  const h1s = outline.filter((item) => item.level === 1);
+  if (outline.length === 0) {
+    return issues;
+  }
+  if (h1s.length === 0) {
+    issues.push({ level: "error", message: "No H1 on the page." });
+  } else if (h1s.length > 1) {
+    issues.push({
+      level: "error",
+      message: `${h1s.length} H1s. A page should have exactly one.`,
+    });
+  }
+
+  let previous = 1;
+  outline.forEach((item) => {
+    if (item.level > previous + 1) {
+      issues.push({
+        level: "warn",
+        message: `H${previous} → H${item.level} skips H${previous + 1}: “${item.text}”.`,
+      });
+    }
+    previous = item.level;
+  });
+
+  outline
+    .filter((item) => item.text.length > 70)
+    .slice(0, 3)
+    .forEach((item) => {
+      issues.push({
+        level: "warn",
+        message: `H${item.level} is ${item.text.length} characters long. Keep headings under ~70.`,
+      });
+    });
+
+  return issues;
 }
 
 /** The whole page outline: the template's H1 then every block's headings. */
@@ -1277,7 +1354,8 @@ function BlockFields({
         </div>
       );
 
-    case "heading":
+    case "heading": {
+      const level = Number(data.level ?? 2);
       return (
         <div className="space-y-3">
           <TextArea
@@ -1286,25 +1364,45 @@ function BlockFields({
             onChange={(v) => setData({ text: v })}
             rows={2}
           />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Select
-              label="Level"
-              value={String(data.level ?? 2)}
-              onChange={(v) => setData({ level: Number(v) })}
-              options={[1, 2, 3, 4, 5, 6].map((n) => ({
-                label: `H${n}`,
-                value: String(n),
-              }))}
-            />
-            <Select
-              label="Align"
-              value={data.align ?? ""}
-              onChange={(v) => setData({ align: v })}
-              options={ALIGN_OPTIONS}
-            />
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <span className="mb-1 block text-xs font-medium text-slate-600">
+                Level
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[1, 2, 3, 4, 5, 6].map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setData({ level: option })}
+                    className={`h-8 min-w-[34px] rounded-md px-2 text-[11px] font-semibold transition-colors ${
+                      level === option
+                        ? "bg-brand-black-950 text-white"
+                        : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    H{option}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="w-32">
+              <Select
+                label="Align"
+                value={data.align ?? ""}
+                onChange={(v) => setData({ align: v })}
+                options={ALIGN_OPTIONS}
+              />
+            </div>
           </div>
+          <p className="text-[11px] text-slate-400">
+            Renders as a real{" "}
+            <span className="font-mono">{`<h${level}>`}</span> tag, so search
+            engines read it as this section&apos;s heading.
+          </p>
         </div>
       );
+    }
 
     case "paragraph":
       return (
@@ -1324,6 +1422,11 @@ function BlockFields({
             onChange={(v) => setData({ align: v })}
             options={ALIGN_OPTIONS}
           />
+          <p className="text-[11px] text-slate-400">
+            Write the whole section in one box: use the <b>H</b> buttons in the
+            toolbar to make a line a real heading. Headings written here are
+            picked up by the Outline panel and read by Google.
+          </p>
         </div>
       );
 
@@ -1782,7 +1885,7 @@ export default function BlockEditor({
   /* --- Heading outline ---------------------------------------------------- */
 
   const outline = pageOutline(pageHeading, ordered);
-  const h1Count = outline.filter((item) => item.level === 1).length;
+  const issues = outlineIssues(outline);
 
   const copyOutline = async () => {
     const text = outline
@@ -1916,17 +2019,15 @@ export default function BlockEditor({
                 Heading outline
               </span>
               <span className="text-slate-400">{outline.length} headings</span>
-              <span
-                className={
-                  h1Count === 1
-                    ? "font-medium text-green-600"
-                    : "font-medium text-amber-600"
-                }
-              >
-                {h1Count === 1
-                  ? "1 × H1 ✓"
-                  : `${h1Count} × H1 — a page should have exactly one`}
-              </span>
+              {issues.length === 0 ? (
+                <span className="font-medium text-green-600">
+                  ✓ structure looks good
+                </span>
+              ) : (
+                <span className="font-medium text-amber-600">
+                  {issues.length} thing{issues.length === 1 ? "" : "s"} to check
+                </span>
+              )}
             </div>
             <button
               type="button"
@@ -1959,6 +2060,22 @@ export default function BlockEditor({
               ))}
             </ol>
           )}
+
+          {issues.length > 0 ? (
+            <ul className="mt-3 space-y-1 border-t border-slate-100 pt-3">
+              {issues.map((issue, index) => (
+                <li
+                  key={index}
+                  className={`text-[11px] ${
+                    issue.level === "error" ? "text-red-600" : "text-amber-600"
+                  }`}
+                >
+                  {issue.level === "error" ? "✕ " : "! "}
+                  {issue.message}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : null}
 
