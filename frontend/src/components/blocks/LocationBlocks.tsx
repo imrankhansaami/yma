@@ -1,5 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
 
+import { RichText } from "@/components/common/RichText";
 import type {
   LocationBodyContent,
   LocationHeroContent,
@@ -35,6 +36,13 @@ export function LocationHeroBlock({
 }) {
   const title = content?.title?.trim();
   const paragraphs = (content?.paragraphs || []).filter((p) => p?.trim());
+  const html = String(content?.html || "").trim();
+
+  // Copy saved in the rich editor replaces the structured fields.
+  if (html) {
+    return <RichText html={html} className="max-w-none" />;
+  }
+
   if (!title && paragraphs.length === 0) return null;
 
   return (
@@ -79,7 +87,9 @@ export function LocationBodyBlock({
 
   return (
     <div className="mt-8 sm:mt-10 flex flex-col gap-10 text-brand-ink-900">
-      {content.aboutTitle?.trim() || about.length ? (
+      {String(content.aboutHtml || "").trim() ? (
+        <RichText html={String(content.aboutHtml)} className="max-w-none" />
+      ) : content.aboutTitle?.trim() || about.length ? (
         <div className="space-y-3">
           {content.aboutTitle?.trim() ? (
             <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight">
@@ -97,7 +107,9 @@ export function LocationBodyBlock({
         </div>
       ) : null}
 
-      {content.whyTitle?.trim() || whyItems.length ? (
+      {String(content.whyHtml || "").trim() ? (
+        <RichText html={String(content.whyHtml)} className="max-w-none" />
+      ) : content.whyTitle?.trim() || whyItems.length ? (
         <div className="space-y-3">
           {content.whyTitle?.trim() ? (
             <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight">
@@ -111,7 +123,9 @@ export function LocationBodyBlock({
         </div>
       ) : null}
 
-      {content.servicesTitle?.trim() || servicesItems.length ? (
+      {String(content.servicesHtml || "").trim() ? (
+        <RichText html={String(content.servicesHtml)} className="max-w-none" />
+      ) : content.servicesTitle?.trim() || servicesItems.length ? (
         <div className="space-y-3">
           {content.servicesTitle?.trim() ? (
             <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight">
@@ -125,7 +139,9 @@ export function LocationBodyBlock({
         </div>
       ) : null}
 
-      {content.safetyTitle?.trim() || safetyItems.length ? (
+      {String(content.safetyHtml || "").trim() ? (
+        <RichText html={String(content.safetyHtml)} className="max-w-none" />
+      ) : content.safetyTitle?.trim() || safetyItems.length ? (
         <div className="space-y-3">
           {content.safetyTitle?.trim() ? (
             <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight">
@@ -139,7 +155,9 @@ export function LocationBodyBlock({
         </div>
       ) : null}
 
-      {content.occasionsTitle?.trim() || occasions.length ? (
+      {String(content.occasionsHtml || "").trim() ? (
+        <RichText html={String(content.occasionsHtml)} className="max-w-none" />
+      ) : content.occasionsTitle?.trim() || occasions.length ? (
         <div className="pt-8 space-y-4">
           {content.occasionsTitle?.trim() ? (
             <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight">

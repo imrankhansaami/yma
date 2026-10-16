@@ -7,6 +7,7 @@ import TextEditor from "@/components/admin/inventory/TextEditor";
 import BlockEditor from "@/components/admin/pages/BlockEditor";
 import { GENERIC_BLOCK_TYPES } from "@/lib/blocks/types";
 import { locationDisplayName } from "@/lib/locations";
+import { bodyToHtml, heroToHtml } from "@/lib/blocks/locationContent";
 import {
   getPageContentByKey,
   PageSection,
@@ -60,10 +61,33 @@ export default function EditLocationPage() {
   const [useSavedContent, setUseSavedContent] = useState(true);
 
   useEffect(() => {
-    if (pageContent) {
-      setSections(pageContent.sections || []);
-      setUseSavedContent(pageContent.isActive !== false);
-    }
+    if (!pageContent) return;
+
+    // Pages saved before the WYSIWYG change still hold structured copy. Seed the
+    // rich text fields from it, so the editor opens with the real copy and the
+    // next save stores it in the new format. The old fields are kept intact.
+    const migrated = (pageContent.sections || []).map((section) => {
+      const data = { ...((section.data as Record<string, any>) || {}) };
+
+      if (section.type === "locationHero" && !String(data.html || "").trim()) {
+        const html = heroToHtml(data);
+        if (html.trim()) data.html = html;
+      }
+
+      if (section.type === "locationBody") {
+        const converted = bodyToHtml(data);
+        Object.entries(converted).forEach(([key, value]) => {
+          if (!String(data[key] || "").trim() && String(value || "").trim()) {
+            data[key] = value;
+          }
+        });
+      }
+
+      return { ...section, data };
+    });
+
+    setSections(migrated);
+    setUseSavedContent(pageContent.isActive !== false);
   }, [pageContent]);
 
   useEffect(() => {

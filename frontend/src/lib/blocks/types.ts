@@ -237,6 +237,8 @@ export type LocationItem = { title: string; body: string };
 export type LocationHeroContent = {
   title: string;
   paragraphs: string[];
+  /** Rich text version; when present it replaces title + paragraphs. */
+  html?: string;
 };
 
 /** The long-form sections under a location detail page's product grid. */
@@ -252,7 +254,22 @@ export type LocationBodyContent = {
   occasionsTitle: string;
   occasionsSubtitle: string;
   occasionsItems: string[];
+  /** Rich text versions; when present they replace the legacy fields above. */
+  aboutHtml?: string;
+  whyHtml?: string;
+  servicesHtml?: string;
+  safetyHtml?: string;
+  occasionsHtml?: string;
 };
+
+/** The sections of a location body, in page order. */
+export const LOCATION_BODY_SECTIONS = [
+  { key: "aboutHtml", label: "About" },
+  { key: "whyHtml", label: "Why choose us" },
+  { key: "servicesHtml", label: "Services" },
+  { key: "safetyHtml", label: "Safety & quality" },
+  { key: "occasionsHtml", label: "Occasions" },
+] as const;
 
 /** The /locations hub page: hero copy and the four regional showcases. */
 export type LocationHubContent = {

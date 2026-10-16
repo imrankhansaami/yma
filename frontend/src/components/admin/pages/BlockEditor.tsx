@@ -55,10 +55,12 @@ import { useAdminToast } from "@/components/ui/admin-toast";
 import {
   BLOCK_CATALOG,
   BLOCK_LABELS,
+  LOCATION_BODY_SECTIONS,
   NESTED_BLOCK_TYPES,
   PAGE_STYLES_TYPE,
   TYPOGRAPHY_ROLES,
 } from "@/lib/blocks/types";
+import { bodyToHtml, heroToHtml } from "@/lib/blocks/locationContent";
 import type {
   BlockStyles,
   TextStyle,
@@ -1224,63 +1226,60 @@ function BlockFields({
         </div>
       );
 
-    case "locationHero":
+    case "locationHero": {
+      const heroHtml = String(data.html ?? "").trim()
+        ? String(data.html)
+        : heroToHtml(data);
       return (
         <div className="space-y-3">
-          <Text label="Headline" value={data.title} onChange={(v) => setData({ title: v })} />
-          <StringList label="Paragraphs" value={data.paragraphs} onChange={(paragraphs) => setData({ paragraphs })} />
+          <div>
+            <span className="mb-1 block text-xs font-medium text-slate-600">
+              Hero copy
+            </span>
+            <TextEditor
+              value={heroHtml}
+              onChange={(value) => setData({ html: value })}
+            />
+          </div>
+          <p className="text-[11px] text-slate-400">
+            Everything here is rich text — write the headline as an H2 and the
+            intro as paragraphs. The Outline panel shows exactly what Google
+            reads.
+          </p>
         </div>
       );
+    }
 
-    case "locationBody":
+    case "locationBody": {
+      const converted = bodyToHtml(data);
       return (
         <div className="space-y-3">
-          <Text label="About heading" value={data.aboutTitle} onChange={(v) => setData({ aboutTitle: v })} />
-          <StringList label="About paragraphs" value={data.aboutParagraphs} onChange={(aboutParagraphs) => setData({ aboutParagraphs })} />
-          <Text label="Why choose us heading" value={data.whyTitle} onChange={(v) => setData({ whyTitle: v })} />
-          <Repeater
-            label="Why choose us points"
-            items={asArray(data, "whyItems")}
-            onChange={(whyItems) => setData({ whyItems })}
-            makeItem={() => ({ title: "", body: "" })}
-            renderItem={(item, update) => (
-              <div className="space-y-2">
-                <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
-                <TextArea label="Body" value={item.body} onChange={(v) => update({ body: v })} rows={3} />
+          {LOCATION_BODY_SECTIONS.map(({ key, label }) => {
+            const saved = String(data[key] ?? "").trim();
+            const value = saved ? String(data[key]) : converted[key] || "";
+            return (
+              <div
+                key={key}
+                className="rounded-md border border-slate-200 bg-slate-50/50 p-3"
+              >
+                <p className="mb-2 text-xs font-semibold text-slate-600">
+                  {label}
+                </p>
+                <TextEditor
+                  value={value}
+                  onChange={(next) => setData({ [key]: next })}
+                />
               </div>
-            )}
-          />
-          <Text label="Services heading" value={data.servicesTitle} onChange={(v) => setData({ servicesTitle: v })} />
-          <Repeater
-            label="Services"
-            items={asArray(data, "servicesItems")}
-            onChange={(servicesItems) => setData({ servicesItems })}
-            makeItem={() => ({ title: "", body: "" })}
-            renderItem={(item, update) => (
-              <div className="space-y-2">
-                <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
-                <TextArea label="Body" value={item.body} onChange={(v) => update({ body: v })} rows={3} />
-              </div>
-            )}
-          />
-          <Text label="Safety heading" value={data.safetyTitle} onChange={(v) => setData({ safetyTitle: v })} />
-          <Repeater
-            label="Safety points"
-            items={asArray(data, "safetyItems")}
-            onChange={(safetyItems) => setData({ safetyItems })}
-            makeItem={() => ({ title: "", body: "" })}
-            renderItem={(item, update) => (
-              <div className="space-y-2">
-                <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
-                <TextArea label="Body" value={item.body} onChange={(v) => update({ body: v })} rows={3} />
-              </div>
-            )}
-          />
-          <Text label="Occasions heading" value={data.occasionsTitle} onChange={(v) => setData({ occasionsTitle: v })} />
-          <Text label="Occasions subheading" value={data.occasionsSubtitle} onChange={(v) => setData({ occasionsSubtitle: v })} />
-          <StringList label="Occasions" value={data.occasionsItems} onChange={(occasionsItems) => setData({ occasionsItems })} />
+            );
+          })}
+          <p className="text-[11px] text-slate-400">
+            One box per section — write its H2 and the H3 points with the
+            toolbar. Pages saved before this change are converted from their old
+            fields automatically.
+          </p>
         </div>
       );
+    }
 
     case "seoContent":
       return (
