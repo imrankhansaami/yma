@@ -8,6 +8,8 @@ import {
   Box,
   ChevronDown,
   ChevronRight,
+  ClipboardCopy,
+  ClipboardPaste,
   CodeXml,
   Columns3,
   Copy,
@@ -24,6 +26,7 @@ import {
   LayoutTemplate,
   Layers,
   List,
+  ListTree,
   Mail,
   Map as MapIcon,
   MapPin,
@@ -186,6 +189,165 @@ function InsertPoint({ onAdd }: { onAdd: () => void }) {
       </button>
     </div>
   );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Heading outline (like an SEO plugin's "Headings" panel)                      */
+/* -------------------------------------------------------------------------- */
+
+type OutlineItem = { level: number; text: string };
+
+/** The headings a single block contributes to the page outline, in order. */
+function blockOutline(block: PageSection): OutlineItem[] {
+  const data = (block.data as AnyRecord) || {};
+  const type = block.type || "richText";
+  const out: OutlineItem[] = [];
+  const add = (level: unknown, text: unknown) => {
+    const value = String(text ?? "").replace(/\s+/g, " ").trim();
+    if (value) {
+      out.push({
+        level: Math.min(6, Math.max(1, Number(level) || 2)),
+        text: value,
+      });
+    }
+  };
+
+  switch (type) {
+    case "heading":
+      add(data.level, data.text);
+      break;
+    case "pageHeader":
+      add(1, data.title);
+      break;
+    case "locationHero":
+      add(2, data.title);
+      break;
+    case "locationBody":
+      add(2, data.aboutTitle);
+      add(2, data.whyTitle);
+      (data.whyItems || []).forEach((item: AnyRecord) => add(3, item?.title));
+      add(2, data.servicesTitle);
+      (data.servicesItems || []).forEach((item: AnyRecord) =>
+        add(3, item?.title),
+      );
+      add(2, data.safetyTitle);
+      (data.safetyItems || []).forEach((item: AnyRecord) =>
+        add(3, item?.title),
+      );
+      add(2, data.occasionsTitle);
+      break;
+    case "columns":
+      (data.columns || []).forEach((column: AnyRecord) => add(3, column?.heading));
+      break;
+    case "richText":
+      add(2, block.title);
+      break;
+    default:
+      // Section blocks (hero, faq, featureGrid, ...) render their title as an H2.
+      add(2, data.title ?? data.heading ?? block.title);
+      break;
+  }
+
+  return out;
+}
+
+/** The whole page outline: the template's H1 then every block's headings. */
+function pageOutline(pageHeading: string | undefined, blocks: PageSection[]) {
+  const items: OutlineItem[] = [];
+  if (String(pageHeading || "").trim()) {
+    items.push({ level: 1, text: String(pageHeading).trim() });
+  }
+  blocks
+    .filter((block) => block.visible !== false)
+    .slice()
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .forEach((block) => items.push(...blockOutline(block)));
+  return items;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Paste content -> blocks                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Turns pasted rich text into blocks: every H1-H6 becomes a Heading block and
+ * everything between headings becomes a Paragraph block. A pasted H1 is demoted
+ * to H2 because the page template already renders the page's only H1.
+ */
+function htmlToBlocks(source: string): PageSection[] {
+  const raw = String(source || "").trim();
+  if (!raw) return [];
+
+  const clean = (value: string) => value.replace(/&nbsp;/g, " ").trim();
+  const looksLikeHtml = /<(h[1-6]|p|ul|ol|blockquote|table|figure|img|div)\b/i.test(
+    raw,
+  );
+  const nodes: { tag: string; html: string; text: string }[] = [];
+
+  if (looksLikeHtml) {
+    const doc = new DOMParser().parseFromString(raw, "text/html");
+    const collect = (parent: Element) => {
+      Array.from(parent.children).forEach((child) => {
+        const tag = child.tagName.toLowerCase();
+        // Unwrap structural wrappers so headings inside them are not lost.
+        if (tag === "div" && child.children.length > 0) {
+          collect(child);
+          return;
+        }
+        nodes.push({
+          tag,
+          html: child.outerHTML,
+          text: clean(child.textContent || ""),
+        });
+      });
+    };
+    collect(doc.body);
+  } else {
+    raw.split(/\n{2,}/).forEach((chunk) => {
+      const text = clean(chunk.replace(/\n/g, " "));
+      if (text) nodes.push({ tag: "p", html: `<p>${text}</p>`, text });
+    });
+  }
+
+  const blocks: PageSection[] = [];
+  let buffer: string[] = [];
+
+  const flush = () => {
+    const html = buffer.join("").trim();
+    buffer = [];
+    if (!html) return;
+    blocks.push({
+      sectionKey: `paragraph-${Date.now()}-${blocks.length}`,
+      type: "paragraph",
+      title: "",
+      content: "",
+      order: 0,
+      visible: true,
+      data: { html },
+    });
+  };
+
+  nodes.forEach((node) => {
+    const heading = /^h([1-6])$/.exec(node.tag);
+    if (heading && node.text) {
+      flush();
+      const pastedLevel = Number(heading[1]);
+      blocks.push({
+        sectionKey: `heading-${Date.now()}-${blocks.length}`,
+        type: "heading",
+        title: "",
+        content: "",
+        order: 0,
+        visible: true,
+        data: { level: pastedLevel === 1 ? 2 : pastedLevel, text: node.text },
+      });
+      return;
+    }
+    if (node.html.trim()) buffer.push(node.html);
+  });
+
+  flush();
+  return blocks;
 }
 
 /** Field-level help so the editor stays compact. */
@@ -1403,6 +1565,7 @@ export default function BlockEditor({
   sections,
   onChange,
   allowedTypes,
+  pageHeading,
 }: {
   sections: PageSection[];
   onChange: (sections: PageSection[]) => void;
@@ -1412,6 +1575,8 @@ export default function BlockEditor({
    * type their page does not render. Existing blocks are always editable.
    */
   allowedTypes?: string[];
+  /** The H1 the page template renders, shown at the top of the outline. */
+  pageHeading?: string;
 }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -1422,6 +1587,10 @@ export default function BlockEditor({
   const [pageList, setPageList] = useState<PageContent[] | null>(null);
   const [libraryFor, setLibraryFor] = useState<number | "end" | null>(null);
   const [libraryQuery, setLibraryQuery] = useState("");
+  const [showOutline, setShowOutline] = useState(false);
+  const [showPaste, setShowPaste] = useState(false);
+  const [pasteHtml, setPasteHtml] = useState("");
+  const [pasteReplace, setPasteReplace] = useState(false);
 
   useEffect(() => {
     setReusable(loadReusableBlocks());
@@ -1610,6 +1779,59 @@ export default function BlockEditor({
     }
   };
 
+  /* --- Heading outline ---------------------------------------------------- */
+
+  const outline = pageOutline(pageHeading, ordered);
+  const h1Count = outline.filter((item) => item.level === 1).length;
+
+  const copyOutline = async () => {
+    const text = outline
+      .map(
+        (item) =>
+          `${"  ".repeat(Math.max(0, item.level - 1))}H${item.level}: ${item.text}`,
+      )
+      .join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      notify({
+        title: "Copied",
+        message: "Heading outline copied to the clipboard.",
+        variant: "success",
+      });
+    } catch {
+      notify({
+        title: "Error",
+        message: "Could not copy the outline.",
+        variant: "error",
+      });
+    }
+  };
+
+  /* --- Paste content ------------------------------------------------------ */
+
+  const convertPasted = () => {
+    const created = htmlToBlocks(pasteHtml);
+    if (created.length === 0) {
+      notify({
+        title: "Nothing to add",
+        message: "Paste some content first.",
+        variant: "error",
+      });
+      return;
+    }
+    commit([...(pasteReplace ? [] : ordered), ...created]);
+    setShowPaste(false);
+    setPasteHtml("");
+    setPasteReplace(false);
+    notify({
+      title: "Content added",
+      message: `${created.length} block${
+        created.length === 1 ? "" : "s"
+      } created from your paste.`,
+      variant: "success",
+    });
+  };
+
   const addable = (
     allowedTypes
       ? BLOCK_CATALOG.filter((entry) => allowedTypes.includes(entry.type))
@@ -1635,6 +1857,18 @@ export default function BlockEditor({
           <span className="font-semibold text-slate-700">
             {ordered.length} block{ordered.length === 1 ? "" : "s"}
           </span>
+          <span className="text-slate-300">·</span>
+          <button
+            type="button"
+            onClick={() => setShowOutline((value) => !value)}
+            className={`inline-flex items-center gap-1 ${
+              showOutline
+                ? "font-semibold text-brand-orange-600"
+                : "hover:text-slate-800"
+            }`}
+          >
+            <ListTree className="h-3.5 w-3.5" /> Outline
+          </button>
           {ordered.length > 0 ? (
             <>
               <span className="text-slate-300">·</span>
@@ -1656,14 +1890,77 @@ export default function BlockEditor({
             </>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={() => setLibraryFor("end")}
-          className="inline-flex items-center gap-1.5 rounded-md bg-brand-black-950 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-black-900"
-        >
-          <Plus className="h-3.5 w-3.5" /> Add block
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowPaste(true)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <ClipboardPaste className="h-3.5 w-3.5" /> Paste content
+          </button>
+          <button
+            type="button"
+            onClick={() => setLibraryFor("end")}
+            className="inline-flex items-center gap-1.5 rounded-md bg-brand-black-950 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-black-900"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add block
+          </button>
+        </div>
       </div>
+
+      {showOutline ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              <span className="font-semibold text-slate-700">
+                Heading outline
+              </span>
+              <span className="text-slate-400">{outline.length} headings</span>
+              <span
+                className={
+                  h1Count === 1
+                    ? "font-medium text-green-600"
+                    : "font-medium text-amber-600"
+                }
+              >
+                {h1Count === 1
+                  ? "1 × H1 ✓"
+                  : `${h1Count} × H1 — a page should have exactly one`}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={copyOutline}
+              className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <ClipboardCopy className="h-3.5 w-3.5" /> Copy outline
+            </button>
+          </div>
+          {outline.length === 0 ? (
+            <p className="text-xs text-slate-400">
+              No headings yet — add a Heading block, or fill in the hero/body
+              headings.
+            </p>
+          ) : (
+            <ol className="space-y-1">
+              {outline.map((item, index) => (
+                <li
+                  key={`${item.level}-${index}`}
+                  className="flex items-baseline gap-2"
+                  style={{ paddingLeft: `${(item.level - 1) * 18}px` }}
+                >
+                  <span className="w-7 shrink-0 rounded bg-slate-100 px-1 text-center text-[10px] font-semibold text-slate-500">
+                    H{item.level}
+                  </span>
+                  <span className="truncate text-sm text-slate-700">
+                    {item.text}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      ) : null}
 
       {ordered.length === 0 ? (
         <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-8 text-center">
@@ -2015,6 +2312,68 @@ export default function BlockEditor({
                   No blocks match your search.
                 </p>
               ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showPaste ? (
+        <div
+          className="fixed inset-0 z-[200] flex items-start justify-center bg-brand-black-950/40 p-4 pt-14 backdrop-blur-sm"
+          onClick={() => setShowPaste(false)}
+        >
+          <div
+            className="flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+              <p className="text-sm font-semibold text-brand-black-950">
+                Paste content
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowPaste(false)}
+                className="text-slate-400 hover:text-slate-700"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              <p className="mb-3 text-xs text-slate-500">
+                Paste your copy straight from the old site, Word or Google Docs.
+                Headings become Heading blocks and the text between them becomes
+                Paragraph blocks. A pasted H1 is turned into an H2, because the
+                page template already renders the page&apos;s one H1.
+              </p>
+              <TextEditor value={pasteHtml} onChange={setPasteHtml} />
+              <label className="mt-3 flex items-center gap-2 text-xs text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={pasteReplace}
+                  onChange={(event) => setPasteReplace(event.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                Replace all existing blocks instead of adding to them
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-4 py-3">
+              <button
+                type="button"
+                onClick={() => setShowPaste(false)}
+                className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={convertPasted}
+                className="inline-flex items-center gap-1.5 rounded-md bg-brand-black-950 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-black-900"
+              >
+                <ClipboardPaste className="h-3.5 w-3.5" /> Convert to blocks
+              </button>
             </div>
           </div>
         </div>

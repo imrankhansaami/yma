@@ -42,7 +42,7 @@ type ApiLocation = {
 /** Hero copy for a location page, used until a `locationHero` block exists. */
 function defaultHero(name: string): LocationHeroContent {
   return {
-    title: `Turn Up the Fun with ${name}\u2019s Best Bouncy Castle Hire`,
+    title: `Your Go-To Bouncy Castle Hire in ${name}`,
     paragraphs: [
       `Bouncy castles, inflatable slides, and obstacle courses are the ultimate entertainment for any event, and YMA Bouncy Castles LTD is your trusted provider in ${name}. Whether it\u2019s a birthday party, a corporate gathering, a school fair, or a community festival, our inflatable castles, soft play areas, and themed designs deliver endless fun and excitement for all ages.`,
       `With safe, high-quality equipment like jumping castles, moon bounces, and inflatable water slides, YMA ensures every event runs smoothly. Our hassle-free service includes delivery, setup, and takedown, so you can focus on enjoying the celebration without worry. From small gardens to large outdoor spaces, we treat every venue professionally and carefully.`,
@@ -82,7 +82,7 @@ function defaultBody(name: string): LocationBodyContent {
         body: "Need a bouncy castle last minute? We offer emergency event solutions, with same-day or next-day bookings depending on availability.",
       },
     ],
-    servicesTitle: "Our Bouncy Castle Hire Services",
+    servicesTitle: "Our Bouncy Castle & Inflatable Hire Services",
     servicesItems: [
       {
         title: "Children's & Adult Bouncy Castles",

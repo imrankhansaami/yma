@@ -6,6 +6,7 @@ import { useAdminToast } from "@/components/ui/admin-toast";
 import TextEditor from "@/components/admin/inventory/TextEditor";
 import BlockEditor from "@/components/admin/pages/BlockEditor";
 import { GENERIC_BLOCK_TYPES } from "@/lib/blocks/types";
+import { locationDisplayName } from "@/lib/locations";
 import {
   getPageContentByKey,
   PageSection,
@@ -336,6 +337,11 @@ export default function EditLocationPage() {
             sections={sections}
             onChange={setSections}
             allowedTypes={LOCATION_BLOCK_TYPES}
+            pageHeading={`Bouncy Castles Hire in ${locationDisplayName(
+              name,
+              slug,
+              location.slugAliases,
+            )}`}
           />
           <button
             type="button"

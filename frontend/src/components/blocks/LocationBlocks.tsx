@@ -17,8 +17,10 @@ function ItemList({
     <div className={className || "space-y-3"}>
       {items.map((item, i) => (
         <div key={`${item.title}-${i}`}>
-          <p className="font-semibold text-brand-ink-900">{item.title}</p>
-          <p>{item.body}</p>
+          {item.title?.trim() ? (
+            <h3 className="font-semibold text-brand-ink-900">{item.title}</h3>
+          ) : null}
+          {item.body?.trim() ? <p>{item.body}</p> : null}
         </div>
       ))}
     </div>
