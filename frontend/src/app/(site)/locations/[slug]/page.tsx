@@ -23,6 +23,7 @@ import { joinCanonicalPath, normalizeCanonicalSlug } from "@/lib/canonical";
 import { locationDisplayName, substituteLocationCode } from "@/lib/locations";
 import { fetchPageContent } from "@/lib/pageContent";
 import { PageBlocks } from "@/components/blocks/PageBlocks";
+import { BlockStyleScope } from "@/components/blocks/BlockStyleScope";
 
 type Params = { slug: string };
 type ApiLocation = {
@@ -300,12 +301,10 @@ export default async function LocationDetailPage({
   // copy as the fallback so every location page renders unchanged.
   const locationCms = await fetchPageContent("location", canonicalSlug);
   const locationBlocks = (locationCms?.sections || []) as PageBlock[];
-  const heroBlock = locationBlocks.find((b) => b.type === "locationHero")?.data as
-    | LocationHeroContent
-    | undefined;
-  const bodyBlock = locationBlocks.find((b) => b.type === "locationBody")?.data as
-    | LocationBodyContent
-    | undefined;
+  const heroBlockEntry = locationBlocks.find((b) => b.type === "locationHero");
+  const bodyBlockEntry = locationBlocks.find((b) => b.type === "locationBody");
+  const heroBlock = heroBlockEntry?.data as LocationHeroContent | undefined;
+  const bodyBlock = bodyBlockEntry?.data as LocationBodyContent | undefined;
   const hero: LocationHeroContent = substituteLocationCode(
     {
       ...defaultHero(locationName),
@@ -329,7 +328,7 @@ export default async function LocationDetailPage({
   );
 
   return (
-    <main className="bg-white mt-16 md:mt-24 font-inter">
+    <main className="cms-page bg-white mt-16 md:mt-24 font-inter">
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: defaults.defaultCanonicalBaseUrl },
@@ -360,7 +359,9 @@ export default async function LocationDetailPage({
         {/* --------------Hero Section---------------- */}
         <div className="grid grid-cols-1 gap-10 md:gap-16 md:grid-cols-2 items-stretch py-12 sm:py-14 md:py-16">
           <div className="space-y-4 text-brand-ink-900">
-            <LocationHeroBlock content={hero} />
+            <BlockStyleScope block={heroBlockEntry}>
+              <LocationHeroBlock content={hero} />
+            </BlockStyleScope>
 
             <div className="mt-6 sm:mt-8 flex flex-row items-center  gap-3 sm:gap-4 font-londrina! w-full ">
               <WhatsappBtn />
@@ -404,7 +405,9 @@ export default async function LocationDetailPage({
         {/* -------------CTA--------------------- */}
         <CtaReadySection />
 
-        <LocationBodyBlock content={body} />
+        <BlockStyleScope block={bodyBlockEntry}>
+          <LocationBodyBlock content={body} />
+        </BlockStyleScope>
 
         <div className="pt-8 space-y-4">
           <LocationDetailClient

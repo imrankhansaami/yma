@@ -38,6 +38,11 @@ const pageSectionSchema = new Schema(
       type: Schema.Types.Mixed,
       default: {},
     },
+    // Presentation overrides (typography, spacing) applied on the storefront.
+    styles: {
+      type: Schema.Types.Mixed,
+      default: {},
+    },
   },
   { _id: true },
 );

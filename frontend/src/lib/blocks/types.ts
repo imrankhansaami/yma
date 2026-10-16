@@ -12,7 +12,63 @@ export type PageBlock = {
   order?: number;
   visible?: boolean;
   data?: Record<string, unknown>;
+  /** Optional presentation overrides (typography, spacing). */
+  styles?: BlockStyles;
 };
+
+/* -------------------------------------------------------------------------- */
+/* Typography & block styles                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** CSS typography for a single element role (a heading level, paragraph, ...). */
+export type TextStyle = {
+  fontFamily?: string;
+  fontSize?: string;
+  fontWeight?: string;
+  fontStyle?: string;
+  lineHeight?: string;
+  letterSpacing?: string;
+  textTransform?: string;
+  textAlign?: string;
+  color?: string;
+  marginTop?: string;
+  marginBottom?: string;
+};
+
+/** Element roles a block's typography can target. */
+export const TYPOGRAPHY_ROLES = [
+  "base",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "p",
+  "span",
+  "a",
+  "li",
+] as const;
+
+export type TypographyRole = (typeof TYPOGRAPHY_ROLES)[number];
+
+export type TypographyMap = Partial<Record<TypographyRole, TextStyle>>;
+
+/** Presentation overrides stored on a block. */
+export type BlockStyles = {
+  typography?: TypographyMap;
+  /** Outer spacing and background for the block wrapper. */
+  marginTop?: string;
+  marginBottom?: string;
+  paddingY?: string;
+  background?: string;
+};
+
+/** Typography that applies to the whole page rather than a single block. */
+export const PAGE_STYLES_TYPE = "pageStyles";
+
+/** The class the storefront puts on a page wrapper for page-wide styles. */
+export const PAGE_STYLES_SCOPE_CLASS = "cms-page";
 
 /** Images may come from the repo (imported asset) or the CMS (URL string). */
 export type BlockImage = string | StaticImageData;
@@ -226,26 +282,43 @@ export const BLOCK_CATALOG: {
   type: string;
   label: string;
   description: string;
+  /** Groups the inserter; blocks without one fall under "Blocks". */
+  group?: string;
 }[] = [
-  { type: "hero", label: "Hero", description: "Big banner with headline, image and booking buttons" },
-  { type: "pageHeader", label: "Page Header", description: "Page title, intro and optional badges" },
-  { type: "richText", label: "Rich Text", description: "A heading and free-form text" },
-  { type: "bulletList", label: "List", description: "A titled list of items (steps, reasons, services)" },
-  { type: "faq", label: "FAQ", description: "Question and answer list" },
-  { type: "contactPage", label: "Contact Page Layout", description: "The full two-column contact page" },
-  { type: "legalPage", label: "Legal Page", description: "Page heading, last-updated date and numbered sections" },
-  { type: "seoContent", label: "Category SEO Content", description: "Intro, why-choose reasons, offerings and cross links" },
-  { type: "locationHero", label: "Location Hero", description: "Location page headline and intro paragraphs" },
-  { type: "locationBody", label: "Location Body", description: "About, why choose us, services, safety and occasions" },
-  { type: "locationHub", label: "Locations Hub", description: "Locations index hero copy and regional showcases" },
-  { type: "categoryTiles", label: "Category Tiles", description: "Grid of image tiles linking to catalogues" },
-  { type: "productGrid", label: "Product Grid", description: "Top picks or newest products" },
-  { type: "featureGrid", label: "Feature Grid", description: "Why-choose-us style feature cards" },
-  { type: "mediaText", label: "Image + Text", description: "Text beside an image with a call-to-action" },
-  { type: "testimonials", label: "Testimonials", description: "Customer review slides" },
-  { type: "productTabs", label: "Product Tabs", description: "Tabbed product carousel" },
-  { type: "cta", label: "Call to Action", description: "Closing call-to-action with buttons" },
-  { type: "newsletter", label: "Newsletter", description: "Email sign-up block" },
+  // --- Content -------------------------------------------------------------
+  { type: "heading", label: "Heading", description: "A single H1-H6 heading", group: "Text" },
+  { type: "paragraph", label: "Paragraph", description: "Free-form rich text", group: "Text" },
+  { type: "richText", label: "Rich Text", description: "A heading and free-form text", group: "Text" },
+  { type: "bulletList", label: "List", description: "A titled list of items (steps, reasons, services)", group: "Text" },
+  { type: "quote", label: "Quote", description: "A highlighted quotation", group: "Text" },
+  { type: "image", label: "Image", description: "An image with optional caption", group: "Media" },
+  { type: "button", label: "Button", description: "A call-to-action link", group: "Media" },
+  { type: "html", label: "Custom HTML", description: "Raw HTML for advanced embeds", group: "Media" },
+  // --- Layout --------------------------------------------------------------
+  { type: "columns", label: "Columns", description: "Two or more side-by-side columns", group: "Layout" },
+  { type: "divider", label: "Divider", description: "A horizontal rule", group: "Layout" },
+  { type: "spacer", label: "Spacer", description: "Vertical space between sections", group: "Layout" },
+  { type: PAGE_STYLES_TYPE, label: "Page Typography", description: "Site-wide text styles for this page (H1-H6, body, links)", group: "Layout" },
+  // --- Sections ------------------------------------------------------------
+  { type: "hero", label: "Hero", description: "Big banner with headline, image and booking buttons", group: "Sections" },
+  { type: "pageHeader", label: "Page Header", description: "Page title, intro and optional badges", group: "Sections" },
+  { type: "faq", label: "FAQ", description: "Question and answer list", group: "Sections" },
+  { type: "categoryTiles", label: "Category Tiles", description: "Grid of image tiles linking to catalogues", group: "Sections" },
+  { type: "productGrid", label: "Product Grid", description: "Top picks or newest products", group: "Sections" },
+  { type: "featureGrid", label: "Feature Grid", description: "Why-choose-us style feature cards", group: "Sections" },
+  { type: "mediaText", label: "Image + Text", description: "Text beside an image with a call-to-action", group: "Sections" },
+  { type: "testimonials", label: "Testimonials", description: "Customer review slides", group: "Sections" },
+  { type: "productTabs", label: "Product Tabs", description: "Tabbed product carousel", group: "Sections" },
+  { type: "cta", label: "Call to Action", description: "Closing call-to-action with buttons", group: "Sections" },
+  { type: "newsletter", label: "Newsletter", description: "Email sign-up block", group: "Sections" },
+  // --- Page layouts --------------------------------------------------------
+  { type: "contactPage", label: "Contact Page Layout", description: "The full two-column contact page", group: "Page layouts" },
+  { type: "legalPage", label: "Legal Page", description: "Page heading, last-updated date and numbered sections", group: "Page layouts" },
+  { type: "seoContent", label: "Category SEO Content", description: "Intro, why-choose reasons, offerings and cross links", group: "Page layouts" },
+  // --- Location ------------------------------------------------------------
+  { type: "locationHero", label: "Location Hero", description: "Location page headline and intro paragraphs", group: "Location" },
+  { type: "locationBody", label: "Location Body", description: "About, why choose us, services, safety and occasions", group: "Location" },
+  { type: "locationHub", label: "Locations Hub", description: "Locations index hero copy and regional showcases", group: "Location" },
 ];
 
 export const BLOCK_LABELS: Record<string, string> = Object.fromEntries(

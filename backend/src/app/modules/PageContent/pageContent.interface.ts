@@ -15,6 +15,8 @@ export interface IPageSection {
   visible?: boolean;
   /** Structured fields for typed blocks. */
   data?: Record<string, any>;
+  /** Presentation overrides (typography, spacing) applied on the storefront. */
+  styles?: Record<string, any>;
 }
 
 export interface IPageContent {

@@ -1,10 +1,34 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
-import type { ReactNode } from "react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Plus,
+  Search,
+  Trash2,
+  Type,
+} from "lucide-react";
+import { useState, type ReactNode } from "react";
 
 import TextEditor from "@/components/admin/inventory/TextEditor";
-import { BLOCK_CATALOG, BLOCK_LABELS } from "@/lib/blocks/types";
+import {
+  BLOCK_CATALOG,
+  BLOCK_LABELS,
+  PAGE_STYLES_TYPE,
+  TYPOGRAPHY_ROLES,
+} from "@/lib/blocks/types";
+import type {
+  BlockStyles,
+  TextStyle,
+  TypographyMap,
+  TypographyRole,
+} from "@/lib/blocks/types";
 import type { PageSection } from "@/services/pageContent.service";
 
 type AnyRecord = Record<string, any>;
@@ -130,6 +154,285 @@ function ImageField({
         />
       ) : null}
     </label>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Typography controls                                                         */
+/* -------------------------------------------------------------------------- */
+
+const FONT_FAMILIES: { label: string; value: string }[] = [
+  { label: "Default (inherit)", value: "" },
+  { label: "Inter", value: "var(--font-inter), Inter, sans-serif" },
+  { label: "Londrina Solid", value: "var(--font-londrina-solid), cursive" },
+  { label: "System UI", value: "system-ui, -apple-system, 'Segoe UI', sans-serif" },
+  { label: "Arial", value: "Arial, Helvetica, sans-serif" },
+  { label: "Georgia", value: "Georgia, 'Times New Roman', serif" },
+  { label: "Times New Roman", value: "'Times New Roman', Times, serif" },
+  { label: "Courier New", value: "'Courier New', monospace" },
+];
+
+const FONT_WEIGHTS = ["", "300", "400", "500", "600", "700", "800", "900"];
+const TEXT_TRANSFORMS = ["", "none", "uppercase", "lowercase", "capitalize"];
+const ALIGN_OPTIONS = [
+  { label: "Default", value: "" },
+  { label: "Left", value: "left" },
+  { label: "Center", value: "center" },
+  { label: "Right", value: "right" },
+];
+
+const ROLE_LABELS: Record<TypographyRole, string> = {
+  base: "All text",
+  h1: "H1",
+  h2: "H2",
+  h3: "H3",
+  h4: "H4",
+  h5: "H5",
+  h6: "H6",
+  p: "Paragraph",
+  span: "Span",
+  a: "Link",
+  li: "List item",
+};
+
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value?: string;
+  onChange: (v: string) => void;
+  options: { label: string; value: string }[];
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] font-medium text-slate-500">
+        {label}
+      </span>
+      <select
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-xs"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function MiniField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value?: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] font-medium text-slate-500">
+        {label}
+      </span>
+      <input
+        type="text"
+        value={value ?? ""}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-xs"
+      />
+    </label>
+  );
+}
+
+/**
+ * Per-block typography. Pick an element role (H1-H6, paragraph, span, link...)
+ * and set its font, size, weight, line height, spacing and colour. The values
+ * are rendered as scoped CSS by BlockStyleScope on the storefront.
+ */
+function TypographyPanel({
+  styles,
+  onChange,
+}: {
+  styles?: BlockStyles;
+  onChange: (styles: BlockStyles) => void;
+}) {
+  const [role, setRole] = useState<TypographyRole>("base");
+  const typography: TypographyMap = styles?.typography || {};
+  const current = typography[role] || {};
+
+  const setRoleStyle = (patch: TextStyle) => {
+    const merged: TextStyle = { ...current, ...patch };
+    const cleaned = Object.fromEntries(
+      Object.entries(merged).filter(
+        ([, value]) => String(value ?? "").trim() !== "",
+      ),
+    ) as TextStyle;
+    onChange({ ...styles, typography: { ...typography, [role]: cleaned } });
+  };
+
+  const setWrapper = (patch: Partial<BlockStyles>) =>
+    onChange({ ...styles, ...patch });
+
+  return (
+    <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50/70 p-3">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {TYPOGRAPHY_ROLES.map((entry) => {
+          const styled =
+            typography[entry] && Object.keys(typography[entry] || {}).length > 0;
+          const active = entry === role;
+          return (
+            <button
+              key={entry}
+              type="button"
+              onClick={() => setRole(entry)}
+              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                active
+                  ? "bg-brand-black-950 text-white"
+                  : styled
+                    ? "bg-white text-brand-black-950 ring-1 ring-brand-orange-400"
+                    : "bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-800"
+              }`}
+            >
+              {ROLE_LABELS[entry]}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Select
+          label="Font family"
+          value={current.fontFamily}
+          onChange={(v) => setRoleStyle({ fontFamily: v })}
+          options={FONT_FAMILIES}
+        />
+        <MiniField
+          label="Font size"
+          value={current.fontSize}
+          onChange={(v) => setRoleStyle({ fontSize: v })}
+          placeholder="18px / 1.25rem"
+        />
+        <Select
+          label="Font weight"
+          value={current.fontWeight}
+          onChange={(v) => setRoleStyle({ fontWeight: v })}
+          options={FONT_WEIGHTS.map((w) => ({ label: w || "Default", value: w }))}
+        />
+        <MiniField
+          label="Line height"
+          value={current.lineHeight}
+          onChange={(v) => setRoleStyle({ lineHeight: v })}
+          placeholder="1.6 / 28px"
+        />
+        <MiniField
+          label="Letter spacing"
+          value={current.letterSpacing}
+          onChange={(v) => setRoleStyle({ letterSpacing: v })}
+          placeholder="0.02em"
+        />
+        <Select
+          label="Transform"
+          value={current.textTransform}
+          onChange={(v) => setRoleStyle({ textTransform: v })}
+          options={TEXT_TRANSFORMS.map((t) => ({
+            label: t || "Default",
+            value: t,
+          }))}
+        />
+        <Select
+          label="Align"
+          value={current.textAlign}
+          onChange={(v) => setRoleStyle({ textAlign: v })}
+          options={ALIGN_OPTIONS}
+        />
+        <label className="block">
+          <span className="mb-1 block text-[11px] font-medium text-slate-500">
+            Colour
+          </span>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={current.color || "#18181b"}
+              onChange={(e) => setRoleStyle({ color: e.target.value })}
+              className="h-8 w-10 rounded border border-slate-200 bg-white"
+            />
+            <button
+              type="button"
+              onClick={() => setRoleStyle({ color: "" })}
+              className="text-[11px] text-slate-500 hover:text-slate-800"
+            >
+              Clear
+            </button>
+          </div>
+        </label>
+        <MiniField
+          label="Margin top"
+          value={current.marginTop}
+          onChange={(v) => setRoleStyle({ marginTop: v })}
+          placeholder="0"
+        />
+        <MiniField
+          label="Margin bottom"
+          value={current.marginBottom}
+          onChange={(v) => setRoleStyle({ marginBottom: v })}
+          placeholder="12px"
+        />
+        <Select
+          label="Font style"
+          value={current.fontStyle}
+          onChange={(v) => setRoleStyle({ fontStyle: v })}
+          options={[
+            { label: "Default", value: "" },
+            { label: "Normal", value: "normal" },
+            { label: "Italic", value: "italic" },
+          ]}
+        />
+      </div>
+
+      <details className="rounded-md border border-slate-200 bg-white">
+        <summary className="cursor-pointer px-3 py-2 text-[11px] font-semibold text-slate-600">
+          Block spacing &amp; background
+        </summary>
+        <div className="grid grid-cols-2 gap-2 border-t border-slate-100 p-3 sm:grid-cols-4">
+          <MiniField
+            label="Margin top"
+            value={styles?.marginTop}
+            onChange={(v) => setWrapper({ marginTop: v })}
+          />
+          <MiniField
+            label="Margin bottom"
+            value={styles?.marginBottom}
+            onChange={(v) => setWrapper({ marginBottom: v })}
+          />
+          <MiniField
+            label="Padding (top+bottom)"
+            value={styles?.paddingY}
+            onChange={(v) => setWrapper({ paddingY: v })}
+            placeholder="24px"
+          />
+          <MiniField
+            label="Background"
+            value={styles?.background}
+            onChange={(v) => setWrapper({ background: v })}
+            placeholder="#f8fafc"
+          />
+        </div>
+      </details>
+
+      <p className="text-[11px] text-slate-400">
+        Styles apply to this block only. Add a “Page Typography” block to style
+        the whole page.
+      </p>
+    </div>
   );
 }
 
@@ -657,6 +960,219 @@ function BlockFields({
         </div>
       );
 
+    case "heading":
+      return (
+        <div className="space-y-3">
+          <TextArea
+            label="Text"
+            value={data.text}
+            onChange={(v) => setData({ text: v })}
+            rows={2}
+          />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Select
+              label="Level"
+              value={String(data.level ?? 2)}
+              onChange={(v) => setData({ level: Number(v) })}
+              options={[1, 2, 3, 4, 5, 6].map((n) => ({
+                label: `H${n}`,
+                value: String(n),
+              }))}
+            />
+            <Select
+              label="Align"
+              value={data.align ?? ""}
+              onChange={(v) => setData({ align: v })}
+              options={ALIGN_OPTIONS}
+            />
+          </div>
+        </div>
+      );
+
+    case "paragraph":
+      return (
+        <div className="space-y-3">
+          <div>
+            <span className="mb-1 block text-xs font-medium text-slate-600">
+              Text
+            </span>
+            <TextEditor
+              value={data.html || ""}
+              onChange={(v) => setData({ html: v })}
+            />
+          </div>
+          <Select
+            label="Align"
+            value={data.align ?? ""}
+            onChange={(v) => setData({ align: v })}
+            options={ALIGN_OPTIONS}
+          />
+        </div>
+      );
+
+    case "quote":
+      return (
+        <div className="space-y-3">
+          <TextArea
+            label="Quote"
+            value={data.text}
+            onChange={(v) => setData({ text: v })}
+            rows={3}
+          />
+          <Text
+            label="Author (optional)"
+            value={data.author}
+            onChange={(v) => setData({ author: v })}
+          />
+        </div>
+      );
+
+    case "image":
+      return (
+        <div className="space-y-3">
+          <ImageField
+            label="Image URL"
+            value={data.src}
+            onChange={(v) => setData({ src: v })}
+          />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Text
+              label="Alt text"
+              value={data.alt}
+              onChange={(v) => setData({ alt: v })}
+            />
+            <Text
+              label="Caption"
+              value={data.caption}
+              onChange={(v) => setData({ caption: v })}
+            />
+            <MiniField
+              label="Width (%)"
+              value={data.width}
+              onChange={(v) => setData({ width: v })}
+              placeholder="100"
+            />
+            <Select
+              label="Align"
+              value={data.align ?? ""}
+              onChange={(v) => setData({ align: v })}
+              options={ALIGN_OPTIONS}
+            />
+          </div>
+        </div>
+      );
+
+    case "button":
+      return (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Text
+            label="Label"
+            value={data.label}
+            onChange={(v) => setData({ label: v })}
+          />
+          <Text
+            label="Link URL"
+            value={data.href}
+            onChange={(v) => setData({ href: v })}
+            placeholder="/booking-catalog"
+          />
+          <Select
+            label="Style"
+            value={data.variant ?? "solid"}
+            onChange={(v) => setData({ variant: v })}
+            options={[
+              { label: "Solid", value: "solid" },
+              { label: "Outline", value: "outline" },
+            ]}
+          />
+          <Select
+            label="Align"
+            value={data.align ?? ""}
+            onChange={(v) => setData({ align: v })}
+            options={ALIGN_OPTIONS}
+          />
+        </div>
+      );
+
+    case "html":
+      return (
+        <div className="space-y-3">
+          <TextArea
+            label="HTML"
+            value={data.html}
+            onChange={(v) => setData({ html: v })}
+            rows={8}
+          />
+          <p className="text-[11px] text-slate-400">
+            Rendered as-is on the page. Only paste markup you trust.
+          </p>
+        </div>
+      );
+
+    case "divider":
+      return (
+        <p className="text-xs text-slate-400">
+          A horizontal rule. No settings.
+        </p>
+      );
+
+    case "spacer":
+      return (
+        <MiniField
+          label="Height"
+          value={data.height}
+          onChange={(v) => setData({ height: v })}
+          placeholder="e.g. 32px or 2rem"
+        />
+      );
+
+    case "columns":
+      return (
+        <div className="space-y-3">
+          <Select
+            label="Columns shown"
+            value={String(data.count ?? 2)}
+            onChange={(v) => setData({ count: Number(v) })}
+            options={[1, 2, 3, 4].map((n) => ({
+              label: String(n),
+              value: String(n),
+            }))}
+          />
+          <Repeater
+            label="Column content"
+            items={asArray(data, "columns")}
+            onChange={(columns) => setData({ columns })}
+            makeItem={() => ({ heading: "", html: "" })}
+            renderItem={(item, update) => (
+              <div className="space-y-2">
+                <Text
+                  label="Heading (optional)"
+                  value={item.heading}
+                  onChange={(v) => update({ heading: v })}
+                />
+                <div>
+                  <span className="mb-1 block text-xs font-medium text-slate-600">
+                    Content
+                  </span>
+                  <TextEditor
+                    value={item.html || ""}
+                    onChange={(v) => update({ html: v })}
+                  />
+                </div>
+              </div>
+            )}
+          />
+        </div>
+      );
+
+    case PAGE_STYLES_TYPE:
+      return (
+        <p className="text-xs text-slate-400">
+          This block renders nothing on its own — use the Typography panel below
+          to set this page’s H1-H6, paragraph, span and link styles.
+        </p>
+      );
+
     case "richText":
     default:
       return (
@@ -688,13 +1204,24 @@ export default function BlockEditor({
    */
   allowedTypes?: string[];
 }) {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [query, setQuery] = useState("");
+
+  const ordered = [...sections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+  /** Persist a new order, normalising `order` to the array position. */
+  const commit = (next: PageSection[]) =>
+    onChange(next.map((block, index) => ({ ...block, order: index })));
+
   const updateBlock = (
     index: number,
     patch: Partial<PageSection>,
     dataPatch?: AnyRecord,
   ) => {
-    onChange(
-      sections.map((block, i) => {
+    commit(
+      ordered.map((block, i) => {
         if (i !== index) return block;
         const next: PageSection = { ...block, ...patch };
         if (dataPatch) {
@@ -706,60 +1233,151 @@ export default function BlockEditor({
   };
 
   const removeBlock = (index: number) =>
-    onChange(sections.filter((_, i) => i !== index));
+    commit(ordered.filter((_, i) => i !== index));
+
+  const duplicateBlock = (index: number) => {
+    const source = ordered[index];
+    if (!source) return;
+    const copy: PageSection = {
+      ...source,
+      sectionKey: `${source.type || "block"}-${Date.now()}`,
+      data: JSON.parse(JSON.stringify(source.data || {})),
+      styles: source.styles
+        ? JSON.parse(JSON.stringify(source.styles))
+        : undefined,
+    };
+    const next = [...ordered];
+    next.splice(index + 1, 0, copy);
+    commit(next);
+  };
 
   const moveBlock = (index: number, dir: -1 | 1) => {
     const target = index + dir;
-    if (target < 0 || target >= sections.length) return;
-    const next = [...sections];
+    if (target < 0 || target >= ordered.length) return;
+    const next = [...ordered];
     [next[index], next[target]] = [next[target], next[index]];
-    onChange(next.map((block, i) => ({ ...block, order: i })));
+    commit(next);
+  };
+
+  /** Drag-and-drop reorder: drop the dragged block at the target position. */
+  const reorderBlock = (from: number, to: number) => {
+    if (from === to) return;
+    const next = [...ordered];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    commit(next);
   };
 
   const addBlock = (type: string) => {
-    onChange([
-      ...sections,
+    commit([
+      ...ordered,
       {
         sectionKey: `${type}-${Date.now()}`,
         type,
         title: "",
         content: "",
-        order: sections.length,
+        order: ordered.length,
         visible: true,
         data: {},
       },
     ]);
   };
 
-  const ordered = [...sections].sort(
-    (a, b) => (a.order ?? 0) - (b.order ?? 0),
-  );
+  const addable = (
+    allowedTypes
+      ? BLOCK_CATALOG.filter((entry) => allowedTypes.includes(entry.type))
+      : BLOCK_CATALOG
+  ).filter((entry) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return `${entry.label} ${entry.description} ${entry.type}`
+      .toLowerCase()
+      .includes(q);
+  });
 
-  const addable = allowedTypes
-    ? BLOCK_CATALOG.filter((entry) => allowedTypes.includes(entry.type))
-    : BLOCK_CATALOG;
+  const groups = Array.from(
+    new Set(addable.map((entry) => entry.group || "Blocks")),
+  );
 
   return (
     <div className="space-y-4">
+      {ordered.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-slate-300 p-4 text-xs text-slate-400">
+          No blocks yet — add your first one below.
+        </p>
+      ) : null}
+
       {ordered.map((block, index) => {
         const type = block.type || "richText";
+        const key = block.sectionKey || `${type}-${index}`;
+        const isCollapsed = collapsed[key] ?? false;
+        const isDragging = dragIndex === index;
+        const isDropTarget =
+          overIndex === index && dragIndex !== null && dragIndex !== index;
+        const isStyled = Object.keys(block.styles?.typography || {}).length > 0;
+
         return (
           <div
-            key={block.sectionKey || index}
-            className="rounded-lg border border-slate-200 p-4"
+            key={key}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (overIndex !== index) setOverIndex(index);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (dragIndex !== null) reorderBlock(dragIndex, index);
+              setDragIndex(null);
+              setOverIndex(null);
+            }}
+            className={`rounded-lg border bg-white transition-shadow ${
+              isDropTarget
+                ? "border-brand-orange-400 ring-2 ring-brand-orange-100"
+                : "border-slate-200"
+            } ${isDragging ? "opacity-50" : ""}`}
           >
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+            <div className="flex items-center justify-between gap-2 p-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCollapsed((prev) => ({ ...prev, [key]: !isCollapsed }))
+                  }
+                  className="text-slate-400 hover:text-slate-700"
+                  aria-label={isCollapsed ? "Expand block" : "Collapse block"}
+                >
+                  {isCollapsed ? (
+                    <ChevronRight className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+                <span
+                  draggable
+                  onDragStart={() => setDragIndex(index)}
+                  onDragEnd={() => {
+                    setDragIndex(null);
+                    setOverIndex(null);
+                  }}
+                  className="cursor-grab text-slate-300 hover:text-slate-500 active:cursor-grabbing"
+                  title="Drag to reorder"
+                >
+                  <GripVertical className="h-4 w-4" />
+                </span>
+                <span className="truncate rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
                   {BLOCK_LABELS[type] ?? type}
                 </span>
+                {isStyled ? (
+                  <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-brand-orange-600">
+                    <Type className="h-3 w-3" /> styled
+                  </span>
+                ) : null}
                 {block.visible === false ? (
-                  <span className="text-[11px] font-medium text-amber-600">
+                  <span className="shrink-0 text-[11px] font-medium text-amber-600">
                     Hidden
                   </span>
                 ) : null}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() =>
@@ -774,6 +1392,15 @@ export default function BlockEditor({
                   ) : (
                     <Eye className="h-4 w-4" />
                   )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => duplicateBlock(index)}
+                  className="text-slate-400 hover:text-slate-700"
+                  aria-label="Duplicate block"
+                  title="Duplicate"
+                >
+                  <Copy className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
@@ -802,28 +1429,76 @@ export default function BlockEditor({
               </div>
             </div>
 
-            <BlockFields
-              block={block}
-              patch={(patch, dataPatch) => updateBlock(index, patch, dataPatch)}
-            />
+            {isCollapsed ? null : (
+              <div className="space-y-3 border-t border-slate-100 p-3">
+                <BlockFields
+                  block={block}
+                  patch={(patch, dataPatch) =>
+                    updateBlock(index, patch, dataPatch)
+                  }
+                />
+                <details
+                  open={type === PAGE_STYLES_TYPE}
+                  className="rounded-md border border-slate-200"
+                >
+                  <summary className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600">
+                    <Type className="h-3.5 w-3.5" /> Typography &amp; spacing
+                  </summary>
+                  <div className="border-t border-slate-100 p-3">
+                    <TypographyPanel
+                      styles={block.styles}
+                      onChange={(styles) => updateBlock(index, { styles })}
+                    />
+                  </div>
+                </details>
+              </div>
+            )}
           </div>
         );
       })}
 
       <div className="rounded-lg border border-dashed border-slate-300 p-4">
-        <p className="mb-2 text-xs font-semibold text-slate-600">Add a block</p>
-        <div className="flex flex-wrap gap-2">
-          {addable.map((entry) => (
-            <button
-              key={entry.type}
-              type="button"
-              onClick={() => addBlock(entry.type)}
-              title={entry.description}
-              className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-            >
-              + {entry.label}
-            </button>
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs font-semibold text-slate-600">Add a block</p>
+          <label className="flex items-center gap-2 rounded-md border border-slate-200 px-2 py-1.5">
+            <Search className="h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search blocks..."
+              className="w-full bg-transparent text-xs outline-none sm:w-40"
+            />
+          </label>
+        </div>
+        <div className="space-y-3">
+          {groups.map((group) => (
+            <div key={group}>
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                {group}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {addable
+                  .filter((entry) => (entry.group || "Blocks") === group)
+                  .map((entry) => (
+                    <button
+                      key={entry.type}
+                      type="button"
+                      onClick={() => addBlock(entry.type)}
+                      title={entry.description}
+                      className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      + {entry.label}
+                    </button>
+                  ))}
+              </div>
+            </div>
           ))}
+          {addable.length === 0 ? (
+            <p className="text-xs text-slate-400">
+              No blocks match your search.
+            </p>
+          ) : null}
         </div>
       </div>
     </div>

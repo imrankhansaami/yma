@@ -1,4 +1,5 @@
 import api from "@/api/api";
+import type { BlockStyles } from "@/lib/blocks/types";
 
 export interface PageSection {
   sectionKey: string;
@@ -11,6 +12,8 @@ export interface PageSection {
   visible?: boolean;
   /** Structured fields for typed blocks. */
   data?: Record<string, unknown>;
+  /** Optional presentation overrides (typography, spacing). */
+  styles?: BlockStyles;
 }
 
 export interface PageContent {

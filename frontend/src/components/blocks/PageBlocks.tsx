@@ -14,8 +14,22 @@ import PickCastle from "@/components/sections/PickCastle";
 import TestimonialSection from "@/components/sections/Testimonial";
 import TopPicksSection from "@/components/sections/TopPicksSection";
 import WhyChoose from "@/components/sections/WhyChoose";
-import { PAGE_OWNED_BLOCK_TYPES } from "@/lib/blocks/types";
+import { PAGE_OWNED_BLOCK_TYPES, PAGE_STYLES_TYPE } from "@/lib/blocks/types";
 import type { PageBlock } from "@/lib/blocks/types";
+import { pageStyleCss } from "@/lib/blocks/blockStyles";
+
+import { BlockStyleScope } from "./BlockStyleScope";
+import {
+  ButtonBlock,
+  ColumnsBlock,
+  DividerBlock,
+  HeadingBlock,
+  HtmlBlock,
+  ImageBlock,
+  ParagraphBlock,
+  QuoteBlock,
+  SpacerBlock,
+} from "./editorBlocks";
 
 const PAGE_OWNED = PAGE_OWNED_BLOCK_TYPES as readonly string[];
 
@@ -27,6 +41,9 @@ const PAGE_OWNED = PAGE_OWNED_BLOCK_TYPES as readonly string[];
  * Blocks whose type is page-owned (a category's SEO content, a location's hero
  * and body, the contact and locations-hub layouts) are skipped: their page
  * renders those itself, in a position chosen for that layout.
+ *
+ * A block's saved typography/spacing is applied through BlockStyleScope, which
+ * adds a scoped wrapper only when the block actually has overrides.
  */
 export function PageBlocks({ blocks }: { blocks?: PageBlock[] | null }) {
   const visible = (Array.isArray(blocks) ? blocks : [])
@@ -40,7 +57,9 @@ export function PageBlocks({ blocks }: { blocks?: PageBlock[] | null }) {
   return (
     <>
       {visible.map((block, index) => (
-        <BlockView key={block.sectionKey || `block-${index}`} block={block} />
+        <BlockStyleScope key={block.sectionKey || `block-${index}`} block={block}>
+          <BlockView block={block} />
+        </BlockStyleScope>
       ))}
     </>
   );
@@ -77,6 +96,29 @@ function BlockView({ block }: { block: PageBlock }) {
       return <CtaReadySection content={data} />;
     case "newsletter":
       return <NewsletterSection content={data} />;
+    case "heading":
+      return <HeadingBlock content={data} />;
+    case "paragraph":
+      return <ParagraphBlock content={data} />;
+    case "quote":
+      return <QuoteBlock content={data} />;
+    case "image":
+      return <ImageBlock content={data} />;
+    case "button":
+      return <ButtonBlock content={data} />;
+    case "html":
+      return <HtmlBlock content={data} />;
+    case "divider":
+      return <DividerBlock />;
+    case "spacer":
+      return <SpacerBlock content={data} />;
+    case "columns":
+      return <ColumnsBlock content={data} />;
+    case PAGE_STYLES_TYPE: {
+      // Settings-only block: its styles apply to the whole page wrapper.
+      const css = pageStyleCss(block);
+      return css ? <style dangerouslySetInnerHTML={{ __html: css }} /> : null;
+    }
     case "richText":
     default:
       return <RichTextBlock title={block.title} content={block.content} />;
