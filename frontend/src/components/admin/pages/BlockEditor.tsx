@@ -3,23 +3,28 @@
 import {
   ArrowDown,
   ArrowUp,
+  BookmarkPlus,
   ChevronDown,
   ChevronRight,
   Copy,
   Eye,
   EyeOff,
+  FolderInput,
   GripVertical,
   Plus,
   Search,
   Trash2,
   Type,
+  X,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import TextEditor from "@/components/admin/inventory/TextEditor";
+import { useAdminToast } from "@/components/ui/admin-toast";
 import {
   BLOCK_CATALOG,
   BLOCK_LABELS,
+  NESTED_BLOCK_TYPES,
   PAGE_STYLES_TYPE,
   TYPOGRAPHY_ROLES,
 } from "@/lib/blocks/types";
@@ -29,9 +34,38 @@ import type {
   TypographyMap,
   TypographyRole,
 } from "@/lib/blocks/types";
-import type { PageSection } from "@/services/pageContent.service";
+import {
+  getAllPageContent,
+  getPageContentByKey,
+  upsertPageContent,
+} from "@/services/pageContent.service";
+import type { PageContent, PageSection } from "@/services/pageContent.service";
 
 type AnyRecord = Record<string, any>;
+
+/* -------------------------------------------------------------------------- */
+/* Reusable blocks (kept in this browser)                                      */
+/* -------------------------------------------------------------------------- */
+
+const REUSABLE_STORAGE_KEY = "yma:reusable-blocks";
+
+type ReusableBlock = { id: string; name: string; block: PageSection };
+
+/** Structured clone for block payloads (they are plain JSON). */
+function deepCopy<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value ?? null)) as T;
+}
+
+function loadReusableBlocks(): ReusableBlock[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(REUSABLE_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 /** Field-level help so the editor stays compact. */
 function Text({
@@ -1126,44 +1160,98 @@ function BlockFields({
         />
       );
 
-    case "columns":
+    case "columns": {
+      const columns = asArray(data, "columns");
+      const shown = Number(data.count) || columns.length || 2;
+      const updateColumn = (index: number, patch: AnyRecord) =>
+        setData({
+          columns: columns.map((column, i) =>
+            i === index ? { ...column, ...patch } : column,
+          ),
+        });
+
       return (
         <div className="space-y-3">
           <Select
             label="Columns shown"
-            value={String(data.count ?? 2)}
+            value={String(shown)}
             onChange={(v) => setData({ count: Number(v) })}
             options={[1, 2, 3, 4].map((n) => ({
               label: String(n),
               value: String(n),
             }))}
           />
-          <Repeater
-            label="Column content"
-            items={asArray(data, "columns")}
-            onChange={(columns) => setData({ columns })}
-            makeItem={() => ({ heading: "", html: "" })}
-            renderItem={(item, update) => (
-              <div className="space-y-2">
-                <Text
-                  label="Heading (optional)"
-                  value={item.heading}
-                  onChange={(v) => update({ heading: v })}
-                />
-                <div>
-                  <span className="mb-1 block text-xs font-medium text-slate-600">
-                    Content
-                  </span>
-                  <TextEditor
-                    value={item.html || ""}
-                    onChange={(v) => update({ html: v })}
-                  />
-                </div>
+
+          {columns.map((column, index) => (
+            <div
+              key={index}
+              className="rounded-md border border-slate-200 bg-slate-50/50 p-3"
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-600">
+                  Column {index + 1}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setData({
+                      columns: columns.filter((_, i) => i !== index),
+                      count: Math.max(1, shown - 1),
+                    })
+                  }
+                  className="text-red-400 hover:text-red-600"
+                  aria-label="Remove column"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
-            )}
-          />
+
+              <Text
+                label="Heading (optional)"
+                value={column.heading}
+                onChange={(v) => updateColumn(index, { heading: v })}
+              />
+              <div className="mt-2">
+                <span className="mb-1 block text-xs font-medium text-slate-600">
+                  Intro text (optional)
+                </span>
+                <TextEditor
+                  value={column.html || ""}
+                  onChange={(v) => updateColumn(index, { html: v })}
+                />
+              </div>
+
+              <div className="mt-3 rounded-md border border-dashed border-slate-300 bg-white p-2">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  Blocks in this column
+                </p>
+                <BlockEditor
+                  sections={(column.blocks as PageSection[]) || []}
+                  onChange={(blocks) => updateColumn(index, { blocks })}
+                  allowedTypes={NESTED_BLOCK_TYPES}
+                />
+              </div>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={() =>
+              setData({
+                columns: [
+                  ...columns,
+                  { heading: "", html: "", blocks: [] },
+                ],
+                count: Math.min(4, columns.length + 1),
+              })
+            }
+            className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add column
+          </button>
         </div>
       );
+    }
 
     case PAGE_STYLES_TYPE:
       return (
@@ -1208,6 +1296,14 @@ export default function BlockEditor({
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [query, setQuery] = useState("");
+  const { notify } = useAdminToast();
+  const [reusable, setReusable] = useState<ReusableBlock[]>([]);
+  const [copyFor, setCopyFor] = useState<string | null>(null);
+  const [pageList, setPageList] = useState<PageContent[] | null>(null);
+
+  useEffect(() => {
+    setReusable(loadReusableBlocks());
+  }, []);
 
   const ordered = [...sections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -1281,6 +1377,86 @@ export default function BlockEditor({
         data: {},
       },
     ]);
+  };
+
+  /* --- Reusable blocks (this browser) ------------------------------------ */
+
+  const persistReusable = (items: ReusableBlock[]) => {
+    setReusable(items);
+    try {
+      window.localStorage.setItem(REUSABLE_STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      /* storage unavailable - keep it for this session only */
+    }
+  };
+
+  const saveReusable = (block: PageSection) => {
+    const fallback = BLOCK_LABELS[block.type || "richText"] || "Block";
+    const name = window.prompt("Name for this reusable block", fallback);
+    if (!name || !name.trim()) return;
+    persistReusable([
+      ...reusable,
+      { id: `rb-${Date.now()}`, name: name.trim(), block: deepCopy(block) },
+    ]);
+    notify({
+      title: "Saved",
+      message: `“${name.trim()}” can now be inserted on any page.`,
+      variant: "success",
+    });
+  };
+
+  const removeReusable = (id: string) =>
+    persistReusable(reusable.filter((item) => item.id !== id));
+
+  const insertReusable = (item: ReusableBlock) =>
+    commit([
+      ...ordered,
+      {
+        ...deepCopy(item.block),
+        sectionKey: `${item.block.type || "block"}-${Date.now()}`,
+        order: ordered.length,
+      },
+    ]);
+
+  /* --- Copy a block to another page -------------------------------------- */
+
+  const openCopyTo = async (key: string) => {
+    setCopyFor(key);
+    if (pageList) return;
+    try {
+      setPageList(await getAllPageContent());
+    } catch {
+      notify({
+        title: "Error",
+        message: "Could not load the page list",
+        variant: "error",
+      });
+    }
+  };
+
+  const copyBlockToPage = async (target: PageContent, block: PageSection) => {
+    try {
+      const current = await getPageContentByKey(target.pageType, target.pageKey);
+      const sections = [...(current?.sections || [])];
+      sections.push({
+        ...deepCopy(block),
+        sectionKey: `${block.type || "block"}-${Date.now()}`,
+        order: sections.length,
+      });
+      await upsertPageContent(target.pageType, target.pageKey, { sections });
+      notify({
+        title: "Copied",
+        message: `Block copied to ${target.pageType} · ${target.pageKey}.`,
+        variant: "success",
+      });
+      setCopyFor(null);
+    } catch {
+      notify({
+        title: "Error",
+        message: "Could not copy the block",
+        variant: "error",
+      });
+    }
   };
 
   const addable = (
@@ -1404,6 +1580,24 @@ export default function BlockEditor({
                 </button>
                 <button
                   type="button"
+                  onClick={() => saveReusable(block)}
+                  className="text-slate-400 hover:text-slate-700"
+                  aria-label="Save as reusable block"
+                  title="Save as reusable block"
+                >
+                  <BookmarkPlus className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openCopyTo(key)}
+                  className="text-slate-400 hover:text-slate-700"
+                  aria-label="Copy to another page"
+                  title="Copy to another page"
+                >
+                  <FolderInput className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
                   onClick={() => moveBlock(index, -1)}
                   className="text-slate-400 hover:text-slate-700"
                   aria-label="Move up"
@@ -1428,6 +1622,40 @@ export default function BlockEditor({
                 </button>
               </div>
             </div>
+
+            {copyFor === key ? (
+              <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50 p-3">
+                <span className="text-xs font-medium text-slate-600">
+                  Copy this block to:
+                </span>
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    const target = (pageList || []).find(
+                      (page) => page._id === e.target.value,
+                    );
+                    if (target) copyBlockToPage(target, block);
+                  }}
+                  className="rounded-md border border-slate-200 px-2 py-1.5 text-xs"
+                >
+                  <option value="" disabled>
+                    Choose a page…
+                  </option>
+                  {(pageList || []).map((page) => (
+                    <option key={page._id} value={page._id}>
+                      {page.pageType} · {page.pageKey}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setCopyFor(null)}
+                  className="text-xs text-slate-500 hover:text-slate-800"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : null}
 
             {isCollapsed ? null : (
               <div className="space-y-3 border-t border-slate-100 p-3">
@@ -1472,6 +1700,38 @@ export default function BlockEditor({
           </label>
         </div>
         <div className="space-y-3">
+          {reusable.length > 0 ? (
+            <div>
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Reusable
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {reusable.map((item) => (
+                  <span
+                    key={item.id}
+                    className="inline-flex items-center overflow-hidden rounded-md border border-slate-200 bg-white"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => insertReusable(item)}
+                      className="px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                      title="Insert this reusable block"
+                    >
+                      + {item.name}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeReusable(item.id)}
+                      className="border-l border-slate-200 px-2 py-1.5 text-slate-400 hover:text-red-600"
+                      aria-label="Delete reusable block"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {groups.map((group) => (
             <div key={group}>
               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">

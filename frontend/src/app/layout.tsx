@@ -32,7 +32,6 @@ const londrina = Londrina_Solid({
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["100", "300", "400", "900"],
   display: "swap",
 });
 

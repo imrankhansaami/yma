@@ -70,6 +70,30 @@ export const PAGE_STYLES_TYPE = "pageStyles";
 /** The class the storefront puts on a page wrapper for page-wide styles. */
 export const PAGE_STYLES_SCOPE_CLASS = "cms-page";
 
+/** One column inside a "columns" block. Columns may hold nested blocks. */
+export type ColumnContent = {
+  heading?: string;
+  html?: string;
+  blocks?: PageBlock[];
+};
+
+/**
+ * Blocks that can be nested inside a column. Deliberately flat (no columns
+ * inside columns) so the editor cannot recurse without end.
+ */
+export const NESTED_BLOCK_TYPES: string[] = [
+  "heading",
+  "paragraph",
+  "richText",
+  "bulletList",
+  "quote",
+  "image",
+  "button",
+  "html",
+  "divider",
+  "spacer",
+];
+
 /** Images may come from the repo (imported asset) or the CMS (URL string). */
 export type BlockImage = string | StaticImageData;
 

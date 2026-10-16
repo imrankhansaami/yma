@@ -1,3 +1,4 @@
+import { RichText } from "@/components/common/RichText";
 import {
   BulletList,
   FaqBlock,
@@ -21,7 +22,6 @@ import { pageStyleCss } from "@/lib/blocks/blockStyles";
 import { BlockStyleScope } from "./BlockStyleScope";
 import {
   ButtonBlock,
-  ColumnsBlock,
   DividerBlock,
   HeadingBlock,
   HtmlBlock,
@@ -113,7 +113,7 @@ function BlockView({ block }: { block: PageBlock }) {
     case "spacer":
       return <SpacerBlock content={data} />;
     case "columns":
-      return <ColumnsBlock content={data} />;
+      return <ColumnsBlockView content={data} />;
     case PAGE_STYLES_TYPE: {
       // Settings-only block: its styles apply to the whole page wrapper.
       const css = pageStyleCss(block);
@@ -123,4 +123,41 @@ function BlockView({ block }: { block: PageBlock }) {
     default:
       return <RichTextBlock title={block.title} content={block.content} />;
   }
+}
+
+/**
+ * Columns render each column's legacy heading/rich-text plus any nested blocks,
+ * so a column can hold any flat block (heading, image, button, ...). Nested
+ * blocks go back through PageBlocks, so they get their own scoped styles too.
+ */
+function ColumnsBlockView({ content }: { content: any }) {
+  const columns: any[] = Array.isArray(content?.columns) ? content.columns : [];
+  if (columns.length === 0) return null;
+
+  const count = Math.min(4, Math.max(1, Number(content?.count) || columns.length));
+  const shown = columns.slice(0, count);
+  const grid =
+    count === 1
+      ? "grid-cols-1"
+      : count === 2
+        ? "md:grid-cols-2"
+        : count === 3
+          ? "md:grid-cols-3"
+          : "md:grid-cols-4";
+
+  return (
+    <div className={`my-6 grid grid-cols-1 gap-6 ${grid}`}>
+      {shown.map((column, index) => (
+        <div key={index} className="space-y-2">
+          {column?.heading ? (
+            <h3 className="text-xl font-semibold">{String(column.heading)}</h3>
+          ) : null}
+          {column?.html ? <RichText html={String(column.html)} /> : null}
+          {Array.isArray(column?.blocks) && column.blocks.length > 0 ? (
+            <PageBlocks blocks={column.blocks} />
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
 }

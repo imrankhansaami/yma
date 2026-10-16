@@ -117,32 +117,3 @@ export function SpacerBlock({ content }: { content: AnyData }) {
   const height = String(content.height || "2rem");
   return <div style={{ height }} aria-hidden="true" />;
 }
-
-export function ColumnsBlock({ content }: { content: AnyData }) {
-  const columns: AnyData[] = Array.isArray(content.columns) ? content.columns : [];
-  if (columns.length === 0) return null;
-
-  const count = Math.min(4, Math.max(1, Number(content.count) || columns.length));
-  const shown = columns.slice(0, count);
-  const grid =
-    count === 1
-      ? "grid-cols-1"
-      : count === 2
-        ? "md:grid-cols-2"
-        : count === 3
-          ? "md:grid-cols-3"
-          : "md:grid-cols-4";
-
-  return (
-    <div className={`my-6 grid grid-cols-1 gap-6 ${grid}`}>
-      {shown.map((column, index) => (
-        <div key={index} className="space-y-2">
-          {column.heading ? (
-            <h3 className="text-xl font-semibold">{String(column.heading)}</h3>
-          ) : null}
-          {column.html ? <RichText html={String(column.html)} /> : null}
-        </div>
-      ))}
-    </div>
-  );
-}
