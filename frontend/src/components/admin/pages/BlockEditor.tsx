@@ -1,23 +1,51 @@
 "use client";
 
 import {
+  AlignLeft,
   ArrowDown,
   ArrowUp,
   BookmarkPlus,
+  Box,
   ChevronDown,
   ChevronRight,
+  CodeXml,
+  Columns3,
   Copy,
   Eye,
   EyeOff,
+  FileText,
   FolderInput,
   GripVertical,
+  Heading1,
+  HelpCircle,
+  Image as ImageIcon,
+  ImagePlus,
+  LayoutGrid,
+  LayoutTemplate,
+  Layers,
+  List,
+  Mail,
+  Map as MapIcon,
+  MapPin,
+  Megaphone,
+  MessageSquareQuote,
+  MousePointerClick,
+  MoveVertical,
+  Package,
+  Phone,
   Plus,
+  Quote as QuoteIcon,
+  Scale,
   Search,
+  SeparatorHorizontal,
+  Sparkles,
+  Star,
   Trash2,
   Type,
   X,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 
 import TextEditor from "@/components/admin/inventory/TextEditor";
 import { useAdminToast } from "@/components/ui/admin-toast";
@@ -65,6 +93,99 @@ function loadReusableBlocks(): ReusableBlock[] {
   } catch {
     return [];
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Presentation helpers                                                        */
+/* -------------------------------------------------------------------------- */
+
+const BLOCK_ICONS: Record<string, LucideIcon> = {
+  heading: Heading1,
+  paragraph: AlignLeft,
+  richText: FileText,
+  bulletList: List,
+  quote: QuoteIcon,
+  image: ImageIcon,
+  button: MousePointerClick,
+  html: CodeXml,
+  columns: Columns3,
+  divider: SeparatorHorizontal,
+  spacer: MoveVertical,
+  [PAGE_STYLES_TYPE]: Type,
+  hero: Sparkles,
+  pageHeader: LayoutTemplate,
+  faq: HelpCircle,
+  categoryTiles: LayoutGrid,
+  productGrid: Package,
+  featureGrid: Star,
+  mediaText: ImagePlus,
+  testimonials: MessageSquareQuote,
+  productTabs: Layers,
+  cta: Megaphone,
+  newsletter: Mail,
+  locationHero: MapPin,
+  locationBody: MapIcon,
+  locationHub: MapIcon,
+  contactPage: Phone,
+  legalPage: Scale,
+  seoContent: Search,
+};
+
+function BlockIcon({ type, className }: { type?: string; className?: string }) {
+  const Icon = BLOCK_ICONS[type || "richText"] || Box;
+  return <Icon className={className} />;
+}
+
+function stripTags(value: string) {
+  return String(value).replace(/<[^>]*>/g, " ");
+}
+
+/** One-line preview of a block's content, shown in the block list. */
+function blockSummary(block: PageSection): string {
+  const data = (block.data as AnyRecord) || {};
+  const type = block.type || "richText";
+
+  if (type === "columns") {
+    const count = Array.isArray(data.columns)
+      ? data.columns.length
+      : Number(data.count) || 0;
+    return count ? `${count} column${count === 1 ? "" : "s"}` : "";
+  }
+  if (type === "spacer") return data.height ? `Height ${data.height}` : "";
+  if (type === "divider") return "";
+
+  const candidates = [
+    data.text,
+    data.title,
+    data.heading,
+    block.title,
+    typeof data.html === "string" ? stripTags(data.html) : "",
+    block.content ? stripTags(block.content) : "",
+    data.label,
+    data.subtitle,
+  ];
+  const first = candidates.find(
+    (value) => typeof value === "string" && value.trim(),
+  );
+  if (!first) return "";
+  const text = String(first).replace(/\s+/g, " ").trim();
+  return text.length > 64 ? `${text.slice(0, 64)}…` : text;
+}
+
+/** Hover-revealed "+ Add block" point between two blocks. */
+function InsertPoint({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="group/insert relative h-4">
+      <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-transparent transition-colors group-hover/insert:bg-brand-orange-200" />
+      <button
+        type="button"
+        onClick={onAdd}
+        className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-500 opacity-0 shadow-sm transition-opacity hover:border-brand-orange-400 hover:text-brand-orange-600 group-hover/insert:opacity-100"
+      >
+        <Plus className="h-3 w-3" /> Add block
+      </button>
+    </div>
+  );
 }
 
 /** Field-level help so the editor stays compact. */
@@ -1295,15 +1416,26 @@ export default function BlockEditor({
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
-  const [query, setQuery] = useState("");
   const { notify } = useAdminToast();
   const [reusable, setReusable] = useState<ReusableBlock[]>([]);
   const [copyFor, setCopyFor] = useState<string | null>(null);
   const [pageList, setPageList] = useState<PageContent[] | null>(null);
+  const [libraryFor, setLibraryFor] = useState<number | "end" | null>(null);
+  const [libraryQuery, setLibraryQuery] = useState("");
 
   useEffect(() => {
     setReusable(loadReusableBlocks());
   }, []);
+
+  // Escape closes the block library.
+  useEffect(() => {
+    if (libraryFor === null) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLibraryFor(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [libraryFor]);
 
   const ordered = [...sections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -1364,20 +1496,35 @@ export default function BlockEditor({
     commit(next);
   };
 
-  const addBlock = (type: string) => {
-    commit([
-      ...ordered,
-      {
-        sectionKey: `${type}-${Date.now()}`,
-        type,
-        title: "",
-        content: "",
-        order: ordered.length,
-        visible: true,
-        data: {},
-      },
-    ]);
+  const addBlockAt = (type: string, at: number | "end") => {
+    const block: PageSection = {
+      sectionKey: `${type}-${Date.now()}`,
+      type,
+      title: "",
+      content: "",
+      order: 0,
+      visible: true,
+      data: {},
+    };
+    const next = [...ordered];
+    if (at === "end") next.push(block);
+    else next.splice(at, 0, block);
+    commit(next);
+    setLibraryFor(null);
+    setLibraryQuery("");
   };
+
+  const expandAll = () => setCollapsed({});
+
+  const collapseAll = () =>
+    setCollapsed(
+      Object.fromEntries(
+        ordered.map((block, index) => [
+          block.sectionKey || `${block.type || "richText"}-${index}`,
+          true,
+        ]),
+      ),
+    );
 
   /* --- Reusable blocks (this browser) ------------------------------------ */
 
@@ -1408,15 +1555,19 @@ export default function BlockEditor({
   const removeReusable = (id: string) =>
     persistReusable(reusable.filter((item) => item.id !== id));
 
-  const insertReusable = (item: ReusableBlock) =>
-    commit([
-      ...ordered,
-      {
-        ...deepCopy(item.block),
-        sectionKey: `${item.block.type || "block"}-${Date.now()}`,
-        order: ordered.length,
-      },
-    ]);
+  const insertReusable = (item: ReusableBlock) => {
+    const block: PageSection = {
+      ...deepCopy(item.block),
+      sectionKey: `${item.block.type || "block"}-${Date.now()}`,
+    };
+    const at = libraryFor === null ? "end" : libraryFor;
+    const next = [...ordered];
+    if (at === "end") next.push(block);
+    else next.splice(at, 0, block);
+    commit(next);
+    setLibraryFor(null);
+    setLibraryQuery("");
+  };
 
   /* --- Copy a block to another page -------------------------------------- */
 
@@ -1464,7 +1615,7 @@ export default function BlockEditor({
       ? BLOCK_CATALOG.filter((entry) => allowedTypes.includes(entry.type))
       : BLOCK_CATALOG
   ).filter((entry) => {
-    const q = query.trim().toLowerCase();
+    const q = libraryQuery.trim().toLowerCase();
     if (!q) return true;
     return `${entry.label} ${entry.description} ${entry.type}`
       .toLowerCase()
@@ -1476,12 +1627,63 @@ export default function BlockEditor({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* Builder toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <LayoutGrid className="h-4 w-4 text-slate-400" />
+          <span className="font-semibold text-slate-700">
+            {ordered.length} block{ordered.length === 1 ? "" : "s"}
+          </span>
+          {ordered.length > 0 ? (
+            <>
+              <span className="text-slate-300">·</span>
+              <button
+                type="button"
+                onClick={expandAll}
+                className="hover:text-slate-800"
+              >
+                Expand all
+              </button>
+              <span className="text-slate-300">·</span>
+              <button
+                type="button"
+                onClick={collapseAll}
+                className="hover:text-slate-800"
+              >
+                Collapse all
+              </button>
+            </>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          onClick={() => setLibraryFor("end")}
+          className="inline-flex items-center gap-1.5 rounded-md bg-brand-black-950 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-black-900"
+        >
+          <Plus className="h-3.5 w-3.5" /> Add block
+        </button>
+      </div>
+
       {ordered.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-slate-300 p-4 text-xs text-slate-400">
-          No blocks yet — add your first one below.
-        </p>
-      ) : null}
+        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-8 text-center">
+          <p className="text-sm font-medium text-slate-600">
+            This page has no sections yet
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            Add your first block to start building the page.
+          </p>
+          <button
+            type="button"
+            onClick={() => setLibraryFor("end")}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-brand-black-950 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-black-900"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add block
+          </button>
+        </div>
+      ) : (
+        <InsertPoint onAdd={() => setLibraryFor(0)} />
+      )}
 
       {ordered.map((block, index) => {
         const type = block.type || "richText";
@@ -1491,14 +1693,15 @@ export default function BlockEditor({
         const isDropTarget =
           overIndex === index && dragIndex !== null && dragIndex !== index;
         const isStyled = Object.keys(block.styles?.typography || {}).length > 0;
+        const summary = blockSummary(block);
 
         return (
-          <div
-            key={key}
-            onDragOver={(e) => {
-              e.preventDefault();
-              if (overIndex !== index) setOverIndex(index);
-            }}
+          <Fragment key={key}>
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (overIndex !== index) setOverIndex(index);
+              }}
             onDrop={(e) => {
               e.preventDefault();
               if (dragIndex !== null) reorderBlock(dragIndex, index);
@@ -1539,19 +1742,31 @@ export default function BlockEditor({
                 >
                   <GripVertical className="h-4 w-4" />
                 </span>
-                <span className="truncate rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
-                  {BLOCK_LABELS[type] ?? type}
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+                  <BlockIcon type={type} className="h-3.5 w-3.5" />
                 </span>
-                {isStyled ? (
-                  <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-brand-orange-600">
-                    <Type className="h-3 w-3" /> styled
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium text-brand-black-950">
+                      {BLOCK_LABELS[type] ?? type}
+                    </span>
+                    {isStyled ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-orange-50 px-2 py-0.5 text-[10px] font-semibold text-brand-orange-700">
+                        <Type className="h-2.5 w-2.5" /> styled
+                      </span>
+                    ) : null}
+                    {block.visible === false ? (
+                      <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                        Hidden
+                      </span>
+                    ) : null}
                   </span>
-                ) : null}
-                {block.visible === false ? (
-                  <span className="shrink-0 text-[11px] font-medium text-amber-600">
-                    Hidden
-                  </span>
-                ) : null}
+                  {summary ? (
+                    <span className="block truncate text-[11px] text-slate-400">
+                      {summary}
+                    </span>
+                  ) : null}
+                </span>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
                 <button
@@ -1682,85 +1897,128 @@ export default function BlockEditor({
               </div>
             )}
           </div>
+            <InsertPoint onAdd={() => setLibraryFor(index + 1)} />
+          </Fragment>
         );
       })}
 
-      <div className="rounded-lg border border-dashed border-slate-300 p-4">
-        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs font-semibold text-slate-600">Add a block</p>
-          <label className="flex items-center gap-2 rounded-md border border-slate-200 px-2 py-1.5">
-            <Search className="h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search blocks..."
-              className="w-full bg-transparent text-xs outline-none sm:w-40"
-            />
-          </label>
-        </div>
-        <div className="space-y-3">
-          {reusable.length > 0 ? (
-            <div>
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Reusable
+      {libraryFor !== null ? (
+        <div
+          className="fixed inset-0 z-[200] flex items-start justify-center bg-brand-black-950/40 p-4 pt-14 backdrop-blur-sm"
+          onClick={() => setLibraryFor(null)}
+        >
+          <div
+            className="flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+              <p className="text-sm font-semibold text-brand-black-950">
+                Add a block
               </p>
-              <div className="flex flex-wrap gap-2">
-                {reusable.map((item) => (
-                  <span
-                    key={item.id}
-                    className="inline-flex items-center overflow-hidden rounded-md border border-slate-200 bg-white"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => insertReusable(item)}
-                      className="px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                      title="Insert this reusable block"
-                    >
-                      + {item.name}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeReusable(item.id)}
-                      className="border-l border-slate-200 px-2 py-1.5 text-slate-400 hover:text-red-600"
-                      aria-label="Delete reusable block"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setLibraryFor(null)}
+                className="text-slate-400 hover:text-slate-700"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-          ) : null}
-          {groups.map((group) => (
-            <div key={group}>
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                {group}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {addable
-                  .filter((entry) => (entry.group || "Blocks") === group)
-                  .map((entry) => (
-                    <button
-                      key={entry.type}
-                      type="button"
-                      onClick={() => addBlock(entry.type)}
-                      title={entry.description}
-                      className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                    >
-                      + {entry.label}
-                    </button>
-                  ))}
-              </div>
+
+            <div className="border-b border-slate-100 px-4 py-3">
+              <label className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2">
+                <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                <input
+                  autoFocus
+                  type="text"
+                  value={libraryQuery}
+                  onChange={(event) => setLibraryQuery(event.target.value)}
+                  placeholder="Search blocks..."
+                  className="w-full bg-transparent text-sm outline-none"
+                />
+              </label>
             </div>
-          ))}
-          {addable.length === 0 ? (
-            <p className="text-xs text-slate-400">
-              No blocks match your search.
-            </p>
-          ) : null}
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {reusable.length > 0 ? (
+                <div className="mb-5">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    Reusable
+                  </p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {reusable.map((item) => (
+                      <span
+                        key={item.id}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 p-3"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => insertReusable(item)}
+                          className="min-w-0 flex-1 truncate text-left text-sm font-medium text-brand-black-950 hover:text-brand-orange-600"
+                          title="Insert this reusable block"
+                        >
+                          {item.name}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeReusable(item.id)}
+                          className="text-slate-300 hover:text-red-600"
+                          aria-label="Delete reusable block"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {groups.map((group) => (
+                <div key={group} className="mb-5 last:mb-0">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    {group}
+                  </p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {addable
+                      .filter((entry) => (entry.group || "Blocks") === group)
+                      .map((entry) => (
+                        <button
+                          key={entry.type}
+                          type="button"
+                          onClick={() =>
+                            addBlockAt(
+                              entry.type,
+                              libraryFor === null ? "end" : libraryFor,
+                            )
+                          }
+                          className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 text-left transition-colors hover:border-brand-orange-400 hover:bg-brand-orange-50/50"
+                        >
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+                            <BlockIcon type={entry.type} className="h-4 w-4" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-medium text-brand-black-950">
+                              {entry.label}
+                            </span>
+                            <span className="block text-xs text-slate-500">
+                              {entry.description}
+                            </span>
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              ))}
+
+              {addable.length === 0 ? (
+                <p className="text-sm text-slate-400">
+                  No blocks match your search.
+                </p>
+              ) : null}
+            </div>
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }
