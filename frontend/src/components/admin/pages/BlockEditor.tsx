@@ -1232,6 +1232,22 @@ function BlockFields({
           <Text label="Title" value={data.title} onChange={(v) => setData({ title: v })} />
           <TextArea label="Description" value={data.description} onChange={(v) => setData({ description: v })} rows={2} />
           <TextArea label="Sub text" value={data.subtext} onChange={(v) => setData({ subtext: v })} rows={2} />
+          <Text
+            label="Areas index heading"
+            value={data.indexTitle ?? ""}
+            onChange={(v) => setData({ indexTitle: v })}
+          />
+          <TextArea
+            label="Areas index intro"
+            value={data.indexIntro ?? ""}
+            onChange={(v) => setData({ indexIntro: v })}
+            rows={2}
+          />
+          <p className="text-[11px] text-slate-400">
+            The A-Z list of location pages below the regional showcases builds
+            itself from the Locations list. Leave the heading and intro blank to
+            use the defaults.
+          </p>
           <Repeater
             label="Regional showcases"
             items={asArray(data, "showcases")}

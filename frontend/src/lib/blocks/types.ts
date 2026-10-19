@@ -278,6 +278,10 @@ export type LocationHubContent = {
   description: string;
   subtext: string;
   showcases: { title: string; intro: string }[];
+  /** Heading above the A-Z index of location pages. */
+  indexTitle?: string;
+  /** Intro line under that heading. */
+  indexIntro?: string;
 };
 
 /** A category page's SEO copy: intro, "why choose" reasons and offerings. */

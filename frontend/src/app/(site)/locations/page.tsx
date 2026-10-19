@@ -10,6 +10,7 @@ import EssexImg from "@/assets/locations/essex.jpg";
 import NorthLondonImg from "@/assets/locations/north-london.jpg";
 import ReserveNowBtn from "@/components/common/btn/ReserveNowBtn";
 import CtaReadySection from "@/components/sections/CtaReadySection";
+import LocationsIndex from "@/components/sections/LocationsIndex";
 import LocationShowcase from "@/components/sections/LocationShowcase";
 import OneStopPartyShop from "@/components/sections/OneStopPartyShop";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import {
 } from "@/data/locations";
 import { SEO_STATIC } from "@/lib/seo-static";
 import { fetchPageContent } from "@/lib/pageContent";
+import { fetchLocationIndex } from "@/lib/locationIndex";
 import type { LocationHubContent, PageBlock } from "@/lib/blocks/types";
 
 export const metadata: Metadata = {
@@ -60,6 +62,10 @@ export const metadata: Metadata = {
   },
 };
 
+// The A-Z index comes from the locations API, so refresh it like the location
+// pages themselves (300s) instead of rebuilding the hub on every request.
+export const revalidate = 300;
+
 const heroCopy = {
   eyebrow: "Bouncy Castle Hire in UK",
   title: "We are available in more than 100 Locations in the UK!",
@@ -94,8 +100,12 @@ const DEFAULT_SHOWCASE_COPY = [
 
 export default async function LocationsPage() {
   // CMS-managed copy (Admin \u2192 Pages \u2192 Core \u2192 locations), with the
-  // current copy as the fallback.
-  const cms = await fetchPageContent("core", "locations");
+  // current copy as the fallback. The index lists every active location page,
+  // which is what gives those pages an internal link from this hub.
+  const [cms, locationIndex] = await Promise.all([
+    fetchPageContent("core", "locations"),
+    fetchLocationIndex(),
+  ]);
   const hubBlock = ((cms?.sections || []) as PageBlock[]).find(
     (b) => b.type === "locationHub",
   )?.data as LocationHubContent | undefined;
@@ -146,6 +156,15 @@ export default async function LocationsPage() {
 
             <ReserveNowBtn className="h-10 sm:h-11 md:h-12 px-6 sm:px-7" />
           </div>
+
+          <p className="mt-5 text-[13px] sm:text-sm font-inter">
+            <a
+              href="#areas-we-cover"
+              className="font-medium text-brand-gray-700 underline decoration-brand-gray-300 underline-offset-4 transition-colors hover:text-brand-green-600"
+            >
+              Browse every area we cover
+            </a>
+          </p>
         </div>
 
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 pb-12 sm:pb-14 md:pb-16">
@@ -196,6 +215,16 @@ export default async function LocationsPage() {
           imageSrc={EnfieldImg}
           areas={enfieldAreas}
         />
+
+        <LocationsIndex
+          groups={locationIndex.groups}
+          title={hub.indexTitle || "Find bouncy castle hire in your area"}
+          intro={
+            hub.indexIntro ||
+            `Every one of these ${locationIndex.count} areas has its own location page with local content, the full hire catalogue and answers to the questions we get asked most. Choose your area to get started.`
+          }
+        />
+
         {/* -------------------Product Catalogue--------------- */}
         <OneStopPartyShop />
         <CtaReadySection />
