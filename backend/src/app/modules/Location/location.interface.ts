@@ -39,6 +39,8 @@ export interface ILocation extends Document {
   metaTitle?: string;
   metaDescription?: string;
   content?: string;
+  /** Optional override for the page's H1. Blank keeps the automatic heading. */
+  heading?: string;
   /** Google Maps query for this page's map: a place, a full address, or "lat,lng". */
   mapQuery?: string;
   /** Google Maps zoom level (1-21). */
@@ -65,6 +67,7 @@ export interface ICreateLocationData {
   metaTitle?: string;
   metaDescription?: string;
   content?: string;
+  heading?: string;
   mapQuery?: string;
   mapZoom?: number;
   isActive?: boolean;

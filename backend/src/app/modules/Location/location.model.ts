@@ -151,6 +151,13 @@ const LocationSchema = new Schema<ILocation>(
       type: String,
     },
 
+    /** Optional override for the page's H1. Blank keeps the automatic heading. */
+    heading: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
     /** Google Maps query shown on the location page: place, address, or "lat,lng". */
     mapQuery: {
       type: String,

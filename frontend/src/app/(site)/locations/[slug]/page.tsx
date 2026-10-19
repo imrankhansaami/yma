@@ -24,6 +24,7 @@ import { locationDisplayName, substituteLocationCode } from "@/lib/locations";
 import { fetchPageContent } from "@/lib/pageContent";
 import { PageBlocks } from "@/components/blocks/PageBlocks";
 import { BlockStyleScope } from "@/components/blocks/BlockStyleScope";
+import { Copy } from "@/components/blocks/Copy";
 
 type Params = { slug: string };
 type ApiLocation = {
@@ -34,6 +35,7 @@ type ApiLocation = {
   metaDescription?: string;
   description?: string;
   content?: string;
+  heading?: string;
   mapQuery?: string;
   mapZoom?: number;
   isActive?: boolean;
@@ -274,6 +276,14 @@ export default async function LocationDetailPage({
   );
   const locationQuery = locationQueryValue(resolvedLocation?.name, canonicalSlug);
 
+  // The H1: an override typed in the admin wins, otherwise the automatic one.
+  const pageHeading =
+    substituteLocationCode(
+      String(resolvedLocation?.heading || "").trim(),
+      [locationQuery],
+      locationName,
+    ) || `Bouncy Castles Hire in ${locationName}`;
+
   // The map defaults to the page's place name; admins can override it with an
   // address, a place, or "lat,lng" (Admin → Pages → Locations → Map).
   const mapQuery =
@@ -350,11 +360,12 @@ export default async function LocationDetailPage({
 
         <div className="border-b border-brand-gray-175 py-6 sm:py-7">
           <h1 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight text-brand-ink-900">
-            Bouncy Castles Hire in {locationName}
+            {pageHeading}
           </h1>
-          <p className="mt-2 text-brand-gray-450 text-[15px] sm:text-[16px] leading-relaxed">
-            {locationDescription}
-          </p>
+          <Copy
+            value={locationDescription}
+            className="mt-2 text-brand-gray-450 text-[15px] sm:text-[16px] leading-relaxed"
+          />
         </div>
         {/* --------------Hero Section---------------- */}
         <div className="grid grid-cols-1 gap-10 md:gap-16 md:grid-cols-2 items-stretch py-12 sm:py-14 md:py-16">

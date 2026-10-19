@@ -41,6 +41,7 @@ export default function EditLocationPage() {
   });
 
   const [name, setName] = useState("");
+  const [heading, setHeading] = useState("");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
@@ -93,6 +94,7 @@ export default function EditLocationPage() {
   useEffect(() => {
     if (location) {
       setName(location.name || "");
+      setHeading(location.heading || "");
       setDescription(location.description || "");
       setContent(location.content || "");
       setMetaTitle(location.metaTitle || "");
@@ -112,6 +114,7 @@ export default function EditLocationPage() {
     mutationFn: async () => {
       const { data } = await api.patch(`/locations/${location._id}`, {
         name,
+        heading,
         description,
         content,
         metaTitle,
@@ -214,6 +217,22 @@ export default function EditLocationPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
+              Page heading (H1)
+            </label>
+            <input
+              type="text"
+              value={heading}
+              onChange={(e) => setHeading(e.target.value)}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+              placeholder="Leave blank for “Bouncy Castles Hire in …”"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              The big heading at the top of the page. Blank uses the automatic
+              heading built from the place name.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               URL slug
             </label>
             <div className="flex items-center gap-2">
@@ -235,14 +254,13 @@ export default function EditLocationPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Short Description
+              Short description
             </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
-              rows={2}
-            />
+            <TextEditor value={description} onChange={setDescription} />
+            <p className="mt-1 text-xs text-slate-500">
+              The intro paragraph under the page heading. Leave it blank to use
+              the built-in line.
+            </p>
           </div>
         </div>
 
@@ -361,11 +379,14 @@ export default function EditLocationPage() {
             sections={sections}
             onChange={setSections}
             allowedTypes={LOCATION_BLOCK_TYPES}
-            pageHeading={`Bouncy Castles Hire in ${locationDisplayName(
-              name,
-              slug,
-              location.slugAliases,
-            )}`}
+            pageHeading={
+              heading.trim() ||
+              `Bouncy Castles Hire in ${locationDisplayName(
+                name,
+                slug,
+                location.slugAliases,
+              )}`
+            }
           />
           <button
             type="button"
