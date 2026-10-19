@@ -5,6 +5,7 @@ import {
   getLocationHandler,
   getLocationBySlugHandler,
   updateLocationHandler,
+  duplicateLocationHandler,
   deleteLocationHandler,
   addDeliveryAreaHandler,
   updateDeliveryAreaHandler,
@@ -27,6 +28,7 @@ router.get("/:id/delivery-areas/:areaId", getDeliveryAreaHandler);
 // Protected routes (add your auth middleware here)
 router.post("/", createLocationHandler);
 router.patch("/:id", updateLocationHandler);
+router.post("/:id/duplicate", duplicateLocationHandler);
 router.delete("/:id", deleteLocationHandler);
 router.post("/:id/delivery-areas", addDeliveryAreaHandler);
 router.patch("/:id/delivery-areas/:areaId", updateDeliveryAreaHandler);

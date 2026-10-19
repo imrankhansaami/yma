@@ -43,6 +43,7 @@ type ApiLocation = {
   description?: string;
   content?: string;
   heading?: string;
+  place?: string;
   mapQuery?: string;
   mapZoom?: number;
   isActive?: boolean;
@@ -192,6 +193,7 @@ export async function generateMetadata({
     resolvedLocation?.name,
     canonicalSlug,
     resolvedLocation?.slugAliases,
+    resolvedLocation?.place,
   );
 
   const defaults = await getSeoDefaults();
@@ -280,6 +282,7 @@ export default async function LocationDetailPage({
     resolvedLocation?.name,
     canonicalSlug,
     resolvedLocation?.slugAliases,
+    resolvedLocation?.place,
   );
   const locationQuery = locationQueryValue(resolvedLocation?.name, canonicalSlug);
 

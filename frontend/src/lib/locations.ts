@@ -110,7 +110,12 @@ export function locationDisplayName(
   name: string | undefined,
   slug: string,
   aliases: string[] = [],
+  place?: string,
 ): string {
+  // A place name typed in the admin wins over everything else.
+  const savedPlace = String(place || "").trim();
+  if (savedPlace) return savedPlace;
+
   const saved = String(name || "").trim();
 
   if (saved && !POSTCODE_DISTRICT.test(saved)) return saved;

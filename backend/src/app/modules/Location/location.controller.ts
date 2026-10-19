@@ -112,6 +112,7 @@ export const createLocationHandler = asyncHandler(
       metaDescription: req.body.metaDescription || "",
       content: req.body.content || "",
       heading: req.body.heading || "",
+      place: req.body.place || "",
       mapQuery: req.body.mapQuery || "",
       mapZoom:
         typeof req.body.mapZoom === "number" ? req.body.mapZoom : 12,
@@ -247,6 +248,108 @@ export const updateLocationHandler = asyncHandler(
       data: location,
     });
   }
+);
+
+// Duplicate a location page: a new location record plus a copy of its page
+// sections, created inactive so it can be finished before it goes public.
+export const duplicateLocationHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const source = await LocationModel.findById(req.params.id);
+    if (!source) {
+      throw new ApiError("Location not found", 404);
+    }
+
+    const name = String(req.body?.name || "").trim();
+    const place = String(req.body?.place || "").trim();
+    if (!name) {
+      throw new ApiError(
+        "A postcode district is required for the new location",
+        400,
+      );
+    }
+
+    const replaceFrom = String(req.body?.replaceFrom || "").trim();
+    const replaceTo = String(req.body?.replaceTo || place || name).trim();
+
+    // Swap the old place name for the new one everywhere in the copied copy.
+    const swap = (value: any): any => {
+      if (typeof value === "string") {
+        if (
+          !replaceFrom ||
+          replaceFrom.toLowerCase() === replaceTo.toLowerCase()
+        ) {
+          return value;
+        }
+        const pattern = new RegExp(
+          replaceFrom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+          "gi",
+        );
+        return value.replace(pattern, replaceTo);
+      }
+      if (Array.isArray(value)) return value.map(swap);
+      if (value && typeof value === "object") {
+        return Object.fromEntries(
+          Object.entries(value).map(([key, val]) => [key, swap(val)]),
+        );
+      }
+      return value;
+    };
+
+    const slug = normalizeSlug(
+      String(req.body?.slug || "").trim() ||
+        `bouncy-castles-hire-in-${place || name}`,
+    );
+
+    const copy = await LocationModel.create({
+      name,
+      place,
+      slug,
+      heading: swap(source.heading || ""),
+      description: swap(source.description || ""),
+      metaTitle: swap(source.metaTitle || ""),
+      metaDescription: swap(source.metaDescription || ""),
+      content: swap(source.content || ""),
+      mapQuery: source.mapQuery || "",
+      mapZoom: source.mapZoom,
+      type: source.type,
+      country: source.country,
+      state: source.state,
+      city: source.city,
+      area: source.area,
+      postcode: source.postcode,
+      deliveryAreas: swap(source.deliveryAreas || []),
+      deliveryOptions: source.deliveryOptions,
+      metadata: source.metadata || {},
+      isActive: false,
+    });
+
+    // Carry the page sections across to the new page key.
+    const sourcePage = await PageContent.findOne({
+      pageType: "location",
+      pageKey: source.slug,
+    });
+    if (sourcePage) {
+      await PageContent.create({
+        pageType: "location",
+        pageKey: copy.slug,
+        title: swap(sourcePage.title || ""),
+        metaTitle: swap(sourcePage.metaTitle || ""),
+        metaDescription: swap(sourcePage.metaDescription || ""),
+        metaKeywords: sourcePage.metaKeywords || "",
+        customJsonLd: sourcePage.customJsonLd || "",
+        isActive: true,
+        sections: swap(sourcePage.sections || []),
+      });
+    }
+
+    revalidatePaths(["/locations", "/sitemap.xml"]);
+
+    res.status(201).json({
+      success: true,
+      message: "Location page duplicated — it starts as a draft",
+      data: copy,
+    });
+  },
 );
 
 // Delete location

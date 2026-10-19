@@ -158,6 +158,13 @@ const LocationSchema = new Schema<ILocation>(
       default: "",
     },
 
+    /** The place shown on the page, e.g. "Leyton" (name stays the code). */
+    place: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
     /** Google Maps query shown on the location page: place, address, or "lat,lng". */
     mapQuery: {
       type: String,

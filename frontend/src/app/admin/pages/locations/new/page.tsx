@@ -15,6 +15,7 @@ export default function NewLocationPage() {
   const { notify } = useAdminToast();
 
   const [name, setName] = useState("");
+  const [place, setPlace] = useState("");
   const [postcode, setPostcode] = useState("");
   const [country, setCountry] = useState("United Kingdom");
   const [state, setState] = useState("");
@@ -31,6 +32,7 @@ export default function NewLocationPage() {
     mutationFn: async () => {
       const { data } = await api.post("/locations", {
         name,
+        place,
         postcode,
         country,
         state,
@@ -42,7 +44,7 @@ export default function NewLocationPage() {
         mapQuery,
         mapZoom,
         ...(urlSlug.trim() ? { slug: urlSlug.trim() } : {}),
-        isActive: true,
+        isActive: false,
       });
       return data;
     },
@@ -137,6 +139,21 @@ export default function NewLocationPage() {
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Place name (shown on the page)
+            </label>
+            <input
+              type="text"
+              value={place}
+              onChange={(e) => setPlace(e.target.value)}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+              placeholder="e.g. Chigwell"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Leave blank to use the built-in place for the postcode district.
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
