@@ -413,17 +413,17 @@ export default async function LocationDetailPage({
           locationQuery={locationQuery}
         />
 
-        {/* -------------CTA--------------------- */}
-        <CtaReadySection />
-
+        {/* --------------Long-form body copy------------ */}
         <BlockStyleScope block={bodyBlockEntry}>
           <LocationBodyBlock content={body} />
         </BlockStyleScope>
 
         <div className="pt-8 space-y-4">
+          {/* The CTA is passed in so it renders directly above the FAQ. */}
           <LocationDetailClient
             locationName={locationName}
             locationSlug={canonicalSlug}
+            beforeFaq={<CtaReadySection />}
           />
         </div>
 

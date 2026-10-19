@@ -4,18 +4,21 @@ import { fetchLocations } from "@/services/location.service";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { normalizeCanonicalSlug } from "@/lib/canonical";
 import { FaqSection } from "@/components/blocks/FaqAccordion";
 
 export default function LocationDetailClient({
   locationName,
   locationSlug,
+  beforeFaq,
 }: {
   /** The place shown in copy, e.g. "Harlow". */
   locationName: string;
   /** The slug used to match the location record, e.g. "cm18". */
   locationSlug?: string;
+  /** Rendered between the delivery areas and the FAQ — the page's CTA. */
+  beforeFaq?: ReactNode;
 }) {
   const toSlug = (name: string) =>
     normalizeCanonicalSlug(name);
@@ -118,6 +121,8 @@ export default function LocationDetailClient({
           </div>
         </div>
       )}
+
+      {beforeFaq}
 
       <FaqSection
         headingAs="h3"
