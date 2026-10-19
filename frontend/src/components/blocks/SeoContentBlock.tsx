@@ -1,9 +1,23 @@
 import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
+import { RichText } from "@/components/common/RichText";
+import { Copy, isRichText } from "@/components/blocks/Copy";
 import type { SeoContentContent, SeoListItem } from "@/lib/blocks/types";
 
 function BulletRow({ title, body }: { title: string; body: string }) {
+  if (isRichText(body)) {
+    return (
+      <li className="flex items-start gap-3">
+        <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-brand-orange-500" />
+        <div className="text-[18px] leading-relaxed text-brand-gray-650">
+          <strong className="text-brand-gray-700">{title}:</strong>
+          <RichText html={body} className="mt-1 max-w-none" />
+        </div>
+      </li>
+    );
+  }
+
   return (
     <li className="flex items-start gap-3">
       <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-brand-orange-500" />
@@ -49,9 +63,10 @@ export function SeoContentBlock({ content }: { content: SeoContentContent }) {
             {content.heading}
           </h2>
           {content.intro?.trim() ? (
-            <p className="mt-6 max-w-[1150px] text-[17px] leading-relaxed text-brand-gray-650">
-              {content.intro}
-            </p>
+            <Copy
+              value={content.intro}
+              className="mt-6 max-w-[1150px] text-[17px] leading-relaxed text-brand-gray-650"
+            />
           ) : null}
         </div>
 

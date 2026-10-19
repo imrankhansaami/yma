@@ -483,6 +483,26 @@ function TextArea({
   );
 }
 
+/** A labelled rich text field, for copy that should support formatting. */
+function RichField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <span className="mb-1 block text-xs font-medium text-slate-600">
+        {label}
+      </span>
+      <TextEditor value={value || ""} onChange={onChange} />
+    </div>
+  );
+}
+
 function StringList({
   label,
   value,
@@ -1040,7 +1060,7 @@ function BlockFields({
                   </label>
                   <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
                 </div>
-                <TextArea label="Description" value={item.description} onChange={(v) => update({ description: v })} rows={2} />
+                <RichField label="Description" value={item.description} onChange={(v) => update({ description: v })} />
               </div>
             )}
           />
@@ -1052,7 +1072,7 @@ function BlockFields({
         <div className="space-y-3">
           <StringList label="Badges" value={data.badges} onChange={(badges) => setData({ badges })} />
           <Text label="Heading" value={data.title} onChange={(v) => setData({ title: v })} />
-          <TextArea label="Paragraph" value={data.body} onChange={(v) => setData({ body: v })} rows={3} />
+          <RichField label="Paragraph" value={data.body} onChange={(v) => setData({ body: v })} />
           <StringList label="Bullet points" value={data.listItems} onChange={(listItems) => setData({ listItems })} />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Text label="Link text" value={data.linkText} onChange={(v) => setData({ linkText: v })} />
@@ -1072,7 +1092,7 @@ function BlockFields({
           makeItem={() => ({ quote: "", author: "", rating: 5 })}
           renderItem={(item, update) => (
             <div className="space-y-2">
-              <TextArea label="Quote" value={item.quote} onChange={(v) => update({ quote: v })} rows={3} />
+              <RichField label="Quote" value={item.quote} onChange={(v) => update({ quote: v })} />
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <Text label="Author" value={item.author} onChange={(v) => update({ author: v })} />
                 <label className="block">
@@ -1134,7 +1154,7 @@ function BlockFields({
         <div className="space-y-3">
           <Text label="Eyebrow" value={data.eyebrow} onChange={(v) => setData({ eyebrow: v })} />
           <Text label="Title" value={data.title} onChange={(v) => setData({ title: v })} />
-          <TextArea label="Intro" value={data.subtitle} onChange={(v) => setData({ subtitle: v })} rows={2} />
+          <RichField label="Intro" value={data.subtitle} onChange={(v) => setData({ subtitle: v })} />
           <StringList label="Badges" value={data.badges} onChange={(badges) => setData({ badges })} />
         </div>
       );
@@ -1144,7 +1164,7 @@ function BlockFields({
         <div className="space-y-3">
           <Text label="Eyebrow" value={data.eyebrow} onChange={(v) => setData({ eyebrow: v })} />
           <Text label="Title" value={data.title} onChange={(v) => setData({ title: v })} />
-          <TextArea label="Intro" value={data.intro} onChange={(v) => setData({ intro: v })} rows={2} />
+          <RichField label="Intro" value={data.intro} onChange={(v) => setData({ intro: v })} />
           <Repeater
             label="Questions"
             items={asArray(data, "items")}
@@ -1153,7 +1173,7 @@ function BlockFields({
             renderItem={(item, update) => (
               <div className="space-y-2">
                 <Text label="Question" value={item.question} onChange={(v) => update({ question: v })} />
-                <TextArea label="Answer" value={item.answer} onChange={(v) => update({ answer: v })} rows={3} />
+                <RichField label="Answer" value={item.answer} onChange={(v) => update({ answer: v })} />
               </div>
             )}
           />
@@ -1164,7 +1184,7 @@ function BlockFields({
       return (
         <div className="space-y-3">
           <Text label="Heading" value={data.title} onChange={(v) => setData({ title: v })} />
-          <TextArea label="Intro" value={data.intro} onChange={(v) => setData({ intro: v })} rows={2} />
+          <RichField label="Intro" value={data.intro} onChange={(v) => setData({ intro: v })} />
           <Repeater
             label="Items"
             items={asArray(data, "items")}
@@ -1173,7 +1193,7 @@ function BlockFields({
             renderItem={(item, update) => (
               <div className="space-y-2">
                 <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
-                <TextArea label="Text" value={item.text} onChange={(v) => update({ text: v })} rows={2} />
+                <RichField label="Text" value={item.text} onChange={(v) => update({ text: v })} />
               </div>
             )}
           />
@@ -1285,7 +1305,7 @@ function BlockFields({
       return (
         <div className="space-y-3">
           <Text label="Main heading" value={data.heading} onChange={(v) => setData({ heading: v })} />
-          <TextArea label="Intro paragraph" value={data.intro} onChange={(v) => setData({ intro: v })} rows={4} />
+          <RichField label="Intro paragraph" value={data.intro} onChange={(v) => setData({ intro: v })} />
           <Text label="Reasons heading" value={data.reasonsHeading} onChange={(v) => setData({ reasonsHeading: v })} />
           <Repeater
             label="Reasons"
@@ -1295,7 +1315,7 @@ function BlockFields({
             renderItem={(item, update) => (
               <div className="space-y-2">
                 <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
-                <TextArea label="Body" value={item.body} onChange={(v) => update({ body: v })} rows={3} />
+                <RichField label="Body" value={item.body} onChange={(v) => update({ body: v })} />
               </div>
             )}
           />
@@ -1308,7 +1328,7 @@ function BlockFields({
             renderItem={(item, update) => (
               <div className="space-y-2">
                 <Text label="Title" value={item.title} onChange={(v) => update({ title: v })} />
-                <TextArea label="Body" value={item.body} onChange={(v) => update({ body: v })} rows={3} />
+                <RichField label="Body" value={item.body} onChange={(v) => update({ body: v })} />
               </div>
             )}
           />

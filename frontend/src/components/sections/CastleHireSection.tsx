@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ReserveNowBtn from "../common/btn/ReserveNowBtn";
 import type { MediaTextContent } from "@/lib/blocks/types";
+import { Copy } from "@/components/blocks/Copy";
 
 const DEFAULT_MEDIA_TEXT: MediaTextContent = {
   badges: ["All ages", "Safe & insured", "Fast setup"],
@@ -48,9 +49,10 @@ export default function CastleHireSection({
             {c.title}
           </h2>
 
-          <p className="text-brand-gray-450 text-[15px] sm:text-[16px] leading-relaxed mb-4 font-inter">
-            {c.body}
-          </p>
+          <Copy
+            value={c.body}
+            className="text-brand-gray-450 text-[15px] sm:text-[16px] leading-relaxed mb-4 font-inter"
+          />
 
           {c.listItems.filter(Boolean).length > 0 && (
             <ul className="text-brand-gray-450 text-[15px] sm:text-[16px] leading-relaxed mb-6 font-inter list-disc pl-5 space-y-2">

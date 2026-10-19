@@ -1,5 +1,6 @@
 import { RichText } from "@/components/common/RichText";
 import { FaqSection } from "@/components/blocks/FaqAccordion";
+import { Copy } from "@/components/blocks/Copy";
 import type {
   BulletListContent,
   FaqContent,
@@ -22,9 +23,10 @@ export function PageHeader({ content }: { content?: PageHeaderContent }) {
           {content.title}
         </h1>
         {content.subtitle ? (
-          <p className="text-sm sm:text-base text-brand-gray-650 max-w-[720px]">
-            {content.subtitle}
-          </p>
+          <Copy
+            value={content.subtitle}
+            className="text-sm sm:text-base text-brand-gray-650 max-w-[720px]"
+          />
         ) : null}
         {content.badges?.filter(Boolean).length ? (
           <div className="mt-2 flex flex-wrap gap-2">
@@ -80,9 +82,10 @@ export function BulletList({ content }: { content?: BulletListContent }) {
         </h2>
       ) : null}
       {content?.intro?.trim() ? (
-        <p className="mt-3 text-sm sm:text-base text-brand-gray-650 max-w-[820px]">
-          {content.intro}
-        </p>
+        <Copy
+          value={content.intro}
+          className="mt-3 text-sm sm:text-base text-brand-gray-650 max-w-[820px]"
+        />
       ) : null}
       <ul className="mt-6 space-y-4">
         {items.map((item, i) => (
@@ -95,9 +98,10 @@ export function BulletList({ content }: { content?: BulletListContent }) {
                 </p>
               ) : null}
               {item.text?.trim() ? (
-                <p className="mt-0.5 text-[14px] sm:text-[15px] text-brand-gray-650">
-                  {item.text}
-                </p>
+                <Copy
+                  value={item.text}
+                  className="mt-0.5 text-[14px] sm:text-[15px] text-brand-gray-650"
+                />
               ) : null}
             </div>
           </li>

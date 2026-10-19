@@ -6,6 +6,8 @@ import {
   CalendarCheck,
   LucideIcon,
 } from "lucide-react";
+
+import { Copy } from "@/components/blocks/Copy";
 import { cn } from "@/lib/utils";
 import type { FeatureGridContent } from "@/lib/blocks/types";
 
@@ -175,9 +177,10 @@ function FeatureCard({ title, desc, Icon, theme }: Feature) {
       >
         {title}
       </h3>
-      <p className="mt-3 text-brand-gray-600 text-[14px] sm:text-[15px] leading-6 font-medium">
-        {desc}
-      </p>
+      <Copy
+        value={desc}
+        className="mt-3 text-brand-gray-600 text-[14px] sm:text-[15px] leading-6 font-medium"
+      />
     </div>
   );
 }

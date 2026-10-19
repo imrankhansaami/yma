@@ -2,6 +2,8 @@ import type { ElementType, ReactNode } from "react";
 import { ChevronDown, HelpCircle } from "lucide-react";
 import type { FaqItem } from "@/lib/blocks/types";
 
+import { Copy } from "./Copy";
+
 /**
  * Shared question & answer accordion. Used by the CMS FAQ block, the /faqs page
  * and the location pages so every FAQ on the site looks and behaves the same.
@@ -38,9 +40,10 @@ export function FaqAccordion({
             </span>
           </summary>
           <div className="px-5 pb-5 sm:px-6 sm:pb-6">
-            <p className="ml-9 border-l-2 border-brand-orange-100 pl-3 text-[14px] leading-relaxed text-brand-gray-650 sm:text-[15px]">
-              {faq.answer}
-            </p>
+            <Copy
+              value={faq.answer}
+              className="ml-9 border-l-2 border-brand-orange-100 pl-3 text-[14px] leading-relaxed text-brand-gray-650 sm:text-[15px]"
+            />
           </div>
         </details>
       ))}

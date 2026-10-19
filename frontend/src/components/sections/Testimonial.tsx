@@ -1,6 +1,8 @@
 "use client";
 
 import { Star } from "lucide-react";
+
+import { Copy } from "@/components/blocks/Copy";
 import { useEffect, useState } from "react";
 import { A11y, Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -193,9 +195,10 @@ export default function TestimonialSection({
                   })}
                 </div>
 
-                <p className="mx-auto max-w-[780px] text-[14px] leading-6 text-brand-ink-900 sm:text-[16px] sm:leading-7 md:text-[18px] md:leading-8">
-                  {t.quote}
-                </p>
+                <Copy
+                  value={t.quote}
+                  className="mx-auto max-w-[780px] text-[14px] leading-6 text-brand-ink-900 sm:text-[16px] sm:leading-7 md:text-[18px] md:leading-8"
+                />
 
                 <div className="mt-5 flex flex-col items-center gap-2 sm:mt-6">
                   {t.avatar ? (
