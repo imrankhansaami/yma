@@ -8,6 +8,7 @@ import BlockEditor from "@/components/admin/pages/BlockEditor";
 import { GENERIC_BLOCK_TYPES } from "@/lib/blocks/types";
 import { locationDisplayName } from "@/lib/locations";
 import { bodyToHtml, heroToHtml } from "@/lib/blocks/locationContent";
+import { LOCATION_SECTION_ORDER } from "@/lib/blocks/types";
 import {
   getPageContentByKey,
   PageSection,
@@ -87,7 +88,39 @@ export default function EditLocationPage() {
       return { ...section, data };
     });
 
-    setSections(migrated);
+    // The page's built-in sections exist as blocks so they can be edited and
+    // dragged. Added only for pages that predate them, so deleting one sticks.
+    const hasStructure = migrated.some(
+      (section) =>
+        section.type === "locationShop" || section.type === "locationAreas",
+    );
+    let nextSections: PageSection[] = migrated;
+    if (!hasStructure) {
+      const structuralTypes = new Set<string>(
+        LOCATION_SECTION_ORDER.map((entry) => entry.type),
+      );
+      const structural: PageSection[] = LOCATION_SECTION_ORDER.map(
+        (entry, index) => {
+          const saved = migrated.find((s) => s.type === entry.type);
+          return {
+            sectionKey: saved?.sectionKey || entry.sectionKey,
+            type: entry.type,
+            title: saved?.title || "",
+            content: saved?.content || "",
+            order: index,
+            visible: saved?.visible ?? true,
+            data: (saved?.data ?? {}) as Record<string, unknown>,
+            styles: saved?.styles,
+          };
+        },
+      );
+      nextSections = [
+        ...structural,
+        ...migrated.filter((s) => !structuralTypes.has(String(s.type || ""))),
+      ];
+    }
+
+    setSections(nextSections);
     setUseSavedContent(pageContent.isActive !== false);
   }, [pageContent]);
 

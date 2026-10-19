@@ -13,7 +13,10 @@ import {
   LocationBodyBlock,
   LocationHeroBlock,
 } from "@/components/blocks/LocationBlocks";
+import { Fragment } from "react";
+import { LOCATION_SECTION_ORDER } from "@/lib/blocks/types";
 import type {
+  CtaContent,
   LocationBodyContent,
   LocationHeroContent,
   PageBlock,
@@ -315,6 +318,32 @@ export default async function LocationDetailPage({
   const bodyBlockEntry = locationBlocks.find((b) => b.type === "locationBody");
   const heroBlock = heroBlockEntry?.data as LocationHeroContent | undefined;
   const bodyBlock = bodyBlockEntry?.data as LocationBodyContent | undefined;
+  // The page renders its sections from the saved blocks, in their saved order,
+  // so every section can be dragged anywhere in the editor. Pages saved before
+  // these were blocks fall back to the default order, keeping their content.
+  const savedSections = locationBlocks.filter((b) => b && b.type) as PageBlock[];
+  const structuralTypes = new Set<string>(
+    LOCATION_SECTION_ORDER.map((entry) => entry.type),
+  );
+  const isMigrated = savedSections.some(
+    (b) => b.type === "locationShop" || b.type === "locationAreas",
+  );
+  const locationSections: PageBlock[] = isMigrated
+    ? savedSections.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    : [
+        ...LOCATION_SECTION_ORDER.map((entry, index) => {
+          const saved = savedSections.find((b) => b.type === entry.type);
+          return {
+            sectionKey: entry.sectionKey,
+            type: entry.type,
+            order: index,
+            visible: saved?.visible ?? true,
+            data: (saved?.data ?? {}) as Record<string, unknown>,
+            styles: saved?.styles,
+          } as PageBlock;
+        }),
+        ...savedSections.filter((b) => !structuralTypes.has(b.type as string)),
+      ];
   const hero: LocationHeroContent = substituteLocationCode(
     {
       ...defaultHero(locationName),
@@ -331,12 +360,6 @@ export default async function LocationDetailPage({
     [locationQuery],
     locationName,
   );
-  // Any further blocks saved on this location, rendered after the body copy.
-  // PageBlocks skips the locationHero/locationBody blocks used above.
-  const otherBlocks = locationBlocks.filter(
-    (b) => b.type !== "locationHero" && b.type !== "locationBody",
-  );
-
   return (
     <main className="cms-page bg-white mt-16 md:mt-24 font-inter">
       <BreadcrumbJsonLd
@@ -367,68 +390,93 @@ export default async function LocationDetailPage({
             className="mt-2 text-brand-gray-450 text-[15px] sm:text-[16px] leading-relaxed"
           />
         </div>
-        {/* --------------Hero Section---------------- */}
-        <div className="grid grid-cols-1 gap-10 md:gap-16 md:grid-cols-2 items-stretch py-12 sm:py-14 md:py-16">
-          <div className="space-y-4 text-brand-ink-900">
-            <BlockStyleScope block={heroBlockEntry}>
-              <LocationHeroBlock content={hero} />
-            </BlockStyleScope>
+        {locationSections.map((section, index) => {
+          const key = section.sectionKey || `${section.type || "block"}-${index}`;
+          const type = section.type || "richText";
 
-            <div className="mt-6 sm:mt-8 flex flex-row items-center  gap-3 sm:gap-4 font-londrina! w-full ">
-              <WhatsappBtn />
-              <ReserveNowBtn
-                href={`/booking-catalog?locationName=${encodeURIComponent(
-                  locationQuery,
-                )}`}
-                className="h-10 sm:h-11 md:h-12 px-6 sm:px-7"
+          if (type === "locationHero") {
+            return (
+              <Fragment key={key}>
+                <div className="grid grid-cols-1 gap-10 md:gap-16 md:grid-cols-2 items-stretch py-12 sm:py-14 md:py-16">
+                  <div className="space-y-4 text-brand-ink-900">
+                    <BlockStyleScope block={section}>
+                      <LocationHeroBlock content={hero} />
+                    </BlockStyleScope>
+
+                    <div className="mt-6 sm:mt-8 flex flex-row items-center  gap-3 sm:gap-4 font-londrina! w-full ">
+                      <WhatsappBtn />
+                      <ReserveNowBtn
+                        href={`/booking-catalog?locationName=${encodeURIComponent(
+                          locationQuery,
+                        )}`}
+                        className="h-10 sm:h-11 md:h-12 px-6 sm:px-7"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="relative h-full overflow-hidden rounded-xl border border-brand-gray-175 shadow-sm">
+                    <iframe
+                      title={`${locationName} map`}
+                      src={`https://www.google.com/maps?q=${encodeURIComponent(
+                        mapQuery,
+                      )}&z=${mapZoom}&output=embed`}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="h-full w-full border-0 min-h-[280px]"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+
+                {locationContentHtml ? (
+                  <RichText
+                    html={locationContentHtml}
+                    className="pb-4 prose-headings:text-brand-ink-900 prose-p:text-brand-gray-450"
+                  />
+                ) : null}
+              </Fragment>
+            );
+          }
+
+          if (type === "locationShop") {
+            return (
+              <DynamicOneStopPartyShop
+                key={key}
+                locationName={locationName}
+                locationQuery={locationQuery}
               />
-            </div>
-          </div>
+            );
+          }
 
-          <div className="relative h-full overflow-hidden rounded-xl border border-brand-gray-175 shadow-sm">
-            <iframe
-              title={`${locationName} map`}
-              src={`https://www.google.com/maps?q=${encodeURIComponent(
-                mapQuery,
-              )}&z=${mapZoom}&output=embed`}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="h-full w-full border-0 min-h-[280px]"
-              allowFullScreen
-            />
-          </div>
-        </div>
+          if (type === "locationBody") {
+            return (
+              <BlockStyleScope key={key} block={section}>
+                <LocationBodyBlock content={body} />
+              </BlockStyleScope>
+            );
+          }
 
-        {/* --------------CMS Content (Admin → Pages → Locations)-------- */}
-        {locationContentHtml ? (
-          <RichText
-            html={locationContentHtml}
-            className="pb-4 prose-headings:text-brand-ink-900 prose-p:text-brand-gray-450"
-          />
-        ) : null}
+          if (type === "cta") {
+            return (
+              <BlockStyleScope key={key} block={section}>
+                <CtaReadySection content={(section.data || {}) as CtaContent} />
+              </BlockStyleScope>
+            );
+          }
 
-        {/* --------------Product Catalogue------------ */}
-        <DynamicOneStopPartyShop
-          locationName={locationName}
-          locationQuery={locationQuery}
-        />
+          if (type === "locationAreas") {
+            return (
+              <div key={key} className="pt-8 space-y-4">
+                <LocationDetailClient
+                  locationName={locationName}
+                  locationSlug={canonicalSlug}
+                />
+              </div>
+            );
+          }
 
-        {/* --------------Long-form body copy------------ */}
-        <BlockStyleScope block={bodyBlockEntry}>
-          <LocationBodyBlock content={body} />
-        </BlockStyleScope>
-
-        <div className="pt-8 space-y-4">
-          {/* The CTA is passed in so it renders directly above the FAQ. */}
-          <LocationDetailClient
-            locationName={locationName}
-            locationSlug={canonicalSlug}
-            beforeFaq={<CtaReadySection />}
-          />
-        </div>
-
-        {/* ---- Additional blocks saved in Admin → Pages → Locations ---- */}
-        <PageBlocks blocks={otherBlocks} />
+          return <PageBlocks key={key} blocks={[section]} />;
+        })}
       </div>
     </main>
   );

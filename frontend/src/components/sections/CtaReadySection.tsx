@@ -1,5 +1,6 @@
 import ReserveNowBtn from "../common/btn/ReserveNowBtn";
 import WhatsappBtn from "../common/btn/WhatsappBtn";
+import { Copy } from "@/components/blocks/Copy";
 import type { CtaContent } from "@/lib/blocks/types";
 
 const DEFAULT_CTA: CtaContent = {
@@ -17,9 +18,10 @@ export default function CtaReadySection({ content }: { content?: CtaContent }) {
         <h2 className="font-inter font-semibold text-[22px] sm:text-[28px] md:text-[30px] leading-tight text-brand-ink-900">
           {title}
         </h2>
-        <p className="font-inter text-[14px] sm:text-[18px] mt-3 text-brand-gray-700 max-w-[620px] mx-auto">
-          {body}
-        </p>
+        <Copy
+          value={body}
+          className="font-inter text-[14px] sm:text-[18px] mt-3 text-brand-gray-700 max-w-[620px] mx-auto"
+        />
 
         {/* Buttons */}
         <div className="mt-6 sm:mt-8 flex flex-row items-center justify-center gap-3 sm:gap-4 font-londrina! w-full px-4">

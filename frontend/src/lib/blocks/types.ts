@@ -358,7 +358,9 @@ export const BLOCK_CATALOG: {
   { type: "seoContent", label: "Category SEO Content", description: "Intro, why-choose reasons, offerings and cross links", group: "Page layouts" },
   // --- Location ------------------------------------------------------------
   { type: "locationHero", label: "Location Hero", description: "Location page headline and intro paragraphs", group: "Location" },
+  { type: "locationShop", label: "Location Product Grid", description: "The one-stop party shop catalogue for this location", group: "Location" },
   { type: "locationBody", label: "Location Body", description: "About, why choose us, services, safety and occasions", group: "Location" },
+  { type: "locationAreas", label: "Delivery Areas & FAQ", description: "Delivery areas list and the location FAQ", group: "Location" },
   { type: "locationHub", label: "Locations Hub", description: "Locations index hero copy and regional showcases", group: "Location" },
 ];
 
@@ -378,8 +380,23 @@ export const PAGE_OWNED_BLOCK_TYPES = [
   "contactPage",
   "seoContent",
   "locationHero",
+  "locationShop",
   "locationBody",
+  "locationAreas",
   "locationHub",
+] as const;
+
+/**
+ * The location page's own sections, in their default order. The page renders
+ * whatever is saved, in the saved order, so these can be dragged anywhere in
+ * the editor. Used to seed pages created before these were blocks.
+ */
+export const LOCATION_SECTION_ORDER = [
+  { type: "locationHero", sectionKey: "location-hero" },
+  { type: "locationShop", sectionKey: "location-shop" },
+  { type: "locationBody", sectionKey: "location-body" },
+  { type: "cta", sectionKey: "location-cta" },
+  { type: "locationAreas", sectionKey: "location-areas" },
 ] as const;
 
 /**

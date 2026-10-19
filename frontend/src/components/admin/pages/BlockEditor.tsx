@@ -1128,7 +1128,7 @@ function BlockFields({
       return (
         <div className="space-y-3">
           <Text label="Heading" value={data.title} onChange={(v) => setData({ title: v })} />
-          <TextArea label="Paragraph" value={data.body} onChange={(v) => setData({ body: v })} rows={3} />
+          <RichField label="Paragraph" value={data.body} onChange={(v) => setData({ body: v })} />
         </div>
       );
 
@@ -1269,6 +1269,23 @@ function BlockFields({
         </div>
       );
     }
+
+    case "locationShop":
+      return (
+        <p className="text-xs text-slate-400">
+          The one-stop party shop catalogue for this location. It builds itself
+          from the location name — drag the block to move it up or down the
+          page.
+        </p>
+      );
+
+    case "locationAreas":
+      return (
+        <p className="text-xs text-slate-400">
+          The delivery areas list and the location FAQ. Drag the block to move
+          them up or down the page.
+        </p>
+      );
 
     case "locationBody": {
       const converted = bodyToHtml(data);
