@@ -254,7 +254,7 @@ export const updateLocationHandler = asyncHandler(
 // sections, created inactive so it can be finished before it goes public.
 export const duplicateLocationHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const source = await LocationModel.findById(req.params.id);
+    const source = await LocationModel.findById(req.params.id).lean();
     if (!source) {
       throw new ApiError("Location not found", 404);
     }
@@ -327,7 +327,7 @@ export const duplicateLocationHandler = asyncHandler(
     const sourcePage = await PageContent.findOne({
       pageType: "location",
       pageKey: source.slug,
-    });
+    }).lean();
     if (sourcePage) {
       await PageContent.create({
         pageType: "location",
