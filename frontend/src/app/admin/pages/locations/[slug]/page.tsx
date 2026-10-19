@@ -9,6 +9,7 @@ import { GENERIC_BLOCK_TYPES } from "@/lib/blocks/types";
 import { locationDisplayName } from "@/lib/locations";
 import { bodyToHtml, heroToHtml } from "@/lib/blocks/locationContent";
 import { LOCATION_SECTION_ORDER } from "@/lib/blocks/types";
+import { defaultLocationFaq } from "@/lib/blocks/locationFaq";
 import {
   getPageContentByKey,
   PageSection,
@@ -63,7 +64,9 @@ export default function EditLocationPage() {
   const [useSavedContent, setUseSavedContent] = useState(true);
 
   useEffect(() => {
-    if (!pageContent) return;
+    if (!pageContent || !location) return;
+
+    const place = locationDisplayName(location?.name, slug, location?.slugAliases);
 
     // Pages saved before the WYSIWYG change still hold structured copy. Seed the
     // rich text fields from it, so the editor opens with the real copy and the
@@ -102,6 +105,16 @@ export default function EditLocationPage() {
       const structural: PageSection[] = LOCATION_SECTION_ORDER.map(
         (entry, index) => {
           const saved = migrated.find((s) => s.type === entry.type);
+          const data = { ...((saved?.data ?? {}) as Record<string, unknown>) };
+          if (
+            entry.type === "locationFaq" &&
+            !(
+              Array.isArray(data.items) &&
+              (data.items as unknown[]).length > 0
+            )
+          ) {
+            data.items = defaultLocationFaq(place);
+          }
           return {
             sectionKey: saved?.sectionKey || entry.sectionKey,
             type: entry.type,
@@ -109,7 +122,7 @@ export default function EditLocationPage() {
             content: saved?.content || "",
             order: index,
             visible: saved?.visible ?? true,
-            data: (saved?.data ?? {}) as Record<string, unknown>,
+            data,
             styles: saved?.styles,
           };
         },
@@ -122,7 +135,7 @@ export default function EditLocationPage() {
 
     setSections(nextSections);
     setUseSavedContent(pageContent.isActive !== false);
-  }, [pageContent]);
+  }, [pageContent, location, slug]);
 
   useEffect(() => {
     if (location) {

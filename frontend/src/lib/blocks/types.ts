@@ -360,7 +360,8 @@ export const BLOCK_CATALOG: {
   { type: "locationHero", label: "Location Hero", description: "Location page headline and intro paragraphs", group: "Location" },
   { type: "locationShop", label: "Location Product Grid", description: "The one-stop party shop catalogue for this location", group: "Location" },
   { type: "locationBody", label: "Location Body", description: "About, why choose us, services, safety and occasions", group: "Location" },
-  { type: "locationAreas", label: "Delivery Areas & FAQ", description: "Delivery areas list and the location FAQ", group: "Location" },
+  { type: "locationFaq", label: "Location FAQ", description: "This location's questions and answers", group: "Location" },
+  { type: "locationAreas", label: "Delivery Areas", description: "The delivery areas list for this location", group: "Location" },
   { type: "locationHub", label: "Locations Hub", description: "Locations index hero copy and regional showcases", group: "Location" },
 ];
 
@@ -382,6 +383,7 @@ export const PAGE_OWNED_BLOCK_TYPES = [
   "locationHero",
   "locationShop",
   "locationBody",
+  "locationFaq",
   "locationAreas",
   "locationHub",
 ] as const;
@@ -396,6 +398,7 @@ export const LOCATION_SECTION_ORDER = [
   { type: "locationShop", sectionKey: "location-shop" },
   { type: "locationBody", sectionKey: "location-body" },
   { type: "cta", sectionKey: "location-cta" },
+  { type: "locationFaq", sectionKey: "location-faq" },
   { type: "locationAreas", sectionKey: "location-areas" },
 ] as const;
 

@@ -3,10 +3,8 @@
 import { fetchLocations } from "@/services/location.service";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2 } from "lucide-react";
-import Link from "next/link";
 import { useMemo, type ReactNode } from "react";
 import { normalizeCanonicalSlug } from "@/lib/canonical";
-import { FaqSection } from "@/components/blocks/FaqAccordion";
 
 export default function LocationDetailClient({
   locationName,
@@ -70,33 +68,6 @@ export default function LocationDetailClient({
     return names;
   }, [locationsData, locationName, locationSlug]);
 
-  const faqs = [
-    {
-      question: "Where can I hire a bouncy castle near me?",
-      answer: `We provide bouncy castle hire in ${locationName}, including Barking, Ilford, Romford, and surrounding areas. Get in touch to check availability in your location.`,
-    },
-    {
-      question: "How do I find the best bouncy castle hire near me?",
-      answer:
-        "Browse our catalog to compare sizes, themes, and prices, or message us for quick recommendations based on your event space.",
-    },
-    {
-      question: "Do you offer same-day bookings?",
-      answer:
-        "Yes—depending on availability. Contact us early in the day to confirm if we can accommodate your timeframe.",
-    },
-    {
-      question: "How do you ensure safety during the event?",
-      answer:
-        "All inflatables are inspected, cleaned, and anchored to PIPA standards. We provide clear safety guidance and perform setup checks.",
-    },
-    {
-      question: "What areas do you cover for bouncy castle hire?",
-      answer:
-        "We cover most surrounding neighborhoods; reach out with your postcode and we’ll confirm delivery and setup options.",
-    },
-  ];
-
   return (
     <>
       {deliveryAreas.length > 0 && (
@@ -123,25 +94,6 @@ export default function LocationDetailClient({
       )}
 
       {beforeFaq}
-
-      <FaqSection
-        headingAs="h3"
-        name="location-faq"
-        intro={
-          <>
-            We&apos;ve compiled the most important information to help you get
-            the most out of your experience. Can&apos;t find what you&apos;re
-            looking for?{" "}
-            <Link
-              href="/contact"
-              className="font-semibold text-brand-orange-600 underline underline-offset-4 hover:text-brand-orange-700"
-            >
-              Contact us.
-            </Link>
-          </>
-        }
-        items={faqs}
-      />
     </>
   );
 }

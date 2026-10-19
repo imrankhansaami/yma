@@ -1160,6 +1160,7 @@ function BlockFields({
       );
 
     case "faq":
+    case "locationFaq":
       return (
         <div className="space-y-3">
           <Text label="Eyebrow" value={data.eyebrow} onChange={(v) => setData({ eyebrow: v })} />

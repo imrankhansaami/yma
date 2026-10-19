@@ -15,8 +15,12 @@ import {
 } from "@/components/blocks/LocationBlocks";
 import { Fragment } from "react";
 import { LOCATION_SECTION_ORDER } from "@/lib/blocks/types";
+import { defaultLocationFaq } from "@/lib/blocks/locationFaq";
+import { FaqBlock } from "@/components/blocks/contentBlocks";
+import { FAQPageJsonLd } from "@/components/seo/JsonLd";
 import type {
   CtaContent,
+  FaqItem,
   LocationBodyContent,
   LocationHeroContent,
   PageBlock,
@@ -461,6 +465,22 @@ export default async function LocationDetailPage({
               <BlockStyleScope key={key} block={section}>
                 <CtaReadySection content={(section.data || {}) as CtaContent} />
               </BlockStyleScope>
+            );
+          }
+
+          if (type === "locationFaq") {
+            const saved = (section.data as { items?: unknown })?.items;
+            const items =
+              Array.isArray(saved) && saved.length > 0
+                ? (saved as FaqItem[])
+                : defaultLocationFaq(locationName);
+            return (
+              <Fragment key={key}>
+                <FAQPageJsonLd questions={items} />
+                <BlockStyleScope block={section}>
+                  <FaqBlock content={{ ...(section.data || {}), items }} />
+                </BlockStyleScope>
+              </Fragment>
             );
           }
 
