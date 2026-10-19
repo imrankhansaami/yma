@@ -11,6 +11,11 @@ import { bodyToHtml, heroToHtml } from "@/lib/blocks/locationContent";
 import { LOCATION_SECTION_ORDER } from "@/lib/blocks/types";
 import { defaultLocationFaq } from "@/lib/blocks/locationFaq";
 import {
+  LOCATION_FAQ_EYEBROW,
+  LOCATION_FAQ_INTRO,
+  LOCATION_FAQ_TITLE,
+} from "@/lib/blocks/locationFaq";
+import {
   getPageContentByKey,
   PageSection,
   upsertPageContent,
@@ -106,14 +111,23 @@ export default function EditLocationPage() {
         (entry, index) => {
           const saved = migrated.find((s) => s.type === entry.type);
           const data = { ...((saved?.data ?? {}) as Record<string, unknown>) };
-          if (
-            entry.type === "locationFaq" &&
-            !(
-              Array.isArray(data.items) &&
-              (data.items as unknown[]).length > 0
-            )
-          ) {
-            data.items = defaultLocationFaq(place);
+          if (entry.type === "locationFaq") {
+            if (!String(data.eyebrow || "").trim()) {
+              data.eyebrow = LOCATION_FAQ_EYEBROW;
+            }
+            if (!String(data.title || "").trim()) {
+              data.title = LOCATION_FAQ_TITLE;
+            }
+            if (!String(data.intro || "").trim()) {
+              data.intro = LOCATION_FAQ_INTRO;
+            }
+            if (
+              !(
+                Array.isArray(data.items) && (data.items as unknown[]).length > 0
+              )
+            ) {
+              data.items = defaultLocationFaq(place);
+            }
           }
           return {
             sectionKey: saved?.sectionKey || entry.sectionKey,

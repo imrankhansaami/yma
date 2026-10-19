@@ -1,5 +1,11 @@
 import type { FaqItem } from "./types";
 
+/** Copy the location FAQ block is seeded with, so every field is editable. */
+export const LOCATION_FAQ_EYEBROW = "FAQ section";
+export const LOCATION_FAQ_TITLE = "Frequently asked questions";
+export const LOCATION_FAQ_INTRO =
+  "We've compiled the most important information to help you get the most out of your experience. Can't find what you're looking for? <a href=\"/contact\">Contact us.</a>";
+
 /**
  * The location FAQ's default questions. Used to seed the editable FAQ block for
  * pages created before the FAQ became editable, and as the fallback when a page

@@ -159,7 +159,7 @@ export function FaqBlock({ content }: { content?: FaqContent }) {
     <FaqSection
       eyebrow={content?.eyebrow || "FAQ section"}
       title={content?.title || "Frequently asked questions"}
-      intro={content?.intro}
+      intro={content?.intro ? <Copy value={content.intro} /> : undefined}
       items={items}
       headingAs="h2"
       name="faq"
