@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHandler";
 import * as pageContentService from "./pageContent.service";
 import { pageContentTag, revalidatePaths } from "../../utils/revalidate";
+import ApiError from "../../utils/apiError";
+import { LocationModel } from "../Location/location.model";
 
 /**
  * Map a PageContent record to the public paths whose ISR cache it affects.
@@ -85,9 +87,24 @@ export const getPageContentByType = asyncHandler(
  */
 export const getPageContentByKey = asyncHandler(
   async (req: Request, res: Response) => {
+    const { pageType, pageKey } = req.params;
+    const requester = (req as any).user;
+    const isAdmin =
+      requester?.role === "admin" || requester?.role === "superadmin";
+
+    // Draft location pages must not expose their copy to anonymous visitors.
+    if (!isAdmin && pageType === "location") {
+      const location = await LocationModel.findOne({ slug: pageKey })
+        .select("isActive")
+        .lean();
+      if (!location || location.isActive === false) {
+        throw new ApiError("Page content not found", 404);
+      }
+    }
+
     const pageContent = await pageContentService.getPageContentByKey(
-      req.params.pageType,
-      req.params.pageKey,
+      pageType,
+      pageKey,
     );
 
     res.status(200).json({

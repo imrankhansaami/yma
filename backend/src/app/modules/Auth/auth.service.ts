@@ -81,10 +81,14 @@ export const login = async (email: string, password: string) => {
     throw new ApiError("Please provide email and password", 400);
 
   const user = await User.findOne({ email }).select(
-    "+password +refreshTokenHash +refreshTokenExpiresAt",
+    "+password +refreshTokenHash +refreshTokenExpiresAt +active",
   );
   if (!user || !user.password)
     throw new ApiError("Incorrect email or password", 401);
+
+  if ((user as any).active === false) {
+    throw new ApiError("This account has been deactivated.", 403);
+  }
 
   const ok = await user.correctPassword(password, user.password);
   if (!ok) throw new ApiError("Incorrect email or password", 401);

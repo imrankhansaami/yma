@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   compress: true,
+  poweredByHeader: false,
   productionBrowserSourceMaps: false,
   experimental: {
     optimizePackageImports: [
@@ -61,6 +62,14 @@ const nextConfig: NextConfig = {
           value: "public, max-age=3600, must-revalidate",
         },
         {
+          key: "Strict-Transport-Security",
+          value: "max-age=31536000; includeSubDomains",
+        },
+        {
+          key: "Permissions-Policy",
+          value: "camera=(), microphone=(), geolocation=()",
+        },
+        {
           key: "X-Content-Type-Options",
           value: "nosniff",
         },
@@ -70,11 +79,75 @@ const nextConfig: NextConfig = {
         },
         {
           key: "X-XSS-Protection",
-          value: "1; mode=block",
+          value: "0",
         },
         {
           key: "Referrer-Policy",
           value: "strict-origin-when-cross-origin",
+        },
+      ],
+    },
+    {
+      // Authenticated pages must never be stored by a shared cache.
+      source: "/admin/:path*",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "private, no-store, max-age=0",
+        },
+      ],
+    },
+    {
+      source: "/admin",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "private, no-store, max-age=0",
+        },
+      ],
+    },
+    {
+      source: "/profile/:path*",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "private, no-store, max-age=0",
+        },
+      ],
+    },
+    {
+      source: "/profile",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "private, no-store, max-age=0",
+        },
+      ],
+    },
+    {
+      source: "/cart",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "private, no-store, max-age=0",
+        },
+      ],
+    },
+    {
+      source: "/checkout/:path*",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "private, no-store, max-age=0",
+        },
+      ],
+    },
+    {
+      source: "/checkout",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "private, no-store, max-age=0",
         },
       ],
     },

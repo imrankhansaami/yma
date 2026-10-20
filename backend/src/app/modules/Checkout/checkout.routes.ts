@@ -12,22 +12,28 @@ import {
   checkAvailability,
   calculateDeliveryFeeAPI,
 } from "./checkout.controller";
-// import { authenticate, authorize } from "../middlewares/auth.middleware";
+import { protectRoute } from "../../middlewares/auth.middleware";
+import { rateLimit } from "../../middlewares/rateLimit";
 
 const router = Router();
 
 // Public routes
 // router.post("/", checkoutFromCart); // Main checkout from cart
-router.post("/", quickCheckout); // Quick checkout with products
+router.post(
+  "/",
+  rateLimit({ windowMs: 10 * 60 * 1000, max: 10 }),
+  quickCheckout,
+); // Quick checkout with products
 router.get("/cart-summary", getCartSummary); // Get cart summary
 
 // Utility routes
 router.post("/check-availability", checkAvailability);
 router.post("/calculate-delivery-fee", calculateDeliveryFeeAPI);
 
-// Order routes
-router.get("/order/:orderId", getOrderById);
-router.get("/user/:userId/orders", getUserOrders);
+// Order routes: the controller only returns the signed-in user's own orders
+// (admins may read any order).
+router.get("/order/:orderId", protectRoute, getOrderById);
+router.get("/user/:userId/orders", protectRoute, getUserOrders);
 
 // Admin routes
 // router.get("/all", authenticate, authorize("admin"), getAllOrders);

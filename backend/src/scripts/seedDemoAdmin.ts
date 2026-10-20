@@ -2,9 +2,17 @@ import connectDB from "../app/config/db";
 import User from "../app/modules/Auth/user.model";
 
 const DEMO_EMAIL = (process.env.DEMO_ADMIN_EMAIL || "demo.admin@yma.test").toLowerCase();
-const DEMO_PASSWORD = process.env.DEMO_ADMIN_PASSWORD || "YmaDemoAdmin2026!";
+const DEMO_PASSWORD = process.env.DEMO_ADMIN_PASSWORD;
 
 async function run() {
+  // Never seed a privileged account with a password that lives in the repo.
+  // Set DEMO_ADMIN_PASSWORD to a long, unique value before running this.
+  if (!DEMO_PASSWORD || DEMO_PASSWORD.length < 16) {
+    throw new Error(
+      "DEMO_ADMIN_PASSWORD must be set to at least 16 characters before seeding a demo admin.",
+    );
+  }
+
   await connectDB();
 
   let user = await User.findOne({ email: DEMO_EMAIL }).select("+password");

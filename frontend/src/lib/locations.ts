@@ -79,13 +79,24 @@ export function substituteLocationCode<T>(
   );
   if (cleaned.length === 0) return value;
 
-  const pattern = new RegExp(
-    `\\b(?:${cleaned.map(escapeRegExp).join("|")})\\b`,
-    "gi",
-  );
+  const codePattern = cleaned.map(escapeRegExp).join("|");
+  const pattern = new RegExp(`\\b(?:${codePattern})\\b`, "gi");
+  const place = String(name || "").trim();
+  // When a title already names the place and then repeats the district code
+  // ("Stepney Green E1", "Tottenham N17"), replacing the code with the place
+  // again produces "Stepney Green Stepney Green". Drop the redundant code
+  // first, then substitute any remaining standalone codes.
+  const duplicatePattern = place
+    ? new RegExp(`(${escapeRegExp(place)})\\s+\\b(?:${codePattern})\\b`, "gi")
+    : null;
 
   const walk = (item: unknown): unknown => {
-    if (typeof item === "string") return item.replace(pattern, name);
+    if (typeof item === "string") {
+      const withoutDuplicate = duplicatePattern
+        ? item.replace(duplicatePattern, "$1")
+        : item;
+      return withoutDuplicate.replace(pattern, () => place || "");
+    }
     if (Array.isArray(item)) return item.map(walk);
     if (item && typeof item === "object") {
       return Object.fromEntries(

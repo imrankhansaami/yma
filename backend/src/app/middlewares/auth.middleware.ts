@@ -44,12 +44,16 @@ export const protectRoute = asyncHandler(
 
       const decoded = jwt.verify(token, secret) as { id: string; iat: number };
 
-      const user = await User.findById(decoded.id);
+      const user = await User.findById(decoded.id).select("+active");
       if (!user) {
         throw new ApiError(
           "The user belonging to this token no longer exists.",
           401,
         );
+      }
+
+      if ((user as any).active === false) {
+        throw new ApiError("This account has been deactivated.", 401);
       }
 
       if (typeof user.changedPasswordAfter === "function") {
@@ -99,8 +103,10 @@ export const optionalAuth = asyncHandler(
         const secret = process.env.JWT_SECRET;
         if (secret) {
           const decoded = jwt.verify(token, secret) as { id: string };
-          const user = await User.findById(decoded.id);
-          if (user) (req as AuthenticatedRequest).user = user;
+          const user = await User.findById(decoded.id).select("+active");
+          if (user && (user as any).active !== false) {
+            (req as AuthenticatedRequest).user = user;
+          }
         }
       }
     } catch {

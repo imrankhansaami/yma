@@ -20,6 +20,7 @@ import {
 import passport from "../../config/passport";
 import { upload } from "../../utils/cloudinary.util";
 import { protectRoute } from "../../middlewares/auth.middleware";
+import { rateLimit } from "../../middlewares/rateLimit";
 const router = express.Router();
 
 const resolveFrontendBase = (req: express.Request) => {
@@ -83,15 +84,31 @@ router.get(
   },
   googleOAuthCallback,
 );
-router.post("/login", loginUser);
+router.post(
+  "/login",
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }),
+  loginUser,
+);
 router.post("/refresh", refreshTokenHandler);
 router.post("/logout", logout);
-router.post("/forgot-password", forgotPasswordHandler);
+router.post(
+  "/forgot-password",
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 5 }),
+  forgotPasswordHandler,
+);
 
 // Reset password routes
 router.get("/reset-password/:token", renderResetPage);
-router.post("/reset-password/:token", resetPasswordHandler);
-router.post("/reset-password", resetPasswordHandler);
+router.post(
+  "/reset-password/:token",
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }),
+  resetPasswordHandler,
+);
+router.post(
+  "/reset-password",
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }),
+  resetPasswordHandler,
+);
 
 // ==================== PROTECTED ROUTES ====================
 router.use(protectRoute);

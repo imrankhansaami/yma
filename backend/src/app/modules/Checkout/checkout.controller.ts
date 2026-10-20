@@ -8,6 +8,7 @@ import Product from "../../modules/Product/product.model";
 import type { IOrderItemExtra } from "../../modules/Order/order.interface";
 import { PlacementFeeManager } from "../../modules/Order/order.interface";
 import User from "../../modules/Auth/user.model";
+import bcrypt from "bcryptjs";
 import { PromoService } from "../../modules/promos/promos.service";
 import crypto from "crypto";
 import {
@@ -78,33 +79,31 @@ const createOrGetUser = async (
 };
 
 // ==================== ENHANCED CALCULATE DELIVERY FEE ====================
+const toMinutes = (value?: string) => {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(value || "").trim());
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+};
+
 const calculateDeliveryFee = (
   deliveryTime: string | undefined,
   collectionTime: string | undefined,
-  keepOvernight: boolean = false,
 ) => {
   let fee = 0;
 
-  // Base delivery fee: 8am-2pm FREE, others €10
-  if (deliveryTime === "8am-12pm" || deliveryTime === "12pm-4pm") {
-    // 8am-2pm (approximated as 8am-12pm and 12pm-4pm) - FREE
-    fee += 0;
-  } else {
-    // Other times - €10
+  // Delivery: 8am-2pm free, any other slot £10.
+  const deliveryMinutes = toMinutes(deliveryTime);
+  if (deliveryMinutes === null || deliveryMinutes < 8 * 60 || deliveryMinutes >= 14 * 60) {
     fee += 10;
   }
 
-  // Collection fee: before 5pm FREE, after 5pm €10
-  if (collectionTime === "after_5pm") {
+  // Collection: before 5pm free, 5pm onwards £10.
+  const collectionMinutes = toMinutes(collectionTime);
+  if (collectionMinutes !== null && collectionMinutes >= 17 * 60) {
     fee += 10;
   }
-  // before_5pm is free, so no charge
 
-  // Overnight keeping: €30 if selected
-  if (keepOvernight) {
-    fee += 30;
-  }
-
+  // Overnight is charged separately as overnightFee, never twice.
   return fee;
 };
 
@@ -213,31 +212,7 @@ export const checkoutFromCart = asyncHandler(
         cartIdFromHeader = rawHeader[0].trim();
       }
 
-      // Debug logging (keep for production troubleshooting, or remove later)
-      console.log("━━━━━━━━━━━━━━━━ CHECKOUT DEBUG ━━━━━━━━━━━━━━━━");
-      console.log("→ Timestamp             :", new Date().toISOString());
-      console.log("→ Raw x-cart-id header  :", JSON.stringify(rawHeader));
-      console.log(
-        "→ Extracted cartId      :",
-        cartIdFromHeader || "(missing/empty)",
-      );
-      console.log(
-        "→ cartStore has ID?     :",
-        cartIdFromHeader ? cartStore.has(cartIdFromHeader) : false,
-      );
-      console.log("→ All cart keys in store:", [...cartStore.keys()]);
-
       const cart = getCartFromSession(cartIdFromHeader);
-
-      console.log("→ Cart found?           :", !!cart);
-      console.log("→ Items length          :", cart?.items?.length ?? "N/A");
-      if ((cart?.items?.length || 0) > 0) {
-        console.log(
-          "→ First item sample     :",
-          JSON.stringify(cart?.items[0], null, 2),
-        );
-      }
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       if (!cart || !cart.items || cart.items.length === 0) {
         throw new ApiError(
@@ -258,13 +233,6 @@ export const checkoutFromCart = asyncHandler(
         promoCode,
         deliveryNotes,
       } = req.body;
-
-      console.log("🛒 Checkout Request:", {
-        shippingAddress,
-        paymentMethod,
-        termsAccepted,
-        promoCode,
-      });
 
       if (!shippingAddress) {
         throw new ApiError("Shipping address is required", 400);
@@ -338,7 +306,6 @@ export const checkoutFromCart = asyncHandler(
       const deliveryFee = calculateDeliveryFee(
         shippingAddress.deliveryTime,
         shippingAddress.collectionTime,
-        shippingAddress.keepOvernight,
       );
 
       const overnightFee = shippingAddress.keepOvernight ? 30 : 0;
@@ -524,8 +491,13 @@ export const getCartSummary = asyncHandler(
 export const getOrderById = asyncHandler(
   async (req: Request, res: Response) => {
     const { orderId } = req.params;
+    const requester = (req as any).user;
+    const isAdmin =
+      requester?.role === "admin" || requester?.role === "superadmin";
 
-    const order = await Order.findById(orderId)
+    const order = await Order.findOne(
+      isAdmin ? { _id: orderId } : { _id: orderId, user: requester?._id },
+    )
       .populate("user", "name email phone")
       .populate("items.product", "name images price");
 
@@ -544,13 +516,24 @@ export const getUserOrders = asyncHandler(
   async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { page = 1, limit = 10 } = req.query;
+    const requester = (req as any).user;
+    const isAdmin =
+      requester?.role === "admin" || requester?.role === "superadmin";
 
-    const skip = (Number(page) - 1) * Number(limit);
+    if (!isAdmin && String(userId) !== String(requester?._id)) {
+      throw new ApiError("You can only view your own orders", 403);
+    }
+
+    // Keep pagination bounded so a large limit cannot dump the collection.
+    const safeLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+    const safePage = Math.max(Number(page) || 1, 1);
+
+    const skip = (safePage - 1) * safeLimit;
     const [orders, total] = await Promise.all([
       Order.find({ user: userId })
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(Number(limit))
+        .limit(safeLimit)
         .populate("items.product", "name images"),
       Order.countDocuments({ user: userId }),
     ]);
@@ -560,10 +543,10 @@ export const getUserOrders = asyncHandler(
       data: {
         orders,
         pagination: {
-          page: Number(page),
-          limit: Number(limit),
+          page: safePage,
+          limit: safeLimit,
           total,
-          pages: Math.ceil(total / Number(limit)),
+          pages: Math.ceil(total / safeLimit),
         },
       },
     });
@@ -743,30 +726,22 @@ export const calculateDeliveryFeeAPI = asyncHandler(
   async (req: Request, res: Response) => {
     const { deliveryTime, collectionTime, keepOvernight = false } = req.body;
 
-    const deliveryFee = calculateDeliveryFee(
-      deliveryTime,
-      collectionTime,
-      keepOvernight,
-    );
+    const deliveryFee = calculateDeliveryFee(deliveryTime, collectionTime);
     const overnightFee = keepOvernight ? 30 : 0;
     const totalFee = deliveryFee + overnightFee;
 
-    // Fee breakdown
-    let deliveryBreakdown = 0;
-    let collectionBreakdown = 0;
+    // Fee breakdown (same rules as calculateDeliveryFee).
+    const deliveryMinutes = toMinutes(deliveryTime);
+    const deliveryBreakdown =
+      deliveryMinutes === null ||
+      deliveryMinutes < 8 * 60 ||
+      deliveryMinutes >= 14 * 60
+        ? 10
+        : 0;
 
-    // Delivery breakdown
-    if (deliveryTime === "8am-12pm" || deliveryTime === "12pm-4pm") {
-      deliveryBreakdown = 0; // Free
-    } else {
-      deliveryBreakdown = 10; // €10
-    }
-
-    // Collection breakdown
-    if (collectionTime === "after_5pm") {
-      collectionBreakdown = 10; // €10
-    }
-    // before_5pm is free
+    const collectionMinutes = toMinutes(collectionTime);
+    const collectionBreakdown =
+      collectionMinutes !== null && collectionMinutes >= 17 * 60 ? 10 : 0;
 
     res.status(200).json({
       success: true,
@@ -877,13 +852,57 @@ export const quickCheckout = asyncHandler(
     session.startTransaction();
 
     try {
-      const { products, shippingAddress, ...rest } = req.body;
+      const {
+        products,
+        shippingAddress,
+        paymentMethod = "cash_on_delivery",
+        termsAccepted = false,
+        invoiceType = "regular",
+        bankDetails,
+      } = req.body ?? {};
 
-      if (!shippingAddress)
-        throw new ApiError("Shipping address required", 400);
+      if (!shippingAddress) throw new ApiError("Shipping address required", 400);
+
+      if (!Array.isArray(products) || products.length === 0) {
+        throw new ApiError("Your basket is empty.", 400);
+      }
+
+      if (!termsAccepted) {
+        throw new ApiError("You must accept terms & conditions", 400);
+      }
+
+      if (!["regular", "corporate"].includes(invoiceType)) {
+        throw new ApiError("Invalid invoice type", 400);
+      }
+
+      if (!["cash_on_delivery", "online"].includes(paymentMethod)) {
+        throw new ApiError("Invalid payment method", 400);
+      }
+
+      if (invoiceType === "corporate" && !String(bankDetails || "").trim()) {
+        throw new ApiError(
+          "Bank details are required for corporate invoices",
+          400,
+        );
+      }
+
+      for (const field of [
+        "firstName",
+        "lastName",
+        "phone",
+        "email",
+        "street",
+        "city",
+        "zipCode",
+        "country",
+      ]) {
+        if (!shippingAddress[field]) {
+          throw new ApiError(`${field} is required`, 400);
+        }
+      }
 
       // 1. FETCH PRODUCTS IN PARALLEL
-      const productIds = products.map((p: any) => p.productId);
+      const productIds = products.map((p: any) => p?.productId).filter(Boolean);
       const dbProducts = await Product.find({
         _id: { $in: productIds },
       }).session(session);
@@ -893,13 +912,18 @@ export const quickCheckout = asyncHandler(
       const orderItems = [];
 
       for (const p of products) {
+        const quantity = Number(p?.quantity);
+        if (!Number.isInteger(quantity) || quantity < 1) {
+          throw new ApiError("Invalid quantity", 400);
+        }
+        p.quantity = quantity;
         const product = productMap.get(p.productId);
         if (!product)
           throw new ApiError(`Product ${p.productId} not found`, 404);
-        if (product.stock < p.quantity)
+        if (product.stock < quantity)
           throw new ApiError(`${product.name} out of stock`, 400);
 
-        product.stock -= p.quantity;
+        product.stock -= quantity;
 
         // Price any selected add-ons from the product's own definitions.
         const { extras, extrasTotal } = resolveExtras(
@@ -924,10 +948,21 @@ export const quickCheckout = asyncHandler(
       }
 
       // 2. IDENTITY LOGIC (Detect if new user)
-      const email = shippingAddress.email.trim().toLowerCase();
+      const email = String(shippingAddress.email).trim().toLowerCase();
+      shippingAddress.email = email;
       const existingUser = await User.findOne({ email }).session(session);
       const isNewUser = !existingUser;
-      const tempPassword = Math.random().toString(36).slice(-10) + "X1!";
+      const tempPassword = isNewUser
+        ? `${crypto.randomBytes(12).toString("base64url")}Aa1!`
+        : "";
+      // findOneAndUpdate does not run the model's pre-save hash hook, so hash
+      // here. A plaintext password must never reach the database.
+      const passwordHash = isNewUser
+        ? await bcrypt.hash(
+            tempPassword,
+            Number(process.env.BCRYPT_SALT_ROUNDS || 12),
+          )
+        : undefined;
 
       const user = await User.findOneAndUpdate(
         { email },
@@ -936,7 +971,7 @@ export const quickCheckout = asyncHandler(
             firstName: shippingAddress.firstName,
             lastName: shippingAddress.lastName,
             name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
-            password: tempPassword,
+            ...(passwordHash ? { password: passwordHash } : {}),
             role: "customer",
             createdViaCheckout: true,
           },
@@ -944,15 +979,37 @@ export const quickCheckout = asyncHandler(
         { upsert: true, new: true, session },
       );
 
+      // Server-side fees. Money fields never come from the request body.
+      const deliveryFee = calculateDeliveryFee(
+        shippingAddress.deliveryTime,
+        shippingAddress.collectionTime,
+      );
+      const overnightFee = shippingAddress.keepOvernight ? 30 : 0;
+      const placementFee = PlacementFeeManager.getFee(
+        shippingAddress.floorType,
+      );
+      const totalAmount =
+        subtotal + deliveryFee + overnightFee + placementFee;
+
       // 3. SAVE UPDATES
       await Promise.all(dbProducts.map((p) => p.save({ session })));
 
       const order = new Order({
         user: user._id,
+        customerName:
+          `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim(),
         items: orderItems,
         subtotalAmount: subtotal,
+        deliveryFee,
+        overnightFee,
+        placementFee,
+        discountAmount: 0,
+        totalAmount,
         shippingAddress,
-        ...rest,
+        paymentMethod,
+        invoiceType,
+        bankDetails:
+          invoiceType === "corporate" ? String(bankDetails || "") : "",
       });
       await order.save({ session });
 

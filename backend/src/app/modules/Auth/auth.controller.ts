@@ -151,9 +151,13 @@ export const refreshTokenHandler = asyncHandler(
 
     // Find user with hashed token
     const user = await User.findById(payload.id).select(
-      "+refreshTokenHash +refreshTokenExpiresAt",
+      "+refreshTokenHash +refreshTokenExpiresAt +active",
     );
     if (!user) throw new ApiError("User not found", 401);
+
+    if ((user as any).active === false) {
+      throw new ApiError("This account has been deactivated.", 401);
+    }
 
     // Validate token hash & expiry
     const matches = user.refreshTokenHash === hashToken(token);

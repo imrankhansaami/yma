@@ -44,6 +44,9 @@ const allowedOrigins = [
   process.env.FRONTEND_URL, // From environment
 ].filter(Boolean);
 
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+
 app.use(
   cors({
     origin: (origin, callback) => {

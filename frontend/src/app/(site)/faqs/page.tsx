@@ -118,6 +118,16 @@ export default async function FaqsPage() {
   const faqItems: FaqItem[] = Array.isArray((faqBlock?.data as any)?.items)
     ? ((faqBlock!.data as any).items as FaqItem[])
     : faqs;
+  // A CMS block can own the page heading. When no block provides one, the page
+  // needs its own H1 so it is not headless for search engines and screen
+  // readers.
+  const blockHasH1 = blocks.some((block) => {
+    if (block.type === "pageHeader" || block.type === "hero") return true;
+    return (
+      block.type === "heading" &&
+      Number((block.data as { level?: number })?.level || 2) === 1
+    );
+  });
 
   return (
     <main className="cms-page w-full bg-white text-brand-ink-900 font-inter mt-24 md:mt-36">
@@ -133,7 +143,14 @@ export default async function FaqsPage() {
         </div>
 
         {hasBlocks ? (
-          <PageBlocks blocks={blocks} />
+          <>
+            {!blockHasH1 && (
+              <h1 className="mt-8 text-3xl font-bold tracking-tight text-brand-ink-900 sm:text-4xl">
+                {cms?.title || "Frequently Asked Questions"}
+              </h1>
+            )}
+            <PageBlocks blocks={blocks} />
+          </>
         ) : (
           <FaqSection
             headingAs="h1"
