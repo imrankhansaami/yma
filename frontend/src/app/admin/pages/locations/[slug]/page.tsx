@@ -443,6 +443,11 @@ export default function EditLocationPage() {
           <h2 className="text-sm font-semibold text-brand-black-950 uppercase tracking-wide">
             Page Content
           </h2>
+          <p className="text-xs text-slate-500">
+            Long-form copy shown under the hero. Pages converted from the old
+            site keep their original copy in Page Sections instead — edit it
+            there so it stays in one place.
+          </p>
           <TextEditor value={content} onChange={setContent} />
         </div>
 
