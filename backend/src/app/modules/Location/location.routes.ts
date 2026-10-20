@@ -1,4 +1,6 @@
 import express from "express";
+import { protectRoute } from "../../middlewares/auth.middleware";
+import { restrictTo } from "../../middlewares/authorization.middleware";
 import {
   createLocationHandler,
   getLocationsHandler,
@@ -25,7 +27,10 @@ router.get("/slug/:slug", getLocationBySlugHandler);
 router.get("/:id", getLocationHandler);
 router.get("/:id/delivery-areas/:areaId", getDeliveryAreaHandler);
 
-// Protected routes (add your auth middleware here)
+// Protected routes (admin only)
+router.use(protectRoute);
+router.use(restrictTo("admin", "superadmin"));
+
 router.post("/", createLocationHandler);
 router.patch("/:id", updateLocationHandler);
 router.post("/:id/duplicate", duplicateLocationHandler);
