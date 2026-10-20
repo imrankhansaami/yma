@@ -48,6 +48,7 @@ export default function EditLocationPage() {
   });
 
   const [name, setName] = useState("");
+  const [place, setPlace] = useState("");
   const [heading, setHeading] = useState("");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
@@ -69,14 +70,20 @@ export default function EditLocationPage() {
   const [useSavedContent, setUseSavedContent] = useState(true);
 
   useEffect(() => {
-    if (!pageContent || !location) return;
+    if (!location) return;
 
-    const place = locationDisplayName(location?.name, slug, location?.slugAliases);
+    const place = locationDisplayName(
+      location?.name,
+      slug,
+      location?.slugAliases,
+      location?.place,
+    );
 
     // Pages saved before the WYSIWYG change still hold structured copy. Seed the
     // rich text fields from it, so the editor opens with the real copy and the
     // next save stores it in the new format. The old fields are kept intact.
-    const migrated = (pageContent.sections || []).map((section) => {
+    const savedSections = pageContent?.sections || [];
+    const migrated = savedSections.map((section) => {
       const data = { ...((section.data as Record<string, any>) || {}) };
 
       if (section.type === "locationHero" && !String(data.html || "").trim()) {
@@ -148,12 +155,13 @@ export default function EditLocationPage() {
     }
 
     setSections(nextSections);
-    setUseSavedContent(pageContent.isActive !== false);
+    setUseSavedContent(pageContent ? pageContent.isActive !== false : true);
   }, [pageContent, location, slug]);
 
   useEffect(() => {
     if (location) {
       setName(location.name || "");
+      setPlace(location.place || "");
       setHeading(location.heading || "");
       setDescription(location.description || "");
       setContent(location.content || "");
@@ -174,6 +182,7 @@ export default function EditLocationPage() {
     mutationFn: async () => {
       const { data } = await api.patch(`/locations/${location._id}`, {
         name,
+        place,
         heading,
         description,
         content,
@@ -246,7 +255,13 @@ export default function EditLocationPage() {
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-brand-black-950">
-          Edit: {location.name}
+          Edit:{" "}
+          {locationDisplayName(
+            location.name,
+            slug,
+            location.slugAliases,
+            location.place,
+          )}
         </h1>
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -274,6 +289,26 @@ export default function EditLocationPage() {
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
             />
+            <p className="text-xs text-slate-500 mt-1">
+              The postcode district products are tagged with (e.g. RM12). Leave
+              it blank for an area page that has no district.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Place name
+            </label>
+            <input
+              type="text"
+              value={place}
+              onChange={(e) => setPlace(e.target.value)}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+              placeholder="e.g. Excel Centre"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              The place shown in the heading, the breadcrumb and the map. Blank
+              falls back to a known name for the postcode district.
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -416,11 +451,11 @@ export default function EditLocationPage() {
             Page Sections
           </h2>
           <p className="text-xs text-slate-500">
-            These are the blocks that make up the copy on this page: the
-            headline and intro beside the map, and the about, why-choose-us,
-            services, safety and occasions sections below the product grid.
-            Unticking &quot;use this saved content&quot; falls back to the copy
-            built into the site.
+            The blocks that make up this page, in the order they appear: the
+            headline and intro beside the map, the long-form copy, the product
+            grid, the call to action, the FAQ, the delivery areas and any map.
+            Drag them to reorder. Unticking &quot;use this saved content&quot;
+            falls back to the copy built into the site.
           </p>
           <label className="flex items-start gap-3">
             <input
@@ -445,6 +480,7 @@ export default function EditLocationPage() {
                 name,
                 slug,
                 location.slugAliases,
+                location.place,
               )}`
             }
           />

@@ -12,9 +12,10 @@ import BlockEditor from "@/components/admin/pages/BlockEditor";
 import { useAdminToast } from "@/components/ui/admin-toast";
 import { normalizeCanonicalSlug } from "@/lib/canonical";
 import { isBuiltInCorePageKey } from "@/lib/core-pages";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import api from "@/api/api";
 
 const PAGE_TITLES: Record<string, string> = {
   home: "Home Page",
@@ -35,6 +36,18 @@ export default function EditCorePage() {
     queryKey: ["pageContent", "core", pageKey],
     queryFn: () => getPageContentByKey("core", pageKey),
     enabled: !!pageKey,
+  });
+
+  // Pages that were converted to a location page keep this older record, but
+  // the public page (and everything worth editing) now lives in Locations.
+  const { data: locationTwin } = useQuery({
+    queryKey: ["location", "by-slug", pageKey],
+    queryFn: async () => {
+      const { data } = await api.get(`/locations/slug/${pageKey}`);
+      return data?.data?.location ?? data?.data ?? null;
+    },
+    enabled: !!pageKey,
+    retry: false,
   });
 
   const [metaTitle, setMetaTitle] = useState("");
@@ -123,6 +136,26 @@ export default function EditCorePage() {
       <h1 className="text-2xl font-semibold text-brand-black-950 mb-6">
         Edit: {pageTitle}
       </h1>
+
+      {locationTwin ? (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-semibold text-amber-900">
+            This page was converted to a location page
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-amber-800">
+            Its public address is{" "}
+            <span className="font-mono">/locations/{locationTwin.slug}</span>.
+            The heading, URL, map and copy are edited in Locations now — changes
+            saved here do not appear on the site.
+          </p>
+          <Link
+            href={`/admin/pages/locations/${locationTwin.slug}`}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-amber-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-800"
+          >
+            Edit the location page <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      ) : null}
 
       <div className="space-y-6">
         {/* Page heading */}

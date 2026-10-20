@@ -128,6 +128,7 @@ const BLOCK_ICONS: Record<string, LucideIcon> = {
   productTabs: Layers,
   cta: Megaphone,
   newsletter: Mail,
+  map: MapIcon,
   locationHero: MapPin,
   locationBody: MapIcon,
   locationHub: MapIcon,
@@ -158,6 +159,8 @@ function blockSummary(block: PageSection): string {
   }
   if (type === "spacer") return data.height ? `Height ${data.height}` : "";
   if (type === "divider") return "";
+  if (type === "map")
+    return data.query ? String(data.query) : "Uses this page's place";
 
   const candidates = [
     data.text,
@@ -1129,6 +1132,31 @@ function BlockFields({
         <div className="space-y-3">
           <Text label="Heading" value={data.title} onChange={(v) => setData({ title: v })} />
           <RichField label="Paragraph" value={data.body} onChange={(v) => setData({ body: v })} />
+        </div>
+      );
+
+    case "map":
+      return (
+        <div className="space-y-3">
+          <Text
+            label="Map location"
+            value={data.query}
+            onChange={(v) => setData({ query: v })}
+            placeholder="e.g. Excel Centre, or 51.5074,-0.1278"
+          />
+          <Select
+            label="Zoom"
+            value={String(Number(data.zoom) || 12)}
+            onChange={(v) => setData({ zoom: Number(v) })}
+            options={[8, 10, 11, 12, 13, 14, 15, 16].map((n) => ({
+              label: String(n),
+              value: String(n),
+            }))}
+          />
+          <p className="text-xs text-slate-400">
+            Enter a place, a full address or coordinates. On a location page,
+            leave it blank to pin the page&apos;s own place.
+          </p>
         </div>
       );
 

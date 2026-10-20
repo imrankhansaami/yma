@@ -20,6 +20,7 @@ import type { PageBlock } from "@/lib/blocks/types";
 import { pageStyleCss } from "@/lib/blocks/blockStyles";
 
 import { BlockStyleScope } from "./BlockStyleScope";
+import { MapBlock } from "./MapBlock";
 import {
   ButtonBlock,
   DividerBlock,
@@ -96,6 +97,8 @@ function BlockView({ block }: { block: PageBlock }) {
       return <CtaReadySection content={data} />;
     case "newsletter":
       return <NewsletterSection content={data} />;
+    case "map":
+      return <MapBlock query={data.query} zoom={data.zoom} />;
     case "heading":
       return <HeadingBlock content={data} />;
     case "paragraph":

@@ -23,6 +23,7 @@ import type {
   FaqItem,
   LocationBodyContent,
   LocationHeroContent,
+  MapContent,
   PageBlock,
 } from "@/lib/blocks/types";
 import { buildSeoTitle, getSeoDefaults, mergeKeywords } from "@/lib/seo";
@@ -30,6 +31,7 @@ import { joinCanonicalPath, normalizeCanonicalSlug } from "@/lib/canonical";
 import { locationDisplayName, substituteLocationCode } from "@/lib/locations";
 import { fetchPageContent } from "@/lib/pageContent";
 import { PageBlocks } from "@/components/blocks/PageBlocks";
+import { MapBlock } from "@/components/blocks/MapBlock";
 import { BlockStyleScope } from "@/components/blocks/BlockStyleScope";
 import { Copy } from "@/components/blocks/Copy";
 
@@ -495,6 +497,19 @@ export default async function LocationDetailPage({
                   locationSlug={canonicalSlug}
                 />
               </div>
+            );
+          }
+
+          // A map block: a blank location means "pin this page's place".
+          if (type === "map") {
+            const data = (section.data || {}) as MapContent;
+            return (
+              <BlockStyleScope key={key} block={section}>
+                <MapBlock
+                  query={String(data.query || "").trim() || mapQuery}
+                  zoom={Number(data.zoom) || mapZoom}
+                />
+              </BlockStyleScope>
             );
           }
 

@@ -284,6 +284,15 @@ export type LocationHubContent = {
   indexIntro?: string;
 };
 
+/**
+ * A map block. `query` accepts a place, a full address or "lat,lng"; on a
+ * location page a blank query falls back to the page's own place.
+ */
+export type MapContent = {
+  query?: string;
+  zoom?: number;
+};
+
 /** A category page's SEO copy: intro, "why choose" reasons and offerings. */
 export type SeoListItem = { title: string; body: string };
 export type SeoLink = { label: string; href: string };
@@ -356,6 +365,7 @@ export const BLOCK_CATALOG: {
   { type: "productTabs", label: "Product Tabs", description: "Tabbed product carousel", group: "Sections" },
   { type: "cta", label: "Call to Action", description: "Closing call-to-action with buttons", group: "Sections" },
   { type: "newsletter", label: "Newsletter", description: "Email sign-up block", group: "Sections" },
+  { type: "map", label: "Map", description: "Google map pinned to a place, address or coordinates", group: "Sections" },
   // --- Page layouts --------------------------------------------------------
   { type: "contactPage", label: "Contact Page Layout", description: "The full two-column contact page", group: "Page layouts" },
   { type: "legalPage", label: "Legal Page", description: "Page heading, last-updated date and numbered sections", group: "Page layouts" },
