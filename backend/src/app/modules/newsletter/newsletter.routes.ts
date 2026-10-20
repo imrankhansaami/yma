@@ -12,6 +12,8 @@ import { rateLimit } from "../../middlewares/rateLimit";
 
 const router = express.Router();
 
+const adminOnly = [protectRoute, restrictTo("admin", "superadmin")] as const;
+
 // Public routes (rate limited so the list cannot be flooded).
 router.post(
   "/newsletter/subscribe",
@@ -20,11 +22,10 @@ router.post(
 );
 router.post("/newsletter/unsubscribe", unsubscribe);
 
-// Admin only: subscriber emails and mass mail sending.
-router.use(protectRoute);
-router.use(restrictTo("admin", "superadmin"));
-router.get("/newsletter/subscribers", getSubscribers);
-router.get("/newsletter/count", getCount);
-router.post("/newsletter/send", sendNewsletter);
+// Admin only: subscriber emails and mass mail sending. Guards are attached per
+// route because this router is mounted at /api/v1.
+router.get("/newsletter/subscribers", ...adminOnly, getSubscribers);
+router.get("/newsletter/count", ...adminOnly, getCount);
+router.post("/newsletter/send", ...adminOnly, sendNewsletter);
 
 export default router;
