@@ -332,7 +332,6 @@ export default async function BookingCatalogPage({
     "limit",
     "sort",
     "sortBy",
-    "size",
   ];
   const hasFilterParams = seedKeys.some(
     (key) => getStringParam(resolvedSearchParams[key]).trim().length > 0,
