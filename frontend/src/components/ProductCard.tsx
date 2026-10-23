@@ -155,7 +155,7 @@ export default function ProductCard({
 
   const Title = () => {
     const titleEl = (
-      <span className="text-brand-ink-900 font-semibold text-[15px] leading-5 sm:text-[18px] sm:leading-6">
+      <span className="text-brand-ink-900 font-semibold text-[15px] leading-5 line-clamp-2 sm:text-[18px] sm:leading-6">
         {title}
       </span>
     );
@@ -172,7 +172,7 @@ export default function ProductCard({
       );
     }
     return (
-      <span className="text-brand-ink-900 font-semibold text-[15px] leading-5 sm:text-[18px] sm:leading-6">
+      <span className="text-brand-ink-900 font-semibold text-[15px] leading-5 line-clamp-2 sm:text-[18px] sm:leading-6">
         {title}
       </span>
     );
@@ -315,7 +315,7 @@ export default function ProductCard({
                   type="button"
                   onClick={onBook}
                   className="
-    w-full h-9 sm:h-12
+    w-full h-11 sm:h-12
     rounded-full
     bg-brand-orange-500
     text-white font-semibold
@@ -335,7 +335,7 @@ export default function ProductCard({
                   type="button"
                   disabled
                   className="
-    w-full h-9 sm:h-12
+    w-full h-11 sm:h-12
     rounded-full
     bg-brand-gray-150
     text-brand-ink-900/60 font-semibold
@@ -356,7 +356,7 @@ export default function ProductCard({
                 <button
                   type="button"
                   onClick={() => setOpenDatePicker(true)}
-                  className="w-full h-9 sm:h-12 rounded-full bg-white text-brand-ink-900 font-semibold border border-brand-gray-150 hover:bg-brand-gray-25 flex items-center justify-center gap-2 text-[13px] sm:text-[16px]"
+                  className="w-full h-11 sm:h-12 rounded-full bg-white text-brand-ink-900 font-semibold border border-brand-gray-150 hover:bg-brand-gray-25 flex items-center justify-center gap-2 text-[13px] sm:text-[16px]"
                 >
                   <span>Add to Cart</span>
                   <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -368,7 +368,7 @@ export default function ProductCard({
                     if (!id) return;
                     await removeItem(String(id));
                   }}
-                  className="w-full h-9 sm:h-12 rounded-full bg-white text-brand-ink-900 font-semibold border border-brand-gray-150 hover:bg-brand-gray-25 flex items-center justify-center gap-2 text-[13px] sm:text-[16px]"
+                  className="w-full h-11 sm:h-12 rounded-full bg-white text-brand-ink-900 font-semibold border border-brand-gray-150 hover:bg-brand-gray-25 flex items-center justify-center gap-2 text-[13px] sm:text-[16px]"
                 >
                   Remove from Cart
                 </button>
@@ -501,8 +501,8 @@ export function ProductCardSkeleton({
         </div>
 
         <div className="mt-4 space-y-2">
-          <div className="h-9 sm:h-12 rounded-full bg-brand-gray-200" />
-          <div className="h-9 sm:h-12 rounded-full bg-brand-gray-75 border border-brand-gray-200" />
+          <div className="h-11 sm:h-12 rounded-full bg-brand-gray-200" />
+          <div className="h-11 sm:h-12 rounded-full bg-brand-gray-75 border border-brand-gray-200" />
         </div>
       </div>
     </article>

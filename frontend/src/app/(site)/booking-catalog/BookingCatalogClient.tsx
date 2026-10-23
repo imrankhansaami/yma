@@ -1,7 +1,12 @@
 "use client";
 
 import { format, isValid, parse } from "date-fns";
-import { Calendar as CalendarIcon, Search } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import type { DateRange } from "react-day-picker";
@@ -97,6 +102,9 @@ function BookingCatalogPageInner({
   const [pageSize, setPageSize] = useState("12");
   const [sort, setSort] = useState<string>(contextDefaultSort);
   const [currentPage, setCurrentPage] = useState(1);
+  // Mobile only: the filter controls live in a bottom sheet so the products sit
+  // near the top of the first screen. Desktop keeps the always-visible card.
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [appliedFilters, setAppliedFilters] = useState<{
     categorySelect: string;
@@ -232,6 +240,23 @@ function BookingCatalogPageInner({
       categoryPathSlug,
     });
   }, [searchParams, catData, forcedCategoryName]);
+
+  // Lock the page behind the bottom sheet and let Escape close it. The sheet is
+  // plain fixed DOM rather than a dialog so the Radix selects inside it keep
+  // working normally.
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSheetOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [sheetOpen]);
 
   const { data: locationsData } = useQuery({
     queryKey: ["locations"],
@@ -396,106 +421,201 @@ function BookingCatalogPageInner({
     ratingCount?: number;
   }>;
 
+  // Count of filters actually applied to the current result set, not just picked
+  // in the sheet, so the mobile badge matches what the user is looking at.
+  const activeFilterCount =
+    (appliedFilters.categorySelect ? 1 : 0) +
+    (appliedFilters.location ? 1 : 0) +
+    (appliedFilters.startDateStr ? 1 : 0);
+
+  const formatShortDate = (value?: string) => {
+    if (!value) return "";
+    const parsed = parse(value, "yyyy-MM-dd", new Date());
+    return isValid(parsed) ? format(parsed, "d MMM") : value;
+  };
+
+  const datesLabel =
+    appliedFilters.startDateStr
+      ? appliedFilters.endDateStr &&
+        appliedFilters.endDateStr !== appliedFilters.startDateStr
+        ? `${formatShortDate(appliedFilters.startDateStr)} – ${formatShortDate(appliedFilters.endDateStr)}`
+        : formatShortDate(appliedFilters.startDateStr)
+      : "Any dates";
+
+  const resetFilters = () => {
+    const categoryPathSlug = String(forcedCategoryName || "").trim();
+    setCategorySelect("");
+    setLocation("");
+    setDateRange(undefined);
+    setCurrentPage(1);
+    setAppliedFilters({
+      categorySelect: "",
+      location: "",
+      searchTerm: "",
+      pageSize,
+      sort,
+      startDateStr: undefined,
+      endDateStr: undefined,
+      categoryPathSlug,
+    });
+    setSheetOpen(false);
+    const nextPath = appliedFilters.categoryPathSlug
+      ? `/booking-catalog/${appliedFilters.categoryPathSlug}`
+      : "/booking-catalog";
+    router.push(nextPath, { scroll: false });
+  };
+
+  // Built once and used by both the desktop card and the mobile sheet.
+  // `layer` raises the portalled dropdown above the sheet (z-[70]).
+  const categoryField = (layer = "") => (
+    <div className="space-y-1">
+      <label className="text-xs font-semibold text-gray-500 uppercase ml-1">
+        Category
+      </label>
+      <Select
+        value={categorySelect}
+        onValueChange={(v) => {
+          setCategorySelect(v);
+          setCurrentPage(1);
+        }}
+      >
+        <SelectTrigger aria-label="Filter by category" className="w-full h-11">
+          <SelectValue placeholder="All Categories" />
+        </SelectTrigger>
+        <SelectContent className={layer}>
+          <SelectItem value=" ">All Categories</SelectItem>
+          {catData?.map((c) => (
+            // Uses c.id (which maps to _id) for backend ObjectId lookup
+            <SelectItem key={c._id} value={String(c._id)}>
+              {c.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  const locationField = (layer = "") => (
+    <div className="space-y-1">
+      <label className="text-xs font-semibold text-gray-500 uppercase ml-1">
+        Location
+      </label>
+      <Select
+        value={location}
+        onValueChange={(v) => {
+          setLocation(v);
+          setCurrentPage(1);
+        }}
+      >
+        <SelectTrigger aria-label="Filter by location" className="w-full h-11">
+          <SelectValue placeholder="Everywhere" />
+        </SelectTrigger>
+        <SelectContent className={layer}>
+          <SelectItem value=" ">Everywhere</SelectItem>
+          {(locationsData as any[])?.map((loc, i) => {
+            const name = loc.name?.trim() || `Location ${i + 1}`;
+            // Locations are postcode districts now, so the code is the name
+            // and repeating it reads as "CM17 (CM17)".
+            const postcode = loc.city?.trim() || "";
+            const secondary =
+              postcode && postcode.toUpperCase() !== name.toUpperCase()
+                ? postcode
+                : "";
+
+            return (
+              <SelectItem key={i} value={name}>
+                {secondary ? `${name} (${secondary})` : name}
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  const datesField = (months: number, layer = "") => (
+    <div className="space-y-1">
+      <label className="text-xs font-semibold text-gray-500 uppercase ml-1">
+        Dates
+      </label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full h-11 py-0 px-3 justify-start font-normal rounded-md border border-input bg-background hover:bg-background"
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {dateRange?.from
+              ? dateRange.to
+                ? `${format(dateRange.from, "LLL dd")} - ${format(dateRange.to, "LLL dd")}`
+                : format(dateRange.from, "LLL dd")
+              : "Select dates"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className={`w-auto p-0 ${layer}`} align="start">
+          <Calendar
+            mode="range"
+            selected={dateRange}
+            onSelect={(range) => {
+              setDateRange(range);
+              setCurrentPage(1);
+            }}
+            numberOfMonths={months}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
-      {/* Search & Filter Bar */}
-      <div className="flex flex-wrap gap-4 p-4 border rounded-xl bg-white shadow-sm items-end">
-        {/* Category Select */}
-        <div className="flex-1 min-w-[200px] space-y-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase ml-1">
-            Category
-          </label>
-          <Select
-            value={categorySelect}
-            onValueChange={(v) => {
-              setCategorySelect(v);
-              setCurrentPage(1);
-            }}
+      {/* Mobile: compact filter bar. The controls themselves live in the sheet
+          at the end of this component so the first product row stays on screen. */}
+      <div className="lg:hidden">
+        <div className="sticky top-[92px] z-30 flex items-center gap-2 rounded-xl border border-brand-gray-150 bg-white/95 px-2.5 py-2 shadow-sm backdrop-blur">
+          <button
+            type="button"
+            onClick={() => setSheetOpen(true)}
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-brand-gray-150 text-[14px] font-semibold text-brand-ink-900 active:bg-brand-gray-25"
+            aria-haspopup="dialog"
+            aria-expanded={sheetOpen}
           >
-            <SelectTrigger aria-label="Filter by category" className="w-full h-11">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value=" ">All Categories</SelectItem>
-              {catData?.map((c) => (
-                // Uses c.id (which maps to _id) for backend ObjectId lookup
-                <SelectItem key={c._id} value={String(c._id)}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Location Select */}
-        <div className="flex-1 min-w-[200px] space-y-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase ml-1">
-            Location
-          </label>
-          <Select
-            value={location}
-            onValueChange={(v) => {
-              setLocation(v);
-              setCurrentPage(1);
-            }}
+            <SlidersHorizontal className="h-4 w-4 text-brand-gray-600" />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-orange-500 px-1.5 text-[11px] font-bold text-white">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSheetOpen(true)}
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-brand-gray-150 text-[14px] font-semibold text-brand-ink-900 active:bg-brand-gray-25"
+            aria-haspopup="dialog"
+            aria-expanded={sheetOpen}
           >
-            <SelectTrigger aria-label="Filter by location" className="w-full h-11">
-              <SelectValue placeholder="Everywhere" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value=" ">Everywhere</SelectItem>
-              {(locationsData as any[])?.map((loc, i) => {
-                const name = loc.name?.trim() || `Location ${i + 1}`;
-                // Locations are postcode districts now, so the code is the name
-                // and repeating it reads as "CM17 (CM17)".
-                const postcode = loc.city?.trim() || "";
-                const secondary =
-                  postcode && postcode.toUpperCase() !== name.toUpperCase()
-                    ? postcode
-                    : "";
-
-                return (
-                  <SelectItem key={i} value={name}>
-                    {secondary ? `${name} (${secondary})` : name}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+            <CalendarIcon className="h-4 w-4 text-brand-gray-600" />
+            <span className="truncate">{datesLabel}</span>
+          </button>
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              aria-label="Clear all filters"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-brand-gray-600 active:bg-brand-gray-25"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
+      </div>
 
-        {/* Date Picker */}
-        <div className="flex-1 min-w-[240px] space-y-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase ml-1">
-            Dates
-          </label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full h-11 py-0 px-3 justify-start font-normal rounded-md border border-input bg-background hover:bg-background"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateRange?.from
-                  ? dateRange.to
-                    ? `${format(dateRange.from, "LLL dd")} - ${format(dateRange.to, "LLL dd")}`
-                    : format(dateRange.from, "LLL dd")
-                  : "Select dates"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="range"
-                selected={dateRange}
-                onSelect={(range) => {
-                  setDateRange(range);
-                  setCurrentPage(1);
-                }}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+      {/* Desktop: always-visible filter card */}
+      <div className="hidden lg:flex flex-wrap gap-4 p-4 border rounded-xl bg-white shadow-sm items-end">
+        <div className="flex-1 min-w-[200px]">{categoryField()}</div>
+        <div className="flex-1 min-w-[200px]">{locationField()}</div>
+        <div className="flex-1 min-w-[240px]">{datesField(2)}</div>
 
         {/* Search Button */}
         <Button
@@ -507,10 +627,16 @@ function BookingCatalogPageInner({
       </div>
 
       {/* Results count + sort */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-brand-gray-600">
-          Your search results:{" "}
-          <span className="font-semibold text-brand-ink-900">{total}</span>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[13px] text-brand-gray-600 lg:text-sm">
+          <span className="lg:hidden">
+            <span className="font-semibold text-brand-ink-900">{total}</span>{" "}
+            results
+          </span>
+          <span className="hidden lg:inline">
+            Your search results:{" "}
+            <span className="font-semibold text-brand-ink-900">{total}</span>
+          </span>
         </p>
         <Select
           value={sort}
@@ -522,7 +648,10 @@ function BookingCatalogPageInner({
             setAppliedFilters((prev) => ({ ...prev, sort: v }));
           }}
         >
-          <SelectTrigger aria-label="Sort products" className="w-[200px] h-10">
+          <SelectTrigger
+            aria-label="Sort products"
+            className="w-[140px] h-9 text-[13px] lg:w-[200px] lg:h-10 lg:text-sm"
+          >
             <SelectValue placeholder="Default" />
           </SelectTrigger>
           <SelectContent>
@@ -541,7 +670,7 @@ function BookingCatalogPageInner({
           Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="h-64 bg-gray-100 animate-pulse rounded-xl"
+              className="h-[330px] bg-gray-100 animate-pulse rounded-xl lg:h-64"
             />
           ))
         ) : mappedItems.length > 0 ? (
@@ -570,6 +699,63 @@ function BookingCatalogPageInner({
           onPageChange={(page) => setCurrentPage(page)}
           isLoading={isFetching}
         />
+      )}
+
+      {/* Mobile filter sheet. Plain fixed DOM (not a Radix dialog) so the selects
+          inside it behave exactly as they do on desktop. */}
+      {sheetOpen && (
+        <div
+          className="fixed inset-0 z-[70] lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Filters and availability"
+        >
+          <div
+            className="absolute inset-0 bg-brand-ink-975/60"
+            onClick={() => setSheetOpen(false)}
+          />
+          <div className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-2xl bg-white px-4 pb-6 pt-3 shadow-2xl">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-brand-gray-150" />
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-[16px] font-semibold text-brand-ink-900">
+                Filters &amp; availability
+              </h2>
+              <button
+                type="button"
+                onClick={() => setSheetOpen(false)}
+                aria-label="Close filters"
+                className="-mr-1 flex h-10 w-10 items-center justify-center rounded-full text-brand-ink-900 active:bg-brand-gray-75"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {categoryField("z-[80]")}
+              {locationField("z-[80]")}
+              {datesField(1, "z-[80]")}
+            </div>
+
+            <div className="mt-5 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="h-12 flex-1 rounded-full border border-brand-gray-150 text-[15px] font-semibold text-brand-ink-900 active:bg-brand-gray-25"
+              >
+                Clear all
+              </button>
+              <Button
+                onClick={() => {
+                  applyFilters();
+                  setSheetOpen(false);
+                }}
+                className="h-12 flex-[1.3] rounded-full bg-brand-orange-500 text-[15px] font-semibold text-white hover:bg-brand-orange-450"
+              >
+                <Search className="mr-2 h-4 w-4" /> Find Availability
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

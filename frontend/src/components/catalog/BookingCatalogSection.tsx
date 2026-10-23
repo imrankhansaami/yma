@@ -19,18 +19,20 @@ export default function BookingCatalogSection({
 }) {
   return (
     <section className="w-full mt-16 md:mt-24">
-      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 py-12 sm:py-14 md:py-16 font-inter">
-        <div className="mb-5 flex items-center gap-2 text-sm text-brand-gray-600">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 py-8 sm:py-12 md:py-16 font-inter">
+        <div className="mb-5 hidden items-center gap-2 text-sm text-brand-gray-600 lg:flex">
           <Home className="h-4 w-4" />
           <ChevronRight className="h-4 w-4 text-brand-gray-300" />
           <span>Booking Catalog</span>
         </div>
 
         <div className="mb-4">
-          <h1 className="text-brand-ink-900 font-semibold text-[26px] sm:text-[28px]">
+          <h1 className="text-brand-ink-900 font-semibold text-[21px] sm:text-[24px] lg:text-[28px]">
             {title}
           </h1>
-          <p className="mt-2 text-brand-gray-600 text-[14px]">{intro}</p>
+          <p className="mt-2 hidden text-brand-gray-600 text-[14px] lg:block">
+            {intro}
+          </p>
         </div>
 
         <BookingCatalogClient

@@ -71,11 +71,39 @@ const Pagination = ({
   };
 
   return (
-    <div className="mt-8 flex justify-center">
-      <nav
-        aria-label="Pagination"
-        className="inline-flex items-center rounded-xl border border-brand-gray-150 overflow-hidden h-10 sm:h-14"
-      >
+    <>
+      {/* Mobile: a numbered pager with five 44px targets overflows a phone, so
+          show prev / position / next instead. */}
+      <div className="mt-6 flex items-center gap-3 sm:hidden">
+        <button
+          onClick={handlePrevious}
+          disabled={currentPage === 1 || isLoading}
+          className="inline-flex h-11 flex-1 items-center justify-center gap-1 rounded-xl border border-brand-gray-150 text-[14px] font-semibold text-brand-ink-900 disabled:opacity-50"
+          aria-label="Previous page"
+        >
+          <ChevronRight className="h-4 w-4 rotate-180" />
+          Prev
+        </button>
+        <span className="shrink-0 text-[13px] text-brand-gray-600">
+          Page <span className="font-semibold text-brand-ink-900">{currentPage}</span> of{" "}
+          {totalPages}
+        </span>
+        <button
+          onClick={handleNext}
+          disabled={currentPage === totalPages || isLoading}
+          className="inline-flex h-11 flex-1 items-center justify-center gap-1 rounded-xl border border-brand-gray-150 text-[14px] font-semibold text-brand-ink-900 disabled:opacity-50"
+          aria-label="Next page"
+        >
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="mt-8 hidden justify-center sm:flex">
+        <nav
+          aria-label="Pagination"
+          className="inline-flex items-center rounded-xl border border-brand-gray-150 overflow-hidden h-10 sm:h-14"
+        >
         {/* Prev */}
         <button
           onClick={handlePrevious}
@@ -148,7 +176,8 @@ const Pagination = ({
           <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
         </button>
       </nav>
-    </div>
+      </div>
+    </>
   );
 };
 
