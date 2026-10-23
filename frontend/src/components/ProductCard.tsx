@@ -41,8 +41,6 @@ export type ProductCardProps = {
 
   images: { src: string; alt?: string }[];
   title: string;
-  subtitle?: string;
-  subnote?: string;
   priceOriginal?: number | null;
   priceCurrent: number;
   priceSuffix?: string;
@@ -75,8 +73,6 @@ export default function ProductCard({
   slug,
   images,
   title,
-  subtitle = "Total Rental Price",
-  subnote = "Incl. taxes",
   priceOriginal = null,
   priceCurrent,
   priceSuffix = "per day",
@@ -293,16 +289,6 @@ export default function ProductCard({
             <Title />
           </h3>
 
-          {/* Captions */}
-          <div className="mt-1.5 sm:mt-2 min-h-[40px] sm:min-h-[48px]">
-            <p className="text-brand-gray-400 text-[12px] sm:text-[14px]">
-              {subtitle}
-            </p>
-            <p className="text-brand-gray-400 text-[12px] sm:text-[14px] mt-0.5 sm:mt-1">
-              {subnote}
-            </p>
-          </div>
-
           <div className="mt-auto">
             {/* Price */}
             <div className="mt-2.5 sm:mt-3 flex items-center justify-between gap-2 min-w-0">
@@ -508,10 +494,6 @@ export function ProductCardSkeleton({
 
       <div className="pb-4 sm:pb-5 pt-3 sm:pt-4 min-w-0">
         <div className="h-5 w-3/4 rounded bg-brand-gray-200" />
-        <div className="mt-2 space-y-2">
-          <div className="h-4 w-32 rounded bg-brand-gray-200" />
-          <div className="h-4 w-24 rounded bg-brand-gray-200" />
-        </div>
 
         <div className="mt-3 flex items-center gap-2">
           <div className="h-5 w-14 rounded bg-brand-gray-200" />

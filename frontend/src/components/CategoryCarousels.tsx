@@ -44,8 +44,6 @@ function mapProductToCard(
     id,
     images: [{ src: cover || (SampleImage as any).src, alt: p.name }],
     title: p.name,
-    subtitle: "Total Rental Price",
-    subnote: "Incl. taxes",
     priceOriginal,
     priceCurrent,
     priceSuffix: "per day",
