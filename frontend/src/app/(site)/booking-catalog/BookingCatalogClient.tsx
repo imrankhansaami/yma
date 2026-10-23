@@ -678,6 +678,7 @@ function BookingCatalogPageInner({
             <ProductCard
               key={p._id}
               id={p._id}
+              slug={p.slug}
               title={p.title}
               images={p.images}
               priceCurrent={p.priceCurrent}
@@ -771,7 +772,22 @@ export default function BookingCatalogPage({
   initialTotal?: number;
 }) {
   return (
-    <Suspense fallback={<div>Loading Catalog...</div>}>
+    <Suspense
+      fallback={
+        // Skeleton grid rather than bare text: this is what paints before the
+        // client resolves, so the cards should already be in place.
+        <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 sm:py-12 md:py-16">
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[330px] animate-pulse rounded-xl bg-gray-100 lg:h-64"
+              />
+            ))}
+          </div>
+        </div>
+      }
+    >
       <BookingCatalogPageInner
         forcedCategoryName={forcedCategoryName}
         initialProducts={initialProducts}
