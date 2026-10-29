@@ -1,5 +1,11 @@
 export type CategoryPageConfig = {
-  key: "bouncy-castle" | "soft-play" | "garden-games" | "fun-food" | "obstacle-course-slides";
+  key:
+    | "bouncy-castle"
+    | "soft-play"
+    | "garden-games"
+    | "fun-food"
+    | "obstacle-course-slides"
+    | "marquee-chairs-and-table";
   name: string;
   slug: string;
   title: string;
@@ -70,6 +76,22 @@ export const CATEGORY_PAGES: CategoryPageConfig[] = [
       "obstacle course hire",
       "inflatable slide hire",
       "assault course inflatables",
+    ],
+  },
+  {
+    key: "marquee-chairs-and-table",
+    name: "Marquee, chairs and table",
+    slug: "marquee-chairs-and-table-hire",
+    title: "Marquee, Chairs and Table Hire",
+    shortDescription:
+      "Marquees, folding tables and chairs to seat and shelter your guests.",
+    seoDescription:
+      "Hire marquees, folding tables and chairs for parties, weddings and events. Weatherproof shelter and seating with delivery and setup.",
+    keywords: [
+      "marquee hire",
+      "table and chair hire",
+      "folding table hire",
+      "party marquee hire",
     ],
   },
 ];

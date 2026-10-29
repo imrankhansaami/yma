@@ -46,6 +46,13 @@ const DEFAULT_ITEMS: CastleItem[] = [
     imgSrc: ObstacleBg,
     imgAlt: "Inflatable obstacle course with slide",
   },
+  {
+    title: "Marquee, Chairs and Table\nHire Catalogue",
+    href: "/booking-catalog/marquee-chairs-and-table-hire",
+    // Served from /public so the same path can be used by the CMS tile.
+    imgSrc: "/marquee-tables-chairs.jpg",
+    imgAlt: "Marquee with folding tables and chairs on a lawn",
+  },
 ];
 
 const DEFAULT_TILES: CategoryTilesContent = {
@@ -72,6 +79,21 @@ function toItems(content?: CategoryTilesContent): CastleItem[] {
   }));
 }
 
+/**
+ * Where a tile sits in the md grid (6 columns, every tile 2 columns wide).
+ *
+ * Five tiles were arranged 3 on top and 2 centred below, which needs explicit
+ * column starts. Six tiles simply flow as 3 + 3, so they need none.
+ */
+function tileClass(index: number, total: number) {
+  if (total === 5) {
+    if (index === 3) return "md:col-span-2 md:col-start-2";
+    if (index === 4)
+      return "col-span-2 justify-self-center w-[calc((100%-0.75rem)/2)] sm:w-[calc((100%-1.25rem)/2)] md:col-span-2 md:col-start-4 md:w-auto";
+  }
+  return "md:col-span-2";
+}
+
 export default function PickCastle({
   content,
 }: {
@@ -96,13 +118,7 @@ export default function PickCastle({
             <CardLink
               key={`${item.href}-${index}`}
               {...item}
-              className={
-                index === 3
-                  ? "md:col-span-2 md:col-start-2"
-                  : index === 4
-                    ? "col-span-2 justify-self-center w-[calc((100%-0.75rem)/2)] sm:w-[calc((100%-1.25rem)/2)] md:col-span-2 md:col-start-4 md:w-auto"
-                    : "md:col-span-2"
-              }
+              className={tileClass(index, items.length)}
             />
           ))}
         </div>
