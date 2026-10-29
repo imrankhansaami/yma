@@ -4,6 +4,7 @@ import NavBG from "@/assets/images/navbar.png";
 import NavBG_SM from "@/assets/images/navbar_sm.png";
 import Logo from "@/assets/logo.svg";
 import { fetchLocations } from "@/services/location.service";
+import { districtLocations } from "@/lib/locations";
 import { normalizeCanonicalSlug } from "@/lib/canonical";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -127,13 +128,15 @@ const Navbar = () => {
     isError: locationsError,
   } = useQuery({
     queryKey: ["navbar-locations"],
-    queryFn: () => fetchLocations({ page: 1, limit: 50 }),
+    queryFn: () => fetchLocations({ page: 1, limit: 200 }),
     staleTime: 10 * 60 * 1000,
     enabled: showLocations || open,
   });
 
   const locationsTree = useMemo(() => {
-    const raw = Array.isArray(locationsData) ? locationsData : [];
+    const raw = districtLocations(
+      Array.isArray(locationsData) ? locationsData : [],
+    );
 
     const dedup = (items: any[]) => {
       const seen = new Set<string>();
@@ -402,7 +405,12 @@ const Navbar = () => {
                       {filteredLocations.length > 0 ? (
                         filteredLocations.map((loc: any, idx: number) => {
                           const isActive = idx === activeParentIdx;
-                          const slug = toSlug(String(loc.name));
+                          // The page lives at the record's own slug: a district
+                          // attached to an area page (N22 -> Wood Green) has no
+                          // /locations/n22, so the name must not be used blindly.
+                          const slug =
+                            String(loc.slug || "").trim() ||
+                            toSlug(String(loc.name));
                           return (
                             <Link
                               key={`${String(loc.id ?? loc.name)}-${idx}`}
@@ -455,7 +463,10 @@ const Navbar = () => {
                         ).map((child: any, cIdx: number) => (
                           <Link
                             key={`${String(child.id ?? child.name)}-${cIdx}`}
-                            href={`/locations/${toSlug(String(child.name))}`}
+                            href={`/locations/${
+                              String(child.slug || "").trim() ||
+                              toSlug(String(child.name))
+                            }`}
                             className="block rounded-lg px-3 py-2 text-sm text-brand-gray-700 hover:bg-brand-gray-25"
                           >
                             {child.name}

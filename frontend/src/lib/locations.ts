@@ -114,6 +114,28 @@ export const POSTCODE_PLACE_NAMES: Record<string, string> = {
 /** A UK postcode district, e.g. CM18, RM10, E1, IG10, N13. */
 export const POSTCODE_DISTRICT = /^[A-Z]{1,2}\d{1,2}[A-Z]?$/i;
 
+/**
+ * True when a location record is a postcode district.
+ *
+ * The customer-facing Location pickers are delivery filters: the value they
+ * send is matched against the districts products are tagged with. Area pages
+ * (Canary Wharf, Excel Centre, Golders Green) carry no district, so choosing
+ * one can never match a product - they are kept out of those lists.
+ */
+export function isDistrictLocation(
+  location: { name?: string } | string | null | undefined,
+): boolean {
+  const name = typeof location === "string" ? location : location?.name;
+  return POSTCODE_DISTRICT.test(String(name || "").trim());
+}
+
+/** The subset of a location list that a delivery filter can use. */
+export function districtLocations<T>(locations: T[] | null | undefined): T[] {
+  return (Array.isArray(locations) ? locations : []).filter((loc) =>
+    isDistrictLocation(loc as { name?: string }),
+  );
+}
+
 function toTitle(value: string) {
   if (!value) return "";
   return value

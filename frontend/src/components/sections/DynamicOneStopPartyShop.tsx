@@ -74,8 +74,8 @@ export default function DynamicOneStopPartyShop({
   const queryName = locationQuery || locationName;
 
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
-    queryKey: ["locations", { page: 1, limit: 100 }],
-    queryFn: () => fetchLocations({ page: 1, limit: 100 }),
+    queryKey: ["locations", { page: 1, limit: 200 }],
+    queryFn: () => fetchLocations({ page: 1, limit: 200 }),
     staleTime: 5 * 60 * 1000,
     enabled: !!queryName,
   });

@@ -30,6 +30,7 @@ import {
 import { Category, fetchCategories } from "@/services/category.service";
 import { CATEGORY_PAGE_BY_SLUG, findCategoryPageByLabel } from "@/lib/category-pages";
 import { fetchLocations } from "@/services/location.service";
+import { districtLocations } from "@/lib/locations";
 import Image from "next/image";
 import type { DateRange } from "react-day-picker";
 import WhatsappBtn from "../common/btn/WhatsappBtn";
@@ -140,8 +141,8 @@ export default function HeroSection({ content }: { content?: HeroContent }) {
     isLoading: locationsLoading,
     isError: locationsError,
   } = useQuery({
-    queryKey: ["locations", { page: 1, limit: 100 }],
-    queryFn: () => fetchLocations({ page: 1, limit: 100 }),
+    queryKey: ["locations", { page: 1, limit: 200 }],
+    queryFn: () => fetchLocations({ page: 1, limit: 200 }),
     staleTime: 5 * 60 * 1000,
     enabled: shouldLoadFilters,
   });
@@ -155,10 +156,12 @@ export default function HeroSection({ content }: { content?: HeroContent }) {
   }, [categories, categorySearch]);
 
   const filteredLocations = React.useMemo(() => {
-    if (!Array.isArray(locationsData)) return [];
-    if (!locationSearch.trim()) return locationsData;
+    // Districts only: this picker feeds the catalogue's location filter, which
+    // matches the districts products are tagged with.
+    const districts = districtLocations(locationsData as any[]);
+    if (!locationSearch.trim()) return districts;
     const search = locationSearch.toLowerCase().trim();
-    return locationsData.filter((loc: any) =>
+    return districts.filter((loc: any) =>
       String(loc.city || loc.name)
         .toLowerCase()
         .includes(search),

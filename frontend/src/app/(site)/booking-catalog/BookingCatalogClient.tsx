@@ -35,6 +35,7 @@ import {
   fetchCategories,
 } from "@/services/category.service";
 import { fetchLocations } from "@/services/location.service";
+import { districtLocations } from "@/lib/locations";
 import { SHOW_PRODUCT_REVIEWS } from "@/lib/features";
 import {
   fetchProducts,
@@ -259,8 +260,8 @@ function BookingCatalogPageInner({
   }, [sheetOpen]);
 
   const { data: locationsData } = useQuery({
-    queryKey: ["locations"],
-    queryFn: () => fetchLocations({ page: 1, limit: 100 }),
+    queryKey: ["locations", { page: 1, limit: 200 }],
+    queryFn: () => fetchLocations({ page: 1, limit: 200 }),
   });
 
   // Seed the first paint with server-rendered products so the catalog appears
@@ -512,7 +513,7 @@ function BookingCatalogPageInner({
         </SelectTrigger>
         <SelectContent className={layer}>
           <SelectItem value=" ">Everywhere</SelectItem>
-          {(locationsData as any[])?.map((loc, i) => {
+          {districtLocations(locationsData as any[])?.map((loc: any, i: number) => {
             const name = loc.name?.trim() || `Location ${i + 1}`;
             // Locations are postcode districts now, so the code is the name
             // and repeating it reads as "CM17 (CM17)".
