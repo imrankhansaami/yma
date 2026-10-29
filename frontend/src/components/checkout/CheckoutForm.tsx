@@ -2,6 +2,9 @@
 
 import api from "@/api/api";
 import { Checkbox } from "@/components/ui/checkbox";
+import AddressAutocomplete, {
+  type AddressParts,
+} from "@/components/checkout/AddressAutocomplete";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -252,6 +255,34 @@ export default function CheckoutForm({
         ? 20
         : 10);
 
+  /**
+   * Fills the address block a picked Google suggestion belongs to. Only the
+   * parts we actually received are written, so anything typed by hand survives.
+   */
+  const applyAddressParts = (parts: AddressParts, target: "main" | "alt") => {
+    const apply = (name: string, value: string, validate = false) => {
+      if (!value) return;
+      (setValue as any)(name, value, {
+        shouldValidate: validate,
+        shouldDirty: true,
+      });
+    };
+
+    if (target === "main") {
+      apply("street1", parts.street, true);
+      apply("street2", parts.flat);
+      apply("townCity", parts.town, true);
+      apply("stateCounty", parts.county);
+      apply("postalCode", parts.postcode, true);
+    } else {
+      apply("shipStreet1", parts.street, true);
+      apply("shipStreet2", parts.flat);
+      apply("shipTownCity", parts.town, true);
+      apply("shipStateCounty", parts.county);
+      apply("shipPostalCode", parts.postcode, true);
+    }
+  };
+
   const { clear, items } = useCartStore();
 
   useEffect(() => {
@@ -496,11 +527,12 @@ export default function CheckoutForm({
 
           {/* Street 1 */}
           <Field label="Street Address" id="street1" required>
-            <Input
+            <AddressAutocomplete
               id="street1"
               placeholder="House number & street name"
               className={`${baseInput} ${errors.street1 ? errorBorder : ""}`}
-              {...register("street1")}
+              inputProps={register("street1")}
+              onSelect={(parts) => applyAddressParts(parts, "main")}
             />
             <ErrorText msg={errors.street1?.message} />
           </Field>
@@ -847,13 +879,14 @@ export default function CheckoutForm({
                 </Field>
 
                 <Field label="Street Address" id="shipStreet1" required>
-                  <Input
+                  <AddressAutocomplete
                     id="shipStreet1"
                     placeholder="House number & street name"
                     className={`${baseInput} ${
                       errors.shipStreet1 ? errorBorder : ""
                     }`}
-                    {...register("shipStreet1")}
+                    inputProps={register("shipStreet1")}
+                    onSelect={(parts) => applyAddressParts(parts, "alt")}
                   />
                   <ErrorText msg={errors.shipStreet1?.message} />
                 </Field>

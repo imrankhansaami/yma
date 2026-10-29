@@ -448,7 +448,6 @@ export default function ProductClient({
     setShowAddOns(false);
     router.push("/checkout");
   };
-
   const addOnPrice = (p: ApiProduct) =>
     p.priceDiscount || p.perDayPrice || p.price || 0;
 
@@ -610,21 +609,23 @@ export default function ProductClient({
 
               <Separator className="my-3 bg-brand-gray-200" />
 
-              <div className="mt-3 bg-white text-[14px] text-brand-gray-700 space-y-2">
+              <div className="mt-3 rounded-lg bg-brand-gray-25 px-3 py-2.5 text-[14px] text-brand-gray-700 space-y-2">
                 {dimensionSummary && (
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <span className="text-brand-ink-900 font-medium">
-                      Size:
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="text-[12px] uppercase tracking-wide text-brand-gray-400">
+                      Size
                     </span>
-                    <span>{dimensionSummary}</span>
+                    <span className="text-brand-ink-900">{dimensionSummary}</span>
                   </div>
                 )}
                 {product?.deliveryAndCollection && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-brand-ink-900 font-medium">
-                      Delivery & Collection:
+                    <span className="text-[12px] uppercase tracking-wide text-brand-gray-400">
+                      Delivery &amp; Collection
                     </span>
-                    <span>{product.deliveryAndCollection}</span>
+                    <span className="text-[14px] leading-6">
+                      {product.deliveryAndCollection}
+                    </span>
                   </div>
                 )}
               </div>
@@ -690,13 +691,13 @@ export default function ProductClient({
                     </div>
 
                     {hasPrice ? (
-                      <div className="mt-4 rounded-lg overflow-hidden border border-brand-gray-150">
-                        <div className="px-3 py-2 flex items-center justify-center gap-1 text-center">
-                          <div className="text-brand-ink-900 text-sm font-medium">
+                      <div className="mt-4 rounded-lg overflow-hidden border border-brand-gray-150 bg-brand-gray-25">
+                        <div className="px-3 py-3 flex items-baseline justify-center gap-1.5 text-center">
+                          <div className="text-brand-ink-900 text-[18px] font-semibold">
                             £{pricePerDay}
                           </div>
-                          <div className="text-[11px] text-brand-zinc-400">
-                            Per day
+                          <div className="text-[12px] text-brand-gray-500">
+                            per day
                           </div>
                         </div>
                       </div>
@@ -853,49 +854,49 @@ export default function ProductClient({
             </aside>
           </div>
 
-          <section className="mt-10 space-y-6">
+          <section className="mt-12 space-y-8">
             {product?.description ? (
-              <div className="space-y-2">
-                <h3 className="text-brand-ink-900 text-[18px] font-semibold">
+              <div className="space-y-2.5">
+                <h3 className="text-brand-ink-900 text-[19px] font-semibold tracking-tight">
                   Description
                 </h3>
                 <RichText
                   html={product.description}
-                  className="text-brand-gray-700"
+                  className="text-[15px] leading-7 text-brand-gray-700 max-w-[860px]"
                 />
               </div>
             ) : null}
 
             {product?.sensitiveDetails && (
-              <div className="space-y-2">
-                <h3 className="text-brand-ink-900 text-[18px] font-semibold">
+              <div className="space-y-2.5 border-t border-brand-gray-150 pt-8">
+                <h3 className="text-brand-ink-900 text-[19px] font-semibold tracking-tight">
                   ⚠️ Sensitive Colour Product Notice (Refundable Cleaning &
                   Damage Deposit)
                 </h3>
                 <RichText
                   html={product.sensitiveDetails}
-                  className="text-brand-gray-700"
+                  className="text-[15px] leading-7 text-brand-gray-700 max-w-[860px]"
                 />
               </div>
             )}
 
             {product?.deliveryAndCollection && (
-              <div className="space-y-2">
-                <h3 className="text-brand-ink-900 text-[18px] font-semibold">
+              <div className="space-y-2.5 border-t border-brand-gray-150 pt-8">
+                <h3 className="text-brand-ink-900 text-[19px] font-semibold tracking-tight">
                   Delivery & Collection
                 </h3>
-                <p className="text-brand-gray-700">
+                <p className="text-[15px] leading-7 text-brand-gray-700 max-w-[860px]">
                   {product.deliveryAndCollection}
                 </p>
               </div>
             )}
 
             {product?.ageRange && (
-              <div className="space-y-2">
-                <h3 className="text-brand-ink-900 text-[18px] font-semibold">
+              <div className="space-y-2.5 border-t border-brand-gray-150 pt-8">
+                <h3 className="text-brand-ink-900 text-[19px] font-semibold tracking-tight">
                   Age Range
                 </h3>
-                <p className="text-brand-gray-700">
+                <p className="text-[15px] leading-7 text-brand-gray-700 max-w-[860px]">
                   {typeof product.ageRange === "string"
                     ? product.ageRange
                     : `Suitable for children aged ${product.ageRange.min ?? "—"}–${
@@ -908,11 +909,11 @@ export default function ProductClient({
           </section>
 
           {visualization && hasDimensions ? (
-            <section className="mt-10">
-              <h3 className="text-brand-ink-900 text-[18px] font-semibold">
+            <section className="mt-12 border-t border-brand-gray-150 pt-8">
+              <h3 className="text-brand-ink-900 text-[19px] font-semibold tracking-tight">
                 Dimensions Visualization
               </h3>
-              <p className="text-brand-gray-700 text-[14px] mt-1">
+              <p className="text-[15px] leading-7 text-brand-gray-700 mt-2">
                 {dimensionSummary}
               </p>
 
@@ -942,8 +943,8 @@ export default function ProductClient({
           ) : null}
 
           {Array.isArray(product?.certificates) && product.certificates.length > 0 ? (
-            <section className="mt-10">
-              <h3 className="text-brand-ink-900 text-[18px] font-semibold">
+            <section className="mt-12 border-t border-brand-gray-150 pt-8">
+              <h3 className="text-brand-ink-900 text-[19px] font-semibold tracking-tight">
                 Certificates
               </h3>
               <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
