@@ -49,15 +49,22 @@ pm2 restart "$PM2_APP" --update-env
 pm2 save
 
 log "Verifying"
-sleep 5
-if ss -ltn 2>/dev/null | grep -q ':8001'; then
-  echo "    port 8001: listening"
-else
-  die "port 8001 is not listening"
-fi
-
-code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:8001${HEALTH_PATH}")"
-echo "    GET ${HEALTH_PATH} -> ${code}"
-[ "$code" = "200" ] || die "health check failed (HTTP $code)"
+# A restarted process can take a few seconds to bind, so retry instead of
+# failing on the first attempt (a slow boot is not a failed deploy).
+ready=0
+for attempt in $(seq 1 8); do
+  sleep 5
+  if ! ss -ltn 2>/dev/null | grep -q ':8001'; then
+    echo "    attempt ${attempt}: port 8001 not up yet"
+    continue
+  fi
+  code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:8001${HEALTH_PATH}")"
+  echo "    attempt ${attempt}: port listening, GET ${HEALTH_PATH} -> ${code}"
+  if [ "$code" = "200" ]; then
+    ready=1
+    break
+  fi
+done
+[ "$ready" = "1" ] || die "health check failed after 40s"
 
 log "Deploy complete"

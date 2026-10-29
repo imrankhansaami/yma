@@ -57,16 +57,24 @@ pm2 restart "$PM2_APP" --update-env
 pm2 save
 
 log "Verifying"
-sleep 5
-if ss -ltn 2>/dev/null | grep -q ':3000'; then
-  echo "    port 3000: listening"
-else
-  die "port 3000 is not listening"
-fi
-
-code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000${HEALTH_PATH}")"
-echo "    GET ${HEALTH_PATH} -> ${code}"
-[ "$code" = "200" ] || die "health check failed (HTTP $code)"
+# A restarted process can take a few seconds to bind, so retry instead of
+# failing on the first attempt (a slow boot is not a failed deploy).
+ready=0
+for attempt in $(seq 1 8); do
+  sleep 5
+  if ! ss -ltn 2>/dev/null | grep -q ':3000'; then
+    echo "    attempt ${attempt}: port 3000 not up yet"
+    continue
+  fi
+  code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000${HEALTH_PATH}")"
+  echo "    attempt ${attempt}: port listening, GET ${HEALTH_PATH} -> ${code}"
+  if [ "$code" = "200" ]; then
+    ready=1
+    break
+  fi
+done
+[ "$ready" = "1" ] || die "health check failed after 40s"
+echo "    port 3000: listening"
 
 # A partial .next still serves HTML but 404s/400s its JS chunks, so check one.
 chunk="$(curl -s "http://127.0.0.1:3000/" | grep -oE '/_next/static/chunks/[^"]+\.js' | head -1 || true)"
