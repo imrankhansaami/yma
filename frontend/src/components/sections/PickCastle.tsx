@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import Bg1 from "@/assets/images/bg1.png";
-import Bg3 from "@/assets/images/bg3.png";
 import Bg4 from "@/assets/images/bg4.png";
 import ObstacleBg from "@/assets/images/obstacle.jpeg";
 import type { BlockImage, CategoryTilesContent } from "@/lib/blocks/types";
@@ -31,8 +30,9 @@ const DEFAULT_ITEMS: CastleItem[] = [
   {
     title: "Garden Games\nHire Catalogue",
     href: "/booking-catalog/garden-games-hire",
-    imgSrc: Bg3,
-    imgAlt: "Giant garden game",
+    // Served from /public so the same path can be used by the CMS tile.
+    imgSrc: "/garden-games.jpg",
+    imgAlt: "Giant garden games with inflatable football target",
   },
   {
     title: "Fun Food\nHire Catalogue",
