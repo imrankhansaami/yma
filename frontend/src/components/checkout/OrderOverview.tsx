@@ -17,7 +17,6 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export default function OrderOverview({
-  keepOvernight = false,
   deliveryTime = "",
   collectionTime = "",
   floorType = "",
@@ -25,7 +24,6 @@ export default function OrderOverview({
   onPaymentMethodChange,
   isBusinessOrder = false,
 }: {
-  keepOvernight?: boolean;
   deliveryTime?: string;
   collectionTime?: string;
   floorType?: string;
@@ -118,8 +116,6 @@ export default function OrderOverview({
 
   const couponValue = appliedPromoData?.discount ?? 0;
 
-  const overnightFee = keepOvernight ? 30 : 0;
-
   // £10 placement fee applies outdoors on a hard surface or on artificial
   // grass. Indoors is always free, including indoors on a hard surface.
   const isIndoors = /indoors/i.test(floorType);
@@ -128,12 +124,7 @@ export default function OrderOverview({
   const floorFee = needsPlacementFee ? 10 : 0;
 
   const total =
-    subTotal -
-    couponValue +
-    shipping +
-    collectionFee +
-    overnightFee +
-    floorFee;
+    subTotal - couponValue + shipping + collectionFee + floorFee;
 
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) {
@@ -144,7 +135,7 @@ export default function OrderOverview({
     setIsApplyingCoupon(true);
 
     try {
-      const orderAmount = subTotal + shipping + collectionFee + overnightFee + floorFee;
+      const orderAmount = subTotal + shipping + collectionFee + floorFee;
 
       const response = await applyPromoCode({
         promo: couponInput.trim(),
@@ -255,16 +246,6 @@ export default function OrderOverview({
               £{subTotal}
             </span>
           </div>
-
-          {/* Overnight Fee (NEW, only when enabled) */}
-          {overnightFee > 0 && (
-            <div className="flex items-center justify-between">
-              <span className="text-ink-900">Keeping Overnight</span>
-              <span className="font-medium text-brand-orange-500">
-                +£{overnightFee}
-              </span>
-            </div>
-          )}
 
           {/* Outdoor Placement Fee (hard surface or artificial grass) */}
           {floorFee > 0 && (

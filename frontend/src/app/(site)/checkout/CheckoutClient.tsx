@@ -15,7 +15,6 @@ export default function CheckoutClient() {
   const formId = "checkout-form";
   const [agree, setAgree] = useState(false);
 
-  const [keepOvernight, setKeepOvernight] = useState(false);
   const [shipDifferent, setShipDifferent] = useState(false);
   const [deliveryTime, setDeliveryTime] = useState("");
   const [collectionTime, setCollectionTime] = useState("");
@@ -59,9 +58,7 @@ export default function CheckoutClient() {
         <section className="md:col-span-6">
           <CheckoutForm
             id={formId}
-            keepOvernight={keepOvernight}
             shipDifferent={shipDifferent}
-            onKeepOvernightChange={setKeepOvernight}
             onShipDifferentChange={setShipDifferent}
             onDeliveryTimeChange={setDeliveryTime}
             onCollectionTimeChange={setCollectionTime}
@@ -75,7 +72,6 @@ export default function CheckoutClient() {
 
         <aside className="md:col-span-6">
           <OrderOverview
-            keepOvernight={keepOvernight}
             deliveryTime={deliveryTime}
             collectionTime={collectionTime}
             floorType={floorType}

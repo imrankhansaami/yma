@@ -47,7 +47,6 @@ export const checkoutSchema = yup
     floorType: yup.string().required("This field is required."),
     collectionTime: yup.string().required("This field is required."),
     userType: yup.string().required("This field is required."),
-    keepOvernight: yup.boolean().default(false),
     shipDifferent: yup.boolean().default(false),
     shipPostalCode: yup
       .string()

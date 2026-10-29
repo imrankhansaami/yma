@@ -47,9 +47,7 @@ type CheckoutFormValues = BaseSchemaValues & {
 
 type Props = {
   id?: string; // form id so the parent can trigger requestSubmit()
-  keepOvernight?: boolean;
   shipDifferent?: boolean;
-  onKeepOvernightChange?: (v: boolean) => void;
   onShipDifferentChange?: (v: boolean) => void;
   onDeliveryTimeChange?: (v: string) => void;
   onCollectionTimeChange?: (v: string) => void;
@@ -138,9 +136,7 @@ const HIRE_OCCASION_VALUE_MAP: Record<string, string> = {
 
 export default function CheckoutForm({
   id,
-  keepOvernight,
   shipDifferent,
-  onKeepOvernightChange,
   onShipDifferentChange,
   onDeliveryTimeChange,
   onCollectionTimeChange,
@@ -183,7 +179,6 @@ export default function CheckoutForm({
       userType: "",
       purchaseType: PURCHASE_TYPE_OPTIONS[0],
       paymentMethod: PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY,
-      keepOvernight: keepOvernight ?? false,
       shipDifferent: shipDifferent ?? false,
       hireOccasion: "",
       notes: "",
@@ -200,11 +195,9 @@ export default function CheckoutForm({
   });
 
   useEffect(() => {
-    if (typeof keepOvernight === "boolean")
-      setValue("keepOvernight", keepOvernight);
     if (typeof shipDifferent === "boolean")
       setValue("shipDifferent", shipDifferent);
-  }, [keepOvernight, shipDifferent, setValue]);
+  }, [shipDifferent, setValue]);
 
   // The purchase type decides which shipping and payment options are offered.
   const purchaseType = watch("purchaseType");
@@ -329,7 +322,6 @@ export default function CheckoutForm({
         collectionTime,
         floorType,
         userType,
-        keepOvernight: Boolean(values.keepOvernight),
         purchaseType: values.purchaseType || "",
         hireOccasion,
         notes,
@@ -759,30 +751,6 @@ export default function CheckoutForm({
 
           {/* Checkboxes */}
           <div className="space-y-4 min-w-0 w-full md:col-span-2">
-            <div className="flex items-center gap-2">
-              <Controller
-                control={control}
-                name="keepOvernight"
-                render={({ field }) => (
-                  <>
-                    <Checkbox
-                      id="keepOvernight"
-                      className={checkboxClass}
-                      checked={field.value}
-                      onCheckedChange={(v) => {
-                        const b = Boolean(v);
-                        field.onChange(b);
-                        onKeepOvernightChange?.(b);
-                      }}
-                    />
-                    <Label htmlFor="keepOvernight" className="text-sm">
-                      Keeping Overnight (+£30)
-                    </Label>
-                  </>
-                )}
-              />
-            </div>
-
             <div
               className={`rounded-lg border px-4 py-3 transition-colors ${
                 shipDifferentLive
