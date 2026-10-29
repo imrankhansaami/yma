@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
 
 import {
@@ -14,8 +14,10 @@ import {
 } from "date-fns";
 import {
   Calendar as CalendarIcon,
+  Check,
   ChevronRight,
   Home,
+  Plus,
   Share,
   Star,
 } from "lucide-react";
@@ -28,6 +30,11 @@ import { SHOW_PRODUCT_REVIEWS } from "@/lib/features";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -42,7 +49,12 @@ import {
   useCartStore,
 } from "@/store/useCartStore";
 
-import { ApiProduct, fetchProductBySlug } from "@/services/product.service";
+import {
+  ApiProduct,
+  fetchProductBySlug,
+  fetchProducts,
+} from "@/services/product.service";
+import { fetchCategories } from "@/services/category.service";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -259,7 +271,12 @@ export default function ProductClient({
     }
   }, [availableFrom, availableUntil, availableOn]);
 
-  const { addItem, open: openCart } = useCartStore();
+  const { addItem, items } = useCartStore();
+
+  const router = useRouter();
+  // The add-ons popup, shown before checkout when a product is booked.
+  const [showAddOns, setShowAddOns] = React.useState(false);
+  const checkoutNavigated = React.useRef(false);
 
   const {
     data: product,
@@ -270,6 +287,32 @@ export default function ProductClient({
     queryFn: () => fetchProductBySlug(productSlug as string),
     enabled: !!productSlug && !initialProduct,
     initialData: initialProduct,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Garden Games are offered as optional extras on every product page.
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: fetchCategories,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const gardenGamesCategoryId = React.useMemo(() => {
+    const list = Array.isArray(categories) ? categories : [];
+    const match = list.find(
+      (c) =>
+        String(c.slug || "").toLowerCase() === "garden-games" ||
+        String(c.name || "").trim().toLowerCase() === "garden games",
+    );
+    return match ? String(match._id || match.id || "") : "";
+  }, [categories]);
+
+  const { data: gardenGames, isLoading: addOnsLoading } = useQuery({
+    queryKey: ["add-ons", "garden-games", gardenGamesCategoryId],
+    queryFn: () =>
+      fetchProducts({ categoryId: gardenGamesCategoryId, limit: 50 }),
+    // Only fetched once the popup is opened, and only when the category is known.
+    enabled: showAddOns && !!gardenGamesCategoryId,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -378,6 +421,7 @@ export default function ProductClient({
     });
   };
 
+  /** Booking the product now leads to the add-ons popup, then checkout. */
   const onBook = () => {
     if (!dateRange?.from || !product) return;
     addItem({
@@ -389,7 +433,43 @@ export default function ProductClient({
       pricePerDay,
       extras: chosenExtras,
     });
-    openCart();
+    checkoutNavigated.current = false;
+    setShowAddOns(true);
+  };
+
+  /**
+   * Leaving the popup — by the buttons, the close icon, Escape or a click
+   * outside — always continues to checkout. The booking is already in the cart,
+   * so nothing is lost and nobody is left stranded on the page.
+   */
+  const goToCheckout = () => {
+    if (checkoutNavigated.current) return;
+    checkoutNavigated.current = true;
+    setShowAddOns(false);
+    router.push("/checkout");
+  };
+
+  const addOnPrice = (p: ApiProduct) =>
+    p.priceDiscount || p.perDayPrice || p.price || 0;
+
+  const isInCart = (p: ApiProduct) =>
+    items.some(
+      (it) => String(it.id) === String(p._id ?? p.id ?? p.slug ?? ""),
+    );
+
+  /** Adds one garden game to the booking, for the same dates as the main item. */
+  const handleAddOn = async (p: ApiProduct) => {
+    if (!dateRange?.from) return;
+    await addItem({
+      id: String(p._id ?? p.id ?? p.slug ?? ""),
+      title: String(p.name ?? ""),
+      image: p.imageCover || p.images?.[0] || "",
+      dateISO: format(dateRange.from, "yyyy-MM-dd"),
+      days: effectiveDays,
+      pricePerDay: addOnPrice(p),
+      extras: [],
+    });
+    toast.success(`${p.name ?? "Item"} added to your booking`);
   };
 
   const handleShare = async () => {
@@ -927,6 +1007,129 @@ export default function ProductClient({
 
         <BookingInfoStrip />
       </div>
+
+      {/* Add-ons popup: garden games, offered before checkout. Closing it any
+          way continues to checkout with whatever is in the cart. */}
+      <Dialog
+        open={showAddOns}
+        onOpenChange={(open) => {
+          if (!open) goToCheckout();
+        }}
+      >
+        <DialogContent className="bg-white font-inter p-0 w-[94vw] max-w-[560px] rounded-[18px] max-h-[88vh] overflow-y-auto">
+          <div className="px-5 pt-5">
+            <DialogTitle className="text-[18px] font-semibold text-brand-ink-900">
+              Add garden games to your booking?
+            </DialogTitle>
+            <p className="mt-1 text-[13px] leading-5 text-brand-ink-700">
+              Optional extras, booked for the same dates as{" "}
+              {product?.name ?? "your product"}. Skip this and you can still
+              book them later.
+            </p>
+          </div>
+
+          <div className="px-5 py-4 space-y-3">
+            {addOnsLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-[86px] animate-pulse rounded-xl bg-brand-gray-75"
+                  />
+                ))}
+              </div>
+            ) : (gardenGames?.items ?? []).filter(
+                (p) =>
+                  String(p.slug || "") !== String(product?.slug || "") &&
+                  String(p._id ?? p.id ?? "") !==
+                    String(product?._id ?? product?.id ?? ""),
+              ).length === 0 ? (
+              <p className="rounded-xl border border-brand-gray-150 px-4 py-6 text-center text-[13px] text-brand-ink-700">
+                No garden games are available at the moment.
+              </p>
+            ) : (
+              (gardenGames?.items ?? [])
+                .filter(
+                  (p) =>
+                    String(p.slug || "") !== String(product?.slug || "") &&
+                    String(p._id ?? p.id ?? "") !==
+                      String(product?._id ?? product?.id ?? ""),
+                )
+                .map((p) => {
+                  const added = isInCart(p);
+                  return (
+                    <div
+                      key={String(p._id ?? p.id ?? p.slug)}
+                      className="flex items-center gap-3 rounded-xl border border-brand-gray-150 p-2"
+                    >
+                      <div className="relative h-[64px] w-[86px] shrink-0 overflow-hidden rounded-lg border border-brand-gray-150 bg-white">
+                        {p.imageCover || p.images?.[0] ? (
+                          <Image
+                            src={p.imageCover || p.images?.[0] || ""}
+                            alt={p.name ?? "Garden game"}
+                            fill
+                            className="object-contain"
+                            sizes="86px"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-brand-gray-75" />
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-medium leading-5 text-brand-ink-900">
+                          {p.name}
+                        </p>
+                        <p className="text-[12px] text-brand-ink-700">
+                          £{addOnPrice(p)} per day
+                        </p>
+                      </div>
+
+                      <Button
+                        type="button"
+                        onClick={() => handleAddOn(p)}
+                        disabled={added}
+                        className={
+                          added
+                            ? "shrink-0 rounded-full bg-brand-gray-150 px-4 text-brand-ink-900/60"
+                            : "shrink-0 rounded-full bg-brand-orange-500 px-4 text-white hover:bg-brand-orange-450"
+                        }
+                      >
+                        {added ? (
+                          <>
+                            <Check className="mr-1 h-4 w-4" /> Added
+                          </>
+                        ) : (
+                          <>
+                            Add <Plus className="ml-1 h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  );
+                })
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 px-5 pb-5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={goToCheckout}
+              className="h-11 rounded-full border-brand-gray-300 px-5 text-brand-ink-900"
+            >
+              Skip
+            </Button>
+            <Button
+              type="button"
+              onClick={goToCheckout}
+              className="h-11 flex-1 rounded-full bg-brand-orange-500 text-white hover:bg-brand-orange-450"
+            >
+              Continue to checkout
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
