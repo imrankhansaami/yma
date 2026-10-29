@@ -754,6 +754,7 @@ export default function ProductClient({
                     </div>
 
                     <button
+                      type="button"
                       className="flex
                         w-full h-10 sm:h-12
                         rounded-full
@@ -763,7 +764,10 @@ export default function ProductClient({
                         text-[14px] sm:text-[16px]
                         border border-white
                         shadow-[0_2px_6px_var(--alpha-black-15)]
-                        hover:bg-brand-orange-450
+                        enabled:hover:bg-brand-orange-450
+                        disabled:bg-brand-gray-150
+                        disabled:text-brand-ink-900/60
+                        disabled:cursor-not-allowed
                         transition-all duration-200"
                       onClick={onBook}
                       disabled={!dateRange?.from || !product || !hasPrice}
