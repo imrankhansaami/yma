@@ -1,5 +1,11 @@
 import * as yup from "yup";
 
+/** The "Purchase type" choices offered on the checkout form. */
+export const PURCHASE_TYPE_OPTIONS = [
+  "Personal Use",
+  "Business Use (School and Corporate event)",
+] as const;
+
 export const checkoutSchema = yup
   .object({
     firstName: yup.string().required("This field is required."),
@@ -38,6 +44,10 @@ export const checkoutSchema = yup
         otherwise: (schema) => schema.optional(),
       }),
     shipStreet2: yup.string().optional(),
+    purchaseType: yup
+      .string()
+      .oneOf([...PURCHASE_TYPE_OPTIONS], "Select a purchase type")
+      .required("This field is required."),
     hireOccasion: yup.string().optional(),
     notes: yup.string().optional(),
     agree: yup.boolean().oneOf([true], "This field is required."),

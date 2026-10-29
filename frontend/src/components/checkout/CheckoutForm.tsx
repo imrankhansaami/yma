@@ -10,7 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { checkoutSchema } from "@/lib/validation/checkout-schema";
+import { checkoutSchema, PURCHASE_TYPE_OPTIONS } from "@/lib/validation/checkout-schema";
 import { selectUser, useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -248,6 +248,7 @@ export default function CheckoutForm({
         floorType,
         userType,
         keepOvernight: Boolean(values.keepOvernight),
+        purchaseType: values.purchaseType || "",
         hireOccasion,
         notes,
 
@@ -716,6 +717,27 @@ export default function CheckoutForm({
                 )}
               />
             </div>
+          </div>
+
+          {/* Purchase Type */}
+          <div className="md:col-span-2 space-y-1.5 min-w-0 w-full">
+            <Label htmlFor="purchaseType" className="text-sm text-ink-900">
+              Purchase Type <span className="text-red-600">*</span>
+            </Label>
+            <select
+              id="purchaseType"
+              className={`${baseSelect} ${errors.purchaseType ? errorBorder : ""}`}
+              {...register("purchaseType")}
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Select purchase type
+              </option>
+              {PURCHASE_TYPE_OPTIONS.map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+            <ErrorText msg={errors.purchaseType?.message} />
           </div>
 
           {/* Hire Occasion */}

@@ -94,6 +94,7 @@ type InternalOrderState = {
     accessibility: string;
     placedIn: string;
     usedBy: string;
+    purchaseType: string;
     occasion: string;
     notes: string;
   };
@@ -187,6 +188,11 @@ const placementOptions = [
 ];
 
 const userOptions = ["Children", "Adults", "Both"];
+
+const purchaseTypeOptions = [
+  "Personal Use",
+  "Business Use (School and Corporate event)",
+];
 
 const occasionOptions = [
   "Christmas Event",
@@ -347,6 +353,7 @@ const transformOrderToState = (order: TOrder): InternalOrderState => {
         normalizeOptionValue(address.locationAccessibility || "", accessibilityOptions),
       placedIn: normalizeOptionValue(address.floorType || "", placementOptions),
       usedBy: normalizeOptionValue(address.userType || "", userOptions),
+      purchaseType: address.purchaseType || "",
       occasion:
         HIRE_OCCASION_LABEL_MAP[address.hireOccasion || ""] ||
         address.hireOccasion ||
@@ -669,6 +676,7 @@ export function OrderDetailsModal({
         locationAccessibility: internalOrder.customer.accessibility,
         floorType: internalOrder.customer.placedIn,
         userType: internalOrder.customer.usedBy,
+        purchaseType: internalOrder.customer.purchaseType,
         hireOccasion: mappedOccasion,
         notes: internalOrder.customer.notes,
         keepOvernight: internalOrder.overnight,
@@ -1529,6 +1537,40 @@ export function OrderDetailsModal({
                     ) : (
                       <div className="flex-1 text-[13px] text-slate-900 max-w-[280px]">
                         {internalOrder.customer.usedBy}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Purchase Type Dropdown */}
+                  <div className="flex gap-16">
+                    <div className="w-40 text-[12px] text-slate-500">
+                      Purchase type
+                    </div>
+                    {isEditing ? (
+                      <Select
+                        value={internalOrder.customer.purchaseType}
+                        onValueChange={(value) =>
+                          handleCustomerChange("purchaseType", value)
+                        }
+                      >
+                        <SelectTrigger className="w-full max-w-[280px] h-8 font-inter">
+                          <SelectValue className="font-inter" />
+                        </SelectTrigger>
+                        <SelectContent className="font-inter">
+                          {purchaseTypeOptions.map((option) => (
+                            <SelectItem
+                              key={option}
+                              value={option}
+                              className="font-inter"
+                            >
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="flex-1 text-[13px] text-slate-900 max-w-[280px]">
+                        {internalOrder.customer.purchaseType || "—"}
                       </div>
                     )}
                   </div>

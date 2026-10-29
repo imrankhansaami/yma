@@ -99,6 +99,7 @@ const shippingAddressSchema = new Schema<IShippingAddress>(
 
     floorType: { type: String, default: "" },
     userType: { type: String, default: "" },
+    purchaseType: { type: String, default: "" },
     keepOvernight: { type: Boolean, default: false },
     hireOccasion: {
       type: String,
