@@ -52,6 +52,13 @@ if ! npm run build; then
   npm run build
 fi
 
+log "Clearing the ISR cache"
+# The ISR cache still holds pages rendered by the *previous* build, and their
+# HTML names asset files this build no longer publishes (chunk names change).
+# Without this, a cached page can 404 its own JavaScript for up to five minutes
+# after the restart. Pages are simply re-rendered on first request instead.
+rm -rf "$FRONTEND_DIR/.next/cache"
+
 log "Reloading PM2 ($PM2_APP)"
 pm2 restart "$PM2_APP" --update-env
 pm2 save
