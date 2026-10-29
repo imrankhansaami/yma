@@ -54,6 +54,7 @@ type Props = {
   onCollectionTimeChange?: (v: string) => void;
   onFloorTypeChange?: (v: string) => void;
   onSubmittingChange?: (v: boolean) => void;
+  onPaymentMethodChange?: (v: string) => void;
 };
 
 const BaseTextarea = (
@@ -141,6 +142,7 @@ export default function CheckoutForm({
   onCollectionTimeChange,
   onFloorTypeChange,
   onSubmittingChange,
+  onPaymentMethodChange,
 }: Props) {
   const router = useRouter();
   const user = useAuthStore(selectUser);
@@ -211,6 +213,12 @@ export default function CheckoutForm({
       });
     }
   }, [isBusinessOrder, paymentMethod, setValue]);
+
+  // Keep the order summary's Payment Method row in step with the choice made
+  // here (it is display-only there).
+  useEffect(() => {
+    if (paymentMethod) onPaymentMethodChange?.(paymentMethod);
+  }, [paymentMethod, onPaymentMethodChange]);
 
   // Shipping status for the SHIPMENT block. Deliberately mirrors OrderOverview
   // so the form and the order summary can never disagree: the standard 8AM-12PM

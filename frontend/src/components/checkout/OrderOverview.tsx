@@ -7,6 +7,10 @@ import {
   computeExtrasTotal,
   useCartStore,
 } from "@/store/useCartStore";
+import {
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_METHOD_OPTIONS,
+} from "@/lib/validation/checkout-schema";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -16,11 +20,14 @@ export default function OrderOverview({
   deliveryTime = "",
   collectionTime = "",
   floorType = "",
+  paymentMethod = PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY,
 }: {
   keepOvernight?: boolean;
   deliveryTime?: string;
   collectionTime?: string;
   floorType?: string;
+  /** Chosen in the checkout form; shown here so the two can never disagree. */
+  paymentMethod?: string;
 }) {
   const store = useCartStore?.() as any;
 
@@ -91,8 +98,6 @@ export default function OrderOverview({
   const isLateCollection = /8:30/i.test(collectionTime);
   const collectionFee =
     !standardCollection && collectionTime ? (isLateCollection ? 20 : 10) : 0;
-
-  const payment = "cod";
 
   const [couponOpen, setCouponOpen] = useState<boolean>(false);
   const [couponApplied, setCouponApplied] = useState<boolean>(false);
@@ -333,42 +338,10 @@ export default function OrderOverview({
             <div className="mb-2 font-medium text-ink-900">Payment Method</div>
 
             <div className="flex items-center justify-between">
-              <label
-                htmlFor="payment-cod-method"
-                className="flex cursor-pointer items-center gap-2"
-              >
-                {/* Accessible custom radio */}
-                <span className="relative inline-flex h-4 w-4 items-center justify-center">
-                  <input
-                    id="payment-cod-method"
-                    type="radio"
-                    name="payment"
-                    value="cod"
-                    checked={payment === "cod"}
-                    onChange={() => {}}
-                    className="absolute inset-0 h-4 w-4 cursor-pointer opacity-0"
-                    aria-checked={payment === "cod"}
-                  />
-                  <span
-                    aria-hidden="true"
-                    className={`inline-flex h-4 w-4 items-center justify-center rounded-full border ${
-                      payment === "cod"
-                        ? "border-brand-orange-500"
-                        : "border-gray-400"
-                    }`}
-                  >
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        payment === "cod"
-                          ? "bg-brand-orange-500"
-                          : "bg-transparent"
-                      }`}
-                    />
-                  </span>
-                </span>
-                <span className="text-ink-900">Cash On Delivery</span>
-              </label>
-
+              <span className="text-ink-900">
+                {PAYMENT_METHOD_LABELS[paymentMethod] ||
+                  paymentMethod.replaceAll("_", " ")}
+              </span>
               <span className="text-brand-orange-500">£0</span>
             </div>
           </div>

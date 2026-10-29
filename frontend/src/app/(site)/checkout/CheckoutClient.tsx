@@ -18,6 +18,7 @@ export default function CheckoutClient() {
   const [deliveryTime, setDeliveryTime] = useState("");
   const [collectionTime, setCollectionTime] = useState("");
   const [floorType, setFloorType] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash_on_delivery");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleConfirm = () => {
@@ -62,6 +63,7 @@ export default function CheckoutClient() {
             onCollectionTimeChange={setCollectionTime}
             onFloorTypeChange={setFloorType}
             onSubmittingChange={setIsSubmitting}
+            onPaymentMethodChange={setPaymentMethod}
           />
         </section>
 
@@ -71,6 +73,7 @@ export default function CheckoutClient() {
             deliveryTime={deliveryTime}
             collectionTime={collectionTime}
             floorType={floorType}
+            paymentMethod={paymentMethod}
           />
         </aside>
       </div>
