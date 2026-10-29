@@ -453,7 +453,7 @@ export default function ProductClient({
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr_1fr] gap-6">
             {/* LEFT: Media */}
             <div>
-              <div className="relative rounded-xl overflow-hidden border border-brand-gray-200">
+              <div className="relative rounded-xl overflow-hidden border border-brand-gray-200 bg-white">
                 <Aspect className="rounded-xl">
                   {images.length > 0 ? (
                     <Image
@@ -461,7 +461,7 @@ export default function ProductClient({
                       alt={activeImageAltText}
                       fill
                       sizes="(max-width: 1279px) 100vw, 480px"
-                      className="object-cover"
+                      className="object-contain"
                       priority
                     />
                   ) : (
@@ -488,7 +488,7 @@ export default function ProductClient({
                     <button
                       key={i}
                       aria-label={`image ${i + 1}`}
-                      className={`relative h-[64px] w-[86px] rounded-md overflow-hidden border ${
+                      className={`relative h-[64px] w-[86px] rounded-md overflow-hidden border bg-white ${
                         i === activeImage
                           ? "border-brand-orange-500"
                           : "border-brand-gray-200"
@@ -499,7 +499,7 @@ export default function ProductClient({
                         src={src}
                         alt={galleryImageAltTexts[i] || coverImageAltText}
                         fill
-                        className="object-cover"
+                        className="object-contain"
                       />
                     </button>
                   ))}

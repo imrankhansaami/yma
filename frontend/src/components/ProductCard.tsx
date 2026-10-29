@@ -224,12 +224,14 @@ export default function ProductCard({
         ].join(" ")}
         aria-label={title}
       >
-        {/* Image */}
+        {/* Image. The box is a fixed 4:3 at every breakpoint and the image is
+            drawn with `object-contain`, so a portrait or square upload shows in
+            full instead of being cropped. */}
         <div className="relative pt-3 sm:pt-4">
           {productPathId ? (
             <Link
               href={`/product/${productPathId}${linkQuery ? `?${linkQuery}` : ""}`}
-              className="relative block w-full overflow-hidden rounded-xl aspect-[4/3] sm:h-[250px] sm:aspect-auto"
+              className="relative block w-full overflow-hidden rounded-xl bg-white aspect-[4/3]"
               aria-label={`View ${title}`}
             >
               {img ? (
@@ -237,7 +239,7 @@ export default function ProductCard({
                   src={img.src}
                   alt={img.alt || title}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 420px"
                   priority={false}
                 />
@@ -246,13 +248,13 @@ export default function ProductCard({
               )}
             </Link>
           ) : (
-            <div className="relative w-full overflow-hidden rounded-xl aspect-[4/3] sm:h-[250px] sm:aspect-auto">
+            <div className="relative w-full overflow-hidden rounded-xl bg-white aspect-[4/3]">
               {img ? (
                 <Image
                   src={img.src}
                   alt={img.alt || title}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 420px"
                   priority={false}
                 />
@@ -487,7 +489,7 @@ export function ProductCardSkeleton({
       aria-label="Loading product"
     >
       <div className="relative pt-3 sm:pt-4">
-        <div className="relative w-full overflow-hidden rounded-xl h-[180px] sm:h-[250px] bg-brand-gray-75" />
+        <div className="relative w-full overflow-hidden rounded-xl aspect-[4/3] bg-brand-gray-75" />
         <div className="absolute left-2 top-5 sm:top-6 h-6 w-20 rounded-md bg-brand-gray-200" />
         <div className="absolute right-4 sm:right-6 top-4 sm:top-6 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-brand-gray-200" />
       </div>

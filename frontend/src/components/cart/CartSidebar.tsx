@@ -76,12 +76,12 @@ export default function CartSidebar() {
             items.map((it, idx) => (
               <div key={`${it.id}-${idx}`}>
                 <div className="flex items-start gap-3 py-3">
-                  <div className="relative h-10 w-10 rounded-md overflow-hidden border border-subtle shrink-0">
+                  <div className="relative h-10 w-10 rounded-md overflow-hidden border border-subtle bg-white shrink-0">
                     <Image
                       src={it.image}
                       alt=""
                       fill
-                      className="object-cover"
+                      className="object-contain"
                       sizes="40px"
                     />
                   </div>

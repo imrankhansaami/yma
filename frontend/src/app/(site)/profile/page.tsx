@@ -366,12 +366,12 @@ export default function ProfilePage() {
                         >
                           <div className="flex items-start gap-4">
                             {imageCover ? (
-                              <div className="relative h-14 w-14 overflow-hidden rounded-lg border border-brand-gray-150 bg-brand-gray-50">
+                              <div className="relative h-14 w-14 overflow-hidden rounded-lg border border-brand-gray-150 bg-white">
                                 <Image
                                   src={imageCover}
                                   alt={firstItem?.name ?? "Order item"}
                                   fill
-                                  className="object-cover"
+                                  className="object-contain"
                                   sizes="56px"
                                 />
                               </div>

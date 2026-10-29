@@ -119,6 +119,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       <p className="text-[16px] font-medium leading-[1.5] text-brand-black-950">
         {title}
       </p>
+      <p className="text-[12px] leading-[1.5] text-brand-gray-500">
+        Landscape 4:3 fills the frame best — around 1600 x 1200 px, under 10 MB.
+        Portrait or square photos are shown in full, with white space beside them.
+      </p>
 
       <div className="flex gap-[8px] w-full overflow-x-auto">
         {/* Large image slot - Index 0 */}

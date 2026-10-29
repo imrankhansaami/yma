@@ -204,7 +204,7 @@ export default function OrderOverview({
                   alt={it.title}
                   width={40}
                   height={40}
-                  className="h-10 w-10 rounded-md object-cover"
+                  className="h-10 w-10 rounded-md bg-white object-contain"
                 />
                 <div className="space-y-1 min-w-0">
                   <p className="line-clamp-2 text-ink-900 break-words">

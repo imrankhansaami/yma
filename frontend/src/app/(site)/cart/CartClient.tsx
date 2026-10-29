@@ -533,12 +533,12 @@ export default function CartClient() {
                         <td className="py-3 sm:py-4">
                           <div className="flex gap-2 sm:gap-4">
                             {/* Responsive thumbnail (fixes overflow on mobile) */}
-                            <div className="relative w-[45px] h-[45px] sm:w-[136px] sm:h-[136px] md:w-[176px] md:h-[150px] rounded-lg overflow-hidden border border-brand-gray-200 shrink-0">
+                            <div className="relative w-[45px] h-[45px] sm:w-[136px] sm:h-[136px] md:w-[176px] md:h-[150px] rounded-lg overflow-hidden border border-brand-gray-200 bg-white shrink-0">
                               <Image
                                 src={row.image}
                                 alt=""
                                 fill
-                                className="object-cover"
+                                className="object-contain"
                                 sizes="(max-width:640px) 110px, (max-width:768px) 136px, 176px"
                               />
                             </div>
@@ -792,7 +792,7 @@ export default function CartClient() {
                                 src={currentImage}
                                 alt=""
                                 fill
-                                className="object-cover pointer-events-none"
+                                className="object-contain pointer-events-none"
                                 sizes="110px"
                                 draggable={false}
                               />
@@ -875,12 +875,12 @@ export default function CartClient() {
                       key={`fbt-mobile-${f.id}`}
                       className="rounded-xl border border-brand-gray-200 bg-white overflow-hidden"
                     >
-                      <div className="relative w-full aspect-[4/3]">
+                      <div className="relative w-full aspect-[4/3] bg-white">
                         <Image
                           src={currentImage}
                           alt=""
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           sizes="(max-width: 640px) 50vw, 200px"
                         />
                         {f.badge && (
@@ -980,12 +980,12 @@ export default function CartClient() {
                   !gardenError &&
                   gardenItemsForModal.map((f) => (
                     <div key={f.id} className="flex gap-3">
-                      <div className="relative h-[90px] w-[110px] rounded-md overflow-hidden border border-brand-gray-200 shrink-0">
+                      <div className="relative h-[90px] w-[110px] rounded-md overflow-hidden border border-brand-gray-200 bg-white shrink-0">
                         <Image
                           src={f.image}
                           alt=""
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           sizes="110px"
                         />
                         {f.badge && (
