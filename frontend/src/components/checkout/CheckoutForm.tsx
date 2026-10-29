@@ -10,7 +10,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { checkoutSchema, PURCHASE_TYPE_OPTIONS } from "@/lib/validation/checkout-schema";
+import {
+  checkoutSchema,
+  PURCHASE_TYPE_OPTIONS,
+  BUSINESS_PURCHASE_TYPE,
+  PAYMENT_METHOD_OPTIONS,
+  PAYMENT_METHOD_LABELS,
+} from "@/lib/validation/checkout-schema";
 import { selectUser, useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -167,6 +173,8 @@ export default function CheckoutForm({
       floorType: "",
       collectionTime: "",
       userType: "",
+      purchaseType: PURCHASE_TYPE_OPTIONS[0],
+      paymentMethod: PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY,
       keepOvernight: keepOvernight ?? false,
       shipDifferent: shipDifferent ?? false,
       hireOccasion: "",
@@ -185,6 +193,38 @@ export default function CheckoutForm({
     if (typeof shipDifferent === "boolean")
       setValue("shipDifferent", shipDifferent);
   }, [keepOvernight, shipDifferent, setValue]);
+
+  // The purchase type decides which shipping and payment options are offered.
+  const purchaseType = watch("purchaseType");
+  const paymentMethod = watch("paymentMethod");
+  const isBusinessOrder = purchaseType === BUSINESS_PURCHASE_TYPE;
+
+  // Bank transfer is business-only, so fall back to cash on delivery if the
+  // customer switches back to Personal Use after choosing it.
+  useEffect(() => {
+    if (
+      !isBusinessOrder &&
+      paymentMethod === PAYMENT_METHOD_OPTIONS.BANK_TRANSFER
+    ) {
+      setValue("paymentMethod", PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY, {
+        shouldValidate: true,
+      });
+    }
+  }, [isBusinessOrder, paymentMethod, setValue]);
+
+  // Shipping status for the SHIPMENT block. Deliberately mirrors OrderOverview
+  // so the form and the order summary can never disagree: the standard 8AM-12PM
+  // slot is free, any other delivery slot adds £10, and a collection after the
+  // standard window adds £10 (£20 for the 8:30 PM slot).
+  const deliveryLabel = watch("deliveryTime") || "";
+  const collectionLabel = watch("collectionTime") || "";
+  const shippingFee =
+    (/standard/i.test(deliveryLabel) || !deliveryLabel ? 0 : 10) +
+    (/standard/i.test(collectionLabel) || !collectionLabel
+      ? 0
+      : /8:30/i.test(collectionLabel)
+        ? 20
+        : 10);
 
   const { clear, items } = useCartStore();
 
@@ -282,7 +322,8 @@ export default function CheckoutForm({
       const payload: any = {
         products,
         shippingAddress,
-        paymentMethod: "cash_on_delivery",
+        paymentMethod:
+          values.paymentMethod || PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY,
         termsAccepted: true,
         invoiceType: "regular",
       };
@@ -808,6 +849,95 @@ export default function CheckoutForm({
               </div>
             </div>
           )}
+
+          {/* Shipment. Personal orders show the shipping status for the times
+              chosen above; the charge itself still follows the delivery rules. */}
+          {purchaseType === PURCHASE_TYPE_OPTIONS[0] ? (
+            <div className="md:col-span-2 space-y-2 min-w-0 w-full">
+              <p className="text-[13px] font-semibold uppercase tracking-wide text-ink-700">
+                Shipment
+              </p>
+              <label
+                htmlFor="shippingFree"
+                className="flex items-start gap-3 rounded-lg border border-slate-200 px-4 py-3 cursor-default"
+              >
+                <input
+                  id="shippingFree"
+                  type="radio"
+                  name="shipping"
+                  value="default"
+                  checked
+                  onChange={() => {}}
+                  className="mt-0.5 h-4 w-4 accent-brand-orange-500"
+                />
+                <span className="space-y-0.5">
+                  <span className="block text-sm font-medium text-ink-900">
+                    {shippingFee === 0
+                      ? "Free shipping"
+                      : `Delivery & collection — £${shippingFee.toFixed(2)}`}
+                  </span>
+                  <span className="block text-xs leading-5 text-ink-700">
+                    {shippingFee === 0
+                      ? "Your chosen delivery and collection times are both free."
+                      : "Your chosen times fall outside the free 8AM-12PM window."}
+                  </span>
+                </span>
+              </label>
+            </div>
+          ) : null}
+
+          {/* Payment method */}
+          <div className="md:col-span-2 space-y-2 min-w-0 w-full">
+            <p className="text-[13px] font-semibold uppercase tracking-wide text-ink-700">
+              Payment method
+            </p>
+
+            {isBusinessOrder ? (
+              <label
+                htmlFor="paymentBankTransfer"
+                className="flex items-start gap-3 rounded-lg border border-slate-200 px-4 py-3 cursor-pointer"
+              >
+                <input
+                  id="paymentBankTransfer"
+                  type="radio"
+                  value={PAYMENT_METHOD_OPTIONS.BANK_TRANSFER}
+                  {...register("paymentMethod")}
+                  className="mt-0.5 h-4 w-4 accent-brand-orange-500"
+                />
+                <span className="space-y-0.5">
+                  <span className="block text-sm font-medium text-ink-900">
+                    {PAYMENT_METHOD_LABELS.bank_transfer}
+                  </span>
+                  <span className="block text-xs leading-5 text-ink-700">
+                    Our team will send you the bank details to complete the
+                    payment.
+                  </span>
+                </span>
+              </label>
+            ) : null}
+
+            <label
+              htmlFor="paymentCash"
+              className="flex items-start gap-3 rounded-lg border border-slate-200 px-4 py-3 cursor-pointer"
+            >
+              <input
+                id="paymentCash"
+                type="radio"
+                value={PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY}
+                {...register("paymentMethod")}
+                className="mt-0.5 h-4 w-4 accent-brand-orange-500"
+              />
+              <span className="space-y-0.5">
+                <span className="block text-sm font-medium text-ink-900">
+                  {PAYMENT_METHOD_LABELS.cash_on_delivery}
+                </span>
+                <span className="block text-xs leading-5 text-ink-700">
+                  Pay with cash upon delivery.
+                </span>
+              </span>
+            </label>
+            <ErrorText msg={errors.paymentMethod?.message} />
+          </div>
 
           {/* Notes */}
           <div className="md:col-span-2 space-y-1.5 min-w-0 w-full">

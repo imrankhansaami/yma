@@ -6,6 +6,23 @@ export const PURCHASE_TYPE_OPTIONS = [
   "Business Use (School and Corporate event)",
 ] as const;
 
+/** Business orders get the bank-transfer option; personal ones do not. */
+export const BUSINESS_PURCHASE_TYPE = PURCHASE_TYPE_OPTIONS[1];
+
+/** Checkout payment methods. Values match the API's PAYMENT_METHODS. */
+export const PAYMENT_METHOD_OPTIONS = {
+  CASH_ON_DELIVERY: "cash_on_delivery",
+  BANK_TRANSFER: "bank_transfer",
+} as const;
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash_on_delivery: "Cash on delivery",
+  bank_transfer: "Direct bank transfer (School and Corporate event)",
+  card: "Card",
+  online: "Online payment",
+  credit_card: "Credit card",
+};
+
 export const checkoutSchema = yup
   .object({
     firstName: yup.string().required("This field is required."),
@@ -48,6 +65,13 @@ export const checkoutSchema = yup
       .string()
       .oneOf([...PURCHASE_TYPE_OPTIONS], "Select a purchase type")
       .required("This field is required."),
+    paymentMethod: yup
+      .string()
+      .oneOf(
+        Object.values(PAYMENT_METHOD_OPTIONS),
+        "Select a payment method",
+      )
+      .default(PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY),
     hireOccasion: yup.string().optional(),
     notes: yup.string().optional(),
     agree: yup.boolean().oneOf([true], "This field is required."),

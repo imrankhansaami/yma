@@ -273,7 +273,9 @@ export const checkoutFromCart = asyncHandler(
         );
       }
 
-      if (!["cash_on_delivery", "online"].includes(paymentMethod)) {
+      if (
+        !["cash_on_delivery", "online", "bank_transfer"].includes(paymentMethod)
+      ) {
         throw new ApiError("Invalid payment method", 400);
       }
 
@@ -875,7 +877,9 @@ export const quickCheckout = asyncHandler(
         throw new ApiError("Invalid invoice type", 400);
       }
 
-      if (!["cash_on_delivery", "online"].includes(paymentMethod)) {
+      if (
+        !["cash_on_delivery", "online", "bank_transfer"].includes(paymentMethod)
+      ) {
         throw new ApiError("Invalid payment method", 400);
       }
 

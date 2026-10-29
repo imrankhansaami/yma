@@ -522,6 +522,8 @@ export const PAYMENT_METHODS = {
   CASH_ON_DELIVERY: "cash_on_delivery",
   CREDIT_CARD: "credit_card",
   ONLINE: "online",
+  /** Business orders: pay by direct bank transfer. */
+  BANK_TRANSFER: "bank_transfer",
 } as const;
 
 export const INVOICE_TYPES = {

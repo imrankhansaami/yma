@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { generateInvoice } from "@/lib/invoice-generator";
+import { PAYMENT_METHOD_LABELS } from "@/lib/validation/checkout-schema";
 import { cn } from "@/lib/utils";
 import { orderServices } from "@/services/order.service";
 import { applyPromoCode } from "@/services/promo.service";
@@ -114,6 +115,7 @@ type InternalOrderState = {
     couponCode: string;
     couponAmount: string;
     totalAmount: string;
+    paymentMethod: string;
   };
 };
 
@@ -393,6 +395,9 @@ const transformOrderToState = (order: TOrder): InternalOrderState => {
       couponCode: order.promoCode || "",
       couponAmount: `-$${(order.discountAmount || 0).toFixed(2)}`,
       totalAmount: `$${(order.totalAmount || 0).toFixed(2)}`,
+      paymentMethod:
+        PAYMENT_METHOD_LABELS[String(order.paymentMethod || "")] ||
+        String(order.paymentMethod || "").replaceAll("_", " "),
     },
   };
 };
@@ -1805,6 +1810,10 @@ export function OrderDetailsModal({
 
               {/* SUMMARY */}
               <div className="pt-5 border-t border-slate-200 space-y-5 text-sm">
+                <SummaryRow
+                  label="Payment method"
+                  value={internalOrder.summary.paymentMethod || "—"}
+                />
                 <SummaryRow
                   label="Shipping charge"
                   value={internalOrder.summary.shippingCharge}
