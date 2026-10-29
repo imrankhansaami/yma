@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import Bg1 from "@/assets/images/bg1.png";
-import Bg2 from "@/assets/images/bg2.png";
 import Bg3 from "@/assets/images/bg3.png";
 import Bg4 from "@/assets/images/bg4.png";
 import ObstacleBg from "@/assets/images/obstacle.jpeg";
@@ -25,8 +24,9 @@ const DEFAULT_ITEMS: CastleItem[] = [
   {
     title: "Soft Play\nHire Catalogue",
     href: "/booking-catalog/soft-play-hire",
-    imgSrc: Bg2,
-    imgAlt: "Soft play equipment in a hall",
+    // Served from /public so the same path can be used by the CMS tile.
+    imgSrc: "/soft-play.jpg",
+    imgAlt: "Pink soft play set with ball pit and play mats",
   },
   {
     title: "Garden Games\nHire Catalogue",
