@@ -23,6 +23,9 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   credit_card: "Credit card",
 };
 
+export type PaymentMethod =
+  (typeof PAYMENT_METHOD_OPTIONS)[keyof typeof PAYMENT_METHOD_OPTIONS];
+
 export const checkoutSchema = yup
   .object({
     firstName: yup.string().required("This field is required."),

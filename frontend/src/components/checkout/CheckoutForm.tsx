@@ -16,6 +16,7 @@ import {
   BUSINESS_PURCHASE_TYPE,
   PAYMENT_METHOD_OPTIONS,
   PAYMENT_METHOD_LABELS,
+  type PaymentMethod,
 } from "@/lib/validation/checkout-schema";
 import { selectUser, useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
@@ -54,7 +55,10 @@ type Props = {
   onCollectionTimeChange?: (v: string) => void;
   onFloorTypeChange?: (v: string) => void;
   onSubmittingChange?: (v: boolean) => void;
-  onPaymentMethodChange?: (v: string) => void;
+  onPaymentMethodChange?: (v: PaymentMethod) => void;
+  onPurchaseTypeChange?: (v: string) => void;
+  /** Chosen elsewhere (the order summary also offers the payment methods). */
+  paymentMethod?: PaymentMethod;
 };
 
 const BaseTextarea = (
@@ -143,6 +147,8 @@ export default function CheckoutForm({
   onFloorTypeChange,
   onSubmittingChange,
   onPaymentMethodChange,
+  onPurchaseTypeChange,
+  paymentMethod: paymentMethodProp,
 }: Props) {
   const router = useRouter();
   const user = useAuthStore(selectUser);
@@ -219,6 +225,21 @@ export default function CheckoutForm({
   useEffect(() => {
     if (paymentMethod) onPaymentMethodChange?.(paymentMethod);
   }, [paymentMethod, onPaymentMethodChange]);
+
+  useEffect(() => {
+    if (purchaseType) onPurchaseTypeChange?.(purchaseType);
+  }, [purchaseType, onPurchaseTypeChange]);
+
+  // The summary panel can set the payment method too, so mirror its value back
+  // into the form. Setting the same value again is a no-op, so this cannot loop.
+  useEffect(() => {
+    if (
+      paymentMethodProp &&
+      paymentMethodProp !== paymentMethod
+    ) {
+      setValue("paymentMethod", paymentMethodProp, { shouldValidate: true });
+    }
+  }, [paymentMethodProp, paymentMethod, setValue]);
 
   // Shipping status for the SHIPMENT block. Deliberately mirrors OrderOverview
   // so the form and the order summary can never disagree: the standard 8AM-12PM
@@ -435,6 +456,27 @@ export default function CheckoutForm({
             />
             <ErrorText msg={errors.lastName?.message} />
           </Field>
+
+          {/* Purchase Type - sits directly after the name fields because it
+              decides which payment options are offered further down. */}
+          <div className="md:col-span-2 space-y-1.5 min-w-0 w-full">
+            <Label htmlFor="purchaseType" className="text-sm text-ink-900">
+              Purchase Type <span className="text-red-600">*</span>
+            </Label>
+            <select
+              id="purchaseType"
+              className={`${baseSelect} ${errors.purchaseType ? errorBorder : ""}`}
+              {...register("purchaseType")}
+            >
+              <option value="" disabled>
+                Select purchase type
+              </option>
+              {PURCHASE_TYPE_OPTIONS.map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+            <ErrorText msg={errors.purchaseType?.message} />
+          </div>
 
           {/* Phone */}
           <Field label="Phone Number" id="phone" required>
@@ -768,27 +810,6 @@ export default function CheckoutForm({
             </div>
           </div>
 
-          {/* Purchase Type */}
-          <div className="md:col-span-2 space-y-1.5 min-w-0 w-full">
-            <Label htmlFor="purchaseType" className="text-sm text-ink-900">
-              Purchase Type <span className="text-red-600">*</span>
-            </Label>
-            <select
-              id="purchaseType"
-              className={`${baseSelect} ${errors.purchaseType ? errorBorder : ""}`}
-              {...register("purchaseType")}
-              defaultValue=""
-            >
-              <option value="" disabled>
-                Select purchase type
-              </option>
-              {PURCHASE_TYPE_OPTIONS.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-            <ErrorText msg={errors.purchaseType?.message} />
-          </div>
-
           {/* Hire Occasion */}
           <div className="md:col-span-2 space-y-1.5 min-w-0 w-full">
             <Label htmlFor="hireOccasion" className="text-sm text-ink-900">
@@ -894,11 +915,33 @@ export default function CheckoutForm({
             </div>
           ) : null}
 
-          {/* Payment method */}
+          {/* Payment method. The existing option stays on top; the business
+              bank-transfer option is added underneath it. */}
           <div className="md:col-span-2 space-y-2 min-w-0 w-full">
             <p className="text-[13px] font-semibold uppercase tracking-wide text-ink-700">
               Payment method
             </p>
+
+            <label
+              htmlFor="paymentCash"
+              className="flex items-start gap-3 rounded-lg border border-slate-200 px-4 py-3 cursor-pointer"
+            >
+              <input
+                id="paymentCash"
+                type="radio"
+                value={PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY}
+                {...register("paymentMethod")}
+                className="mt-0.5 h-4 w-4 accent-brand-orange-500"
+              />
+              <span className="space-y-0.5">
+                <span className="block text-sm font-medium text-ink-900">
+                  {PAYMENT_METHOD_LABELS.cash_on_delivery}
+                </span>
+                <span className="block text-xs leading-5 text-ink-700">
+                  Pay with cash upon delivery.
+                </span>
+              </span>
+            </label>
 
             {isBusinessOrder ? (
               <label
@@ -924,26 +967,6 @@ export default function CheckoutForm({
               </label>
             ) : null}
 
-            <label
-              htmlFor="paymentCash"
-              className="flex items-start gap-3 rounded-lg border border-slate-200 px-4 py-3 cursor-pointer"
-            >
-              <input
-                id="paymentCash"
-                type="radio"
-                value={PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY}
-                {...register("paymentMethod")}
-                className="mt-0.5 h-4 w-4 accent-brand-orange-500"
-              />
-              <span className="space-y-0.5">
-                <span className="block text-sm font-medium text-ink-900">
-                  {PAYMENT_METHOD_LABELS.cash_on_delivery}
-                </span>
-                <span className="block text-xs leading-5 text-ink-700">
-                  Pay with cash upon delivery.
-                </span>
-              </span>
-            </label>
             <ErrorText msg={errors.paymentMethod?.message} />
           </div>
 

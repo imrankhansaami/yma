@@ -2,6 +2,8 @@
 
 import CheckoutForm from "@/components/checkout/CheckoutForm";
 import OrderOverview from "@/components/checkout/OrderOverview";
+import { BUSINESS_PURCHASE_TYPE as BUSINESS_USE_LABEL } from "@/lib/validation/checkout-schema";
+import type { PaymentMethod } from "@/lib/validation/checkout-schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -18,7 +20,9 @@ export default function CheckoutClient() {
   const [deliveryTime, setDeliveryTime] = useState("");
   const [collectionTime, setCollectionTime] = useState("");
   const [floorType, setFloorType] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("cash_on_delivery");
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>("cash_on_delivery");
+  const [purchaseType, setPurchaseType] = useState("Personal Use");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleConfirm = () => {
@@ -64,6 +68,8 @@ export default function CheckoutClient() {
             onFloorTypeChange={setFloorType}
             onSubmittingChange={setIsSubmitting}
             onPaymentMethodChange={setPaymentMethod}
+            onPurchaseTypeChange={setPurchaseType}
+            paymentMethod={paymentMethod}
           />
         </section>
 
@@ -74,6 +80,8 @@ export default function CheckoutClient() {
             collectionTime={collectionTime}
             floorType={floorType}
             paymentMethod={paymentMethod}
+            onPaymentMethodChange={setPaymentMethod}
+            isBusinessOrder={purchaseType === BUSINESS_USE_LABEL}
           />
         </aside>
       </div>

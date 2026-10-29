@@ -10,6 +10,7 @@ import {
 import {
   PAYMENT_METHOD_LABELS,
   PAYMENT_METHOD_OPTIONS,
+  type PaymentMethod,
 } from "@/lib/validation/checkout-schema";
 import Image from "next/image";
 import { useMemo, useState } from "react";
@@ -21,6 +22,8 @@ export default function OrderOverview({
   collectionTime = "",
   floorType = "",
   paymentMethod = PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY,
+  onPaymentMethodChange,
+  isBusinessOrder = false,
 }: {
   keepOvernight?: boolean;
   deliveryTime?: string;
@@ -28,6 +31,10 @@ export default function OrderOverview({
   floorType?: string;
   /** Chosen in the checkout form; shown here so the two can never disagree. */
   paymentMethod?: string;
+  /** Set from here too, so the payment method can be picked in either place. */
+  onPaymentMethodChange?: (v: PaymentMethod) => void;
+  /** Business orders also get the bank transfer option. */
+  isBusinessOrder?: boolean;
 }) {
   const store = useCartStore?.() as any;
 
@@ -337,12 +344,26 @@ export default function OrderOverview({
           <div>
             <div className="mb-2 font-medium text-ink-900">Payment Method</div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-ink-900">
-                {PAYMENT_METHOD_LABELS[paymentMethod] ||
-                  paymentMethod.replaceAll("_", " ")}
-              </span>
-              <span className="text-brand-orange-500">£0</span>
+            <div className="space-y-2">
+              <PaymentOption
+                id="summary-payment-cod"
+                label={PAYMENT_METHOD_LABELS.cash_on_delivery}
+                checked={paymentMethod === PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY}
+                onSelect={() =>
+                  onPaymentMethodChange?.(PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY)
+                }
+              />
+
+              {isBusinessOrder ? (
+                <PaymentOption
+                  id="summary-payment-bank"
+                  label={PAYMENT_METHOD_LABELS.bank_transfer}
+                  checked={paymentMethod === PAYMENT_METHOD_OPTIONS.BANK_TRANSFER}
+                  onSelect={() =>
+                    onPaymentMethodChange?.(PAYMENT_METHOD_OPTIONS.BANK_TRANSFER)
+                  }
+                />
+              ) : null}
             </div>
           </div>
 
@@ -416,5 +437,44 @@ export default function OrderOverview({
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * One payment choice in the order summary.
+ *
+ * Kept in step with the form's PAYMENT METHOD section through the checkout page
+ * state, so either place can be used to pick the method.
+ */
+function PaymentOption({
+  id,
+  label,
+  checked,
+  onSelect,
+}: {
+  id: string;
+  label: string;
+  checked: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-center justify-between gap-3"
+    >
+      <span className="flex items-start gap-2">
+        <input
+          id={id}
+          type="radio"
+          name="summary-payment"
+          value={id}
+          checked={checked}
+          onChange={onSelect}
+          className="mt-0.5 h-4 w-4 accent-brand-orange-500"
+        />
+        <span className="text-ink-900">{label}</span>
+      </span>
+      <span className="text-brand-orange-500">£0</span>
+    </label>
   );
 }
