@@ -1089,6 +1089,11 @@ export default function ProductClient({
                         type="button"
                         onClick={() => handleAddOn(p)}
                         disabled={added}
+                        aria-label={
+                          added
+                            ? `${p.name} is added to your booking`
+                            : `Add ${p.name} to your booking`
+                        }
                         className={
                           added
                             ? "shrink-0 rounded-full bg-brand-gray-150 px-4 text-brand-ink-900/60"
