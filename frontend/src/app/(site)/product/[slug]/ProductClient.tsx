@@ -610,21 +610,13 @@ export default function ProductClient({
                     </div>
 
                     {hasPrice ? (
-                      <div className="mt-4 grid grid-cols-2 rounded-lg overflow-hidden border border-brand-gray-150">
+                      <div className="mt-4 rounded-lg overflow-hidden border border-brand-gray-150">
                         <div className="px-3 py-2 flex items-center justify-center gap-1 text-center">
                           <div className="text-brand-ink-900 text-sm font-medium">
                             £{pricePerDay}
                           </div>
                           <div className="text-[11px] text-brand-zinc-400">
                             Per day
-                          </div>
-                        </div>
-                        <div className="px-3 py-2 text-center flex items-center justify-center gap-1 border-l border-brand-gray-150">
-                          <div className="text-brand-ink-900 text-sm font-medium">
-                            £{pricePerWeek}
-                          </div>
-                          <div className="text-[11px] text-brand-zinc-400">
-                            Per week
                           </div>
                         </div>
                       </div>
