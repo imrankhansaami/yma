@@ -596,7 +596,7 @@ export default function ProductClient({
                           <div className="text-[12px] text-brand-zinc-400">
                             {dateRange?.from
                               ? dateRange?.to
-                                ? `For ${rangeDays} days • ${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d")}`
+                                ? `For ${rangeDays} ${rangeDays === 1 ? "day" : "days"} • ${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d")}`
                                 : `For 1 day • ${format(dateRange.from, "MMM d")}`
                               : "Select dates"}
                           </div>
