@@ -99,6 +99,9 @@ const shippingAddressSchema = new Schema<IShippingAddress>(
 
     floorType: { type: String, default: "" },
     userType: { type: String, default: "" },
+    /** Recipient when the order ships to a different address. */
+    deliveryFirstName: { type: String, default: "" },
+    deliveryLastName: { type: String, default: "" },
     purchaseType: { type: String, default: "" },
     keepOvernight: { type: Boolean, default: false },
     hireOccasion: {

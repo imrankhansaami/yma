@@ -123,6 +123,9 @@ export interface IShippingAddress {
   collectionTime?: string; // "17:00", "20:30" etc.
   floorType?: string;
   userType?: "residential" | "office" | "shop" | string;
+  /** Recipient when the order is delivered to a different address. */
+  deliveryFirstName?: string;
+  deliveryLastName?: string;
   /** "Personal Use" or "Business Use (School and Corporate event)". */
   purchaseType?: string;
   keepOvernight?: boolean;

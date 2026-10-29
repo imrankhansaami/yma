@@ -56,6 +56,28 @@ export const checkoutSchema = yup
         then: (schema) => schema.required("This field is required."),
         otherwise: (schema) => schema.optional(),
       }),
+    shipFirstName: yup
+      .string()
+      .when("shipDifferent", {
+        is: true,
+        then: (schema) => schema.required("This field is required."),
+        otherwise: (schema) => schema.optional(),
+      }),
+    shipLastName: yup
+      .string()
+      .when("shipDifferent", {
+        is: true,
+        then: (schema) => schema.required("This field is required."),
+        otherwise: (schema) => schema.optional(),
+      }),
+    shipTownCity: yup
+      .string()
+      .when("shipDifferent", {
+        is: true,
+        then: (schema) => schema.required("This field is required."),
+        otherwise: (schema) => schema.optional(),
+      }),
+    shipStateCounty: yup.string().optional(),
     shipStreet1: yup
       .string()
       .when("shipDifferent", {

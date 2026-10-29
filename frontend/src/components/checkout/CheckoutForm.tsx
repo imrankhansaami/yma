@@ -191,6 +191,10 @@ export default function CheckoutForm({
       shipPostalCode: "",
       shipStreet1: "",
       shipStreet2: "",
+      shipFirstName: "",
+      shipLastName: "",
+      shipTownCity: "",
+      shipStateCounty: "",
     },
     mode: "onTouched",
   });
@@ -266,17 +270,24 @@ export default function CheckoutForm({
     try {
       const useAlt = Boolean(values.shipDifferent);
 
-      // Determine which address block to use for shipping
+      // The order keeps the buyer's details for the customer record; when a
+      // different delivery address is ticked, the address itself plus the
+      // recipient's name come from that block.
       const shippingFirstName = values.firstName;
       const shippingLastName = values.lastName;
 
       const streetMain = useAlt ? values.shipStreet1 : values.street1;
       const street2 = (useAlt ? values.shipStreet2 : values.street2) || "";
-      const city = values.townCity || "";
-      const stateCounty = values.stateCounty || "";
+      const city = (useAlt ? values.shipTownCity : values.townCity) || "";
+      const stateCounty = (useAlt
+        ? values.shipStateCounty
+        : values.stateCounty) || "";
       const zip = (useAlt ? values.shipPostalCode : values.postalCode) || "";
       const location = values.location;
       const companyName = values.company;
+
+      const deliveryFirstName = useAlt ? values.shipFirstName || "" : "";
+      const deliveryLastName = useAlt ? values.shipLastName || "" : "";
 
       const streetCombined = street2
         ? `${streetMain || ""}`.trim()
@@ -311,6 +322,8 @@ export default function CheckoutForm({
 
         // Additional Fields
         companyName: companyName || "",
+        deliveryFirstName,
+        deliveryLastName,
         locationAccessibility: accessibility,
         deliveryTime,
         collectionTime,
@@ -836,20 +849,33 @@ export default function CheckoutForm({
             </select>
           </div>
 
-          {/* Secondary address block (conditional) */}
+          {/* Secondary address block (conditional). Shows the full delivery
+              address when the customer ticks "Deliver to a Different Address?". */}
           {shipDifferentLive && (
             <div className="col-span-1 md:col-span-2">
               <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Postal / Zip code" id="shipPostalCode" required>
+                <Field label="First Name" id="shipFirstName" required>
                   <Input
-                    id="shipPostalCode"
-                    placeholder="Enter postal/zip code"
+                    id="shipFirstName"
+                    placeholder="Enter first name"
                     className={`${baseInput} ${
-                      errors.shipPostalCode ? errorBorder : ""
+                      errors.shipFirstName ? errorBorder : ""
                     }`}
-                    {...register("shipPostalCode")}
+                    {...register("shipFirstName")}
                   />
-                  <ErrorText msg={errors.shipPostalCode?.message} />
+                  <ErrorText msg={errors.shipFirstName?.message} />
+                </Field>
+
+                <Field label="Last Name" id="shipLastName" required>
+                  <Input
+                    id="shipLastName"
+                    placeholder="Enter last name"
+                    className={`${baseInput} ${
+                      errors.shipLastName ? errorBorder : ""
+                    }`}
+                    {...register("shipLastName")}
+                  />
+                  <ErrorText msg={errors.shipLastName?.message} />
                 </Field>
 
                 <Field label="Street Address" id="shipStreet1" required>
@@ -874,6 +900,42 @@ export default function CheckoutForm({
                     {...register("shipStreet2")}
                   />
                   <ErrorText msg={errors.shipStreet2?.message} />
+                </Field>
+
+                <Field label="Town/City" id="shipTownCity" required>
+                  <Input
+                    id="shipTownCity"
+                    placeholder="Enter your city name"
+                    className={`${baseInput} ${
+                      errors.shipTownCity ? errorBorder : ""
+                    }`}
+                    {...register("shipTownCity")}
+                  />
+                  <ErrorText msg={errors.shipTownCity?.message} />
+                </Field>
+
+                <Field label="State/County" id="shipStateCounty">
+                  <Input
+                    id="shipStateCounty"
+                    placeholder="Enter your state"
+                    className={`${baseInput} ${
+                      errors.shipStateCounty ? errorBorder : ""
+                    }`}
+                    {...register("shipStateCounty")}
+                  />
+                  <ErrorText msg={errors.shipStateCounty?.message} />
+                </Field>
+
+                <Field label="Postal / Zip code" id="shipPostalCode" required>
+                  <Input
+                    id="shipPostalCode"
+                    placeholder="Enter postal/zip code"
+                    className={`${baseInput} ${
+                      errors.shipPostalCode ? errorBorder : ""
+                    }`}
+                    {...register("shipPostalCode")}
+                  />
+                  <ErrorText msg={errors.shipPostalCode?.message} />
                 </Field>
               </div>
             </div>

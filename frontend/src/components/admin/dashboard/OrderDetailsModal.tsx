@@ -106,6 +106,7 @@ type InternalOrderState = {
     city: string;
     county: string;
     zip: string;
+    recipient: string;
   };
   items: OrderItem[];
   summary: {
@@ -369,6 +370,11 @@ const transformOrderToState = (order: TOrder): InternalOrderState => {
       city: address.city || "N/A",
       county: address.country || "N/A",
       zip: address.zipCode || "N/A",
+      // Filled in only when the order goes to a different address.
+      recipient:
+        [address.deliveryFirstName, address.deliveryLastName]
+          .filter(Boolean)
+          .join(" ") || "",
     },
     items: (order.items || []).map((p) => ({
       id: p.product?._id || p.productId || "",
@@ -682,6 +688,13 @@ export function OrderDetailsModal({
         floorType: internalOrder.customer.placedIn,
         userType: internalOrder.customer.usedBy,
         purchaseType: internalOrder.customer.purchaseType,
+        deliveryFirstName:
+          String(internalOrder.shipping.recipient || "").split(" ")[0] || "",
+        deliveryLastName:
+          String(internalOrder.shipping.recipient || "")
+            .split(" ")
+            .slice(1)
+            .join(" ") || "",
         hireOccasion: mappedOccasion,
         notes: internalOrder.customer.notes,
         keepOvernight: internalOrder.overnight,
@@ -1641,6 +1654,16 @@ export function OrderDetailsModal({
                   Shipping Information
                 </p>
                 <div className="space-x-16 space-y-5 text-sm">
+                  {internalOrder.shipping.recipient ? (
+                    <EditableDetailRow
+                      label="Deliver to"
+                      value={internalOrder.shipping.recipient}
+                      editing={isEditing}
+                      onChange={(value) =>
+                        handleShippingChange("recipient", value)
+                      }
+                    />
+                  ) : null}
                   <EditableDetailRow
                     label="Location"
                     value={internalOrder.shipping.location}
