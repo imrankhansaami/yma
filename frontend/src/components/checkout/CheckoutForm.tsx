@@ -157,6 +157,7 @@ export default function CheckoutForm({
     control,
     handleSubmit,
     setValue,
+    getValues,
     watch,
     formState: { errors },
   } = useForm<CheckoutFormValues>({
@@ -219,6 +220,15 @@ export default function CheckoutForm({
       });
     }
   }, [isBusinessOrder, paymentMethod, setValue]);
+
+  // The Company Name field is hidden for personal orders, so clear it when the
+  // customer switches away from Business Use: a hidden field must not be
+  // submitted as their company.
+  useEffect(() => {
+    if (!isBusinessOrder && getValues("company")) {
+      setValue("company", "", { shouldDirty: true });
+    }
+  }, [isBusinessOrder, getValues, setValue]);
 
   // Keep the order summary's Payment Method row in step with the choice made
   // here (it is display-only there).
@@ -593,16 +603,20 @@ export default function CheckoutForm({
             <ErrorText msg={errors.postalCode?.message} />
           </Field>
 
-          {/* Company */}
-          <Field label="Company Name" id="company">
-            <Input
-              id="company"
-              placeholder="Enter company name"
-              className={`${baseInput} ${errors.company ? errorBorder : ""}`}
-              {...register("company")}
-            />
-            <ErrorText msg={errors.company?.message} />
-          </Field>
+          {/* Company. Business orders only: a personal customer has no company
+              to give, so the field is hidden and any value typed before
+              switching is cleared rather than riding along on the order. */}
+          {isBusinessOrder ? (
+            <Field label="Company Name" id="company">
+              <Input
+                id="company"
+                placeholder="Enter company name"
+                className={`${baseInput} ${errors.company ? errorBorder : ""}`}
+                {...register("company")}
+              />
+              <ErrorText msg={errors.company?.message} />
+            </Field>
+          ) : null}
 
           {/* Accessibility */}
           <Field label="Location Accessibility" id="accessibility">
