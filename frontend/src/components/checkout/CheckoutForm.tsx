@@ -280,13 +280,11 @@ export default function CheckoutForm({
 
     if (target === "main") {
       apply("street1", parts.street, true);
-      apply("street2", parts.flat);
       apply("townCity", parts.town, true);
       apply("stateCounty", parts.county);
       apply("postalCode", parts.postcode, true);
     } else {
       apply("shipStreet1", parts.street, true);
-      apply("shipStreet2", parts.flat);
       apply("shipTownCity", parts.town, true);
       apply("shipStateCounty", parts.county);
       apply("shipPostalCode", parts.postcode, true);
@@ -311,7 +309,9 @@ export default function CheckoutForm({
       const shippingLastName = values.lastName;
 
       const streetMain = useAlt ? values.shipStreet1 : values.street1;
-      const street2 = (useAlt ? values.shipStreet2 : values.street2) || "";
+      // The apartment line was removed from the form; orders carry an empty
+      // second address line unless an admin fills one in later.
+      const street2 = "";
       const city = (useAlt ? values.shipTownCity : values.townCity) || "";
       const stateCounty = (useAlt
         ? values.shipStateCounty
@@ -547,16 +547,7 @@ export default function CheckoutForm({
             <ErrorText msg={errors.street1?.message} />
           </Field>
 
-          {/* Street 2 */}
-          <Field label="Street Address" id="street2">
-            <Input
-              id="street2"
-              placeholder="Apartment, suite, unit, etc."
-              className={`${baseInput} ${errors.street2 ? errorBorder : ""}`}
-              {...register("street2")}
-            />
-            <ErrorText msg={errors.street2?.message} />
-          </Field>
+          {/* Street 2 removed: one street address field per block. */}
 
           {/* Town/City */}
           <Field label="Town/City" id="townCity" required>
@@ -903,18 +894,6 @@ export default function CheckoutForm({
                     onSelect={(parts) => applyAddressParts(parts, "alt")}
                   />
                   <ErrorText msg={errors.shipStreet1?.message} />
-                </Field>
-
-                <Field label="Street Address" id="shipStreet2">
-                  <Input
-                    id="shipStreet2"
-                    placeholder="Apartment, suite, unit, etc."
-                    className={`${baseInput} ${
-                      errors.shipStreet2 ? errorBorder : ""
-                    }`}
-                    {...register("shipStreet2")}
-                  />
-                  <ErrorText msg={errors.shipStreet2?.message} />
                 </Field>
 
                 <Field label="Town/City" id="shipTownCity" required>
