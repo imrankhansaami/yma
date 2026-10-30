@@ -121,7 +121,8 @@ const normalizeDeliveryTime = (value?: string) => {
 const normalizeCollectionTime = (value?: string) => {
   const cleaned = stripFeeLabel(value);
   if (!cleaned) return "";
-  if (/standard collection/i.test(cleaned)) return "17:00";
+  if (/standard collection/i.test(cleaned)) return "After 5:00 PM";
+  if (/overnight/i.test(cleaned)) return "Overnight Collection";
   return parseTimeLabelToValue(cleaned);
 };
 
@@ -252,18 +253,25 @@ export default function CheckoutForm({
   }, [paymentMethodProp, paymentMethod, setValue]);
 
   // Shipping status for the SHIPMENT block. Deliberately mirrors OrderOverview
-  // so the form and the order summary can never disagree: the standard 8AM-12PM
-  // slot is free, any other delivery slot adds £10, and a collection after the
-  // standard window adds £10 (£20 for the 8:30 PM slot).
+  // so the form and the order summary can never disagree: the standard windows
+  // (delivery 8AM–12PM, collection after 5PM) are free, fixed deliveries are
+  // £10, fixed collections £10 (£15 at 7:30 PM, £30 at 8:30 PM) and Overnight
+  // Collection £40.
   const deliveryLabel = watch("deliveryTime") || "";
   const collectionLabel = watch("collectionTime") || "";
-  const shippingFee =
-    (/standard/i.test(deliveryLabel) || !deliveryLabel ? 0 : 10) +
-    (/standard/i.test(collectionLabel) || !collectionLabel
+  const deliveryCharge =
+    /standard/i.test(deliveryLabel) || !deliveryLabel ? 0 : 10;
+  const collectionCharge =
+    /standard/i.test(collectionLabel) || !collectionLabel
       ? 0
-      : /8:30/i.test(collectionLabel)
-        ? 20
-        : 10);
+      : /overnight/i.test(collectionLabel)
+        ? 40
+        : /8:30/i.test(collectionLabel)
+          ? 30
+          : /7:30/i.test(collectionLabel)
+            ? 15
+            : 10;
+  const shippingFee = deliveryCharge + collectionCharge;
 
   /**
    * Fills the address block a picked Google suggestion belongs to. Only the
@@ -674,8 +682,8 @@ export default function CheckoutForm({
                   Our standard delivery time is between 8:00 AM and 12:00 PM,
                   during which delivery is completely free. As we handle
                   multiple orders daily, our team follows a fixed delivery
-                  route. If you require a specific delivery time (either within
-                  8 AM–12 PM or after 12 PM), a £10 delivery fee will apply.
+                  route. If you require a specific delivery time after
+                  12:00 PM, a £10 delivery fee will apply.
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -691,12 +699,6 @@ export default function CheckoutForm({
                 Select delivery time
               </option>
               <option>Standard delivery 8AM to 12PM (Free)</option>
-              <option>9:00 AM (+£10)</option>
-              <option>9:30 AM (+£10)</option>
-              <option>10:00 AM (+£10)</option>
-              <option>10:30 AM (+£10)</option>
-              <option>11:00 AM (+£10)</option>
-              <option>11:30 AM (+£10)</option>
               <option>12:00 PM (+£10)</option>
               <option>12:30 PM (+£10)</option>
               <option>1:00 PM (+£10)</option>
@@ -754,9 +756,10 @@ export default function CheckoutForm({
                 <TooltipContent className="max-w-[340px] text-[13px] leading-5 font-inter">
                   For collections, our standard pickup time starts after 5:00 PM
                   and is free of charge. Our team will arrive anytime after 5 PM
-                  based on the collection route. If you prefer your bouncy
-                  castle to be collected at a fixed time, a £10 collection fee
-                  will apply.
+                  based on the collection route. A fixed collection time costs
+                  £10 up to 7:00 PM, £15 at 7:30 PM or £30 at 8:30 PM.
+                  Overnight Collection (+£40) keeps the castle overnight,
+                  collected the next morning.
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -787,9 +790,9 @@ export default function CheckoutForm({
               <option>6:00 PM (+£10)</option>
               <option>6:30 PM (+£10)</option>
               <option>7:00 PM (+£10)</option>
-              <option>7:30 PM (+£10)</option>
-              <option>8:00 PM (+£10)</option>
-              <option>8:30 PM (+£20)</option>
+              <option>7:30 PM (+£15)</option>
+              <option>8:30 PM (+£30)</option>
+              <option>Overnight Collection (+£40)</option>
             </select>
             <ErrorText msg={errors.collectionTime?.message} />
           </div>
@@ -948,7 +951,7 @@ export default function CheckoutForm({
                   <span className="block text-xs leading-5 text-ink-700">
                     {shippingFee === 0
                       ? "Your chosen delivery and collection times are both free."
-                      : "Your chosen times fall outside the free 8AM-12PM window."}
+                      : "Your chosen delivery or collection times carry a fee."}
                   </span>
                 </span>
               </label>

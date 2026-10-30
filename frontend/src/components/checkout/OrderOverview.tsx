@@ -100,9 +100,18 @@ export default function OrderOverview({
   const standardDelivery = /standard/i.test(deliveryTime);
   const standardCollection = /standard/i.test(collectionTime);
   const shipping = !standardDelivery && deliveryTime ? 10 : 0;
-  const isLateCollection = /8:30/i.test(collectionTime);
+  // Fixed collection fees: £10 up to 7:00 PM, £15 at 7:30 PM, £30 at 8:30 PM,
+  // £40 for Overnight Collection. The "After 5PM" standard pickup is free.
   const collectionFee =
-    !standardCollection && collectionTime ? (isLateCollection ? 20 : 10) : 0;
+    !standardCollection && collectionTime
+      ? /overnight/i.test(collectionTime)
+        ? 40
+        : /8:30/i.test(collectionTime)
+          ? 30
+          : /7:30/i.test(collectionTime)
+            ? 15
+            : 10
+      : 0;
 
   const [couponOpen, setCouponOpen] = useState<boolean>(false);
   const [couponApplied, setCouponApplied] = useState<boolean>(false);
@@ -169,15 +178,6 @@ export default function OrderOverview({
     setCouponInput("");
     toast.info("Promo code removed");
   };
-
-  const deliveryLabel =
-    !deliveryTime || standardDelivery
-      ? "Free Delivery (Standard time 8AM to 12PM)"
-      : `Specific Delivery Time ${deliveryTime}`;
-  const collectionLabel =
-    !collectionTime || standardCollection
-      ? "Free Collection (Standard time after 5PM)"
-      : `Specific Collection Time ${collectionTime}`;
 
   return (
     <div className="rounded-md bg-brand-gray-50 min-w-0">
@@ -256,71 +256,6 @@ export default function OrderOverview({
               </span>
             </div>
           )}
-
-          {/* Shipping Details */}
-          <div>
-            <div className="mb-2 font-medium text-ink-900">
-              Shipping Details
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {/* small orange outlined dot */}
-                <span className="relative inline-flex h-4 w-4 items-center justify-center">
-                  <input
-                    id="delivery-method"
-                    type="radio"
-                    name="delivery"
-                    value="delivery"
-                    checked
-                    onChange={() => {}}
-                    className="absolute inset-0 h-4 w-4 cursor-pointer opacity-0"
-                    aria-checked
-                  />
-                  <span
-                    aria-hidden="true"
-                    className={`inline-flex h-4 w-4 items-center justify-center rounded-full border ${"border-brand-orange-500"}`}
-                  >
-                    <span
-                      className={`h-2 w-2 rounded-full ${"bg-brand-orange-500"}`}
-                    />
-                  </span>
-                </span>
-                <span className="text-ink-900">{deliveryLabel}</span>
-              </div>
-              <span className="text-brand-orange-500">£{shipping}</span>
-            </div>
-          </div>
-
-          {/* Collection Details */}
-          <div>
-            <div className="mb-2 font-medium text-ink-900">
-              Collection Details
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="relative inline-flex h-4 w-4 items-center justify-center">
-                  <input
-                    id="collection-method"
-                    type="radio"
-                    name="collection"
-                    value="collection"
-                    checked
-                    onChange={() => {}}
-                    className="absolute inset-0 h-4 w-4 cursor-pointer opacity-0"
-                    aria-checked
-                  />
-                  <span
-                    aria-hidden="true"
-                    className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-brand-orange-500"
-                  >
-                    <span className="h-2 w-2 rounded-full bg-brand-orange-500" />
-                  </span>
-                </span>
-                <span className="text-ink-900">{collectionLabel}</span>
-              </div>
-              <span className="text-brand-orange-500">£{collectionFee}</span>
-            </div>
-          </div>
 
           <div>
             <div className="mb-2 font-medium text-ink-900">Payment Method</div>

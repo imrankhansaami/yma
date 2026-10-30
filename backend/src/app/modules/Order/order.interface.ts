@@ -119,8 +119,8 @@ export interface IShippingAddress {
   location?: string; // e.g. "front gate", "white building"
   companyName?: string;
   locationAccessibility?: string; // e.g. "lift available", "stairs only"
-  deliveryTime?: string; // now using 30-min slot format "09:30"
-  collectionTime?: string; // "17:00", "20:30" etc.
+  deliveryTime?: string; // "09:00" = standard 8AM–12PM, else "12:00"–"19:00"
+  collectionTime?: string; // "After 5:00 PM", "19:30", "Overnight Collection" etc.
   floorType?: string;
   userType?: "residential" | "office" | "shop" | string;
   /** Recipient when the order is delivered to a different address. */
@@ -320,16 +320,24 @@ export interface CustomerOrderHistory {
 // ───────────────────────────────────────────────
 
 export type DeliveryTimeOption = {
-  value: string; // "09:00", "09:30", "10:00", ...
+  value: string; // "09:00" (standard window), "12:00"–"19:00" fixed slots
   label: string; // "9:00 AM", "9:30 AM", ...
   fee: number;
   isFree: boolean;
 };
 
-// Delivery: 9:00 AM – 7:00 PM every 30 min
+// Delivery: the free standard window (8:00 AM – 12:00 PM) is the "09:00"
+// entry; fixed times after 12:00 PM are £10 each, every 30 min to 7:00 PM.
 export const DELIVERY_TIME_OPTIONS: DeliveryTimeOption[] = (() => {
-  const slots: DeliveryTimeOption[] = [];
-  for (let h = 9; h <= 19; h++) {
+  const slots: DeliveryTimeOption[] = [
+    {
+      value: "09:00",
+      label: "Standard (8:00 AM – 12:00 PM)",
+      fee: 0,
+      isFree: true,
+    },
+  ];
+  for (let h = 12; h <= 19; h++) {
     for (let m = 0; m < 60; m += 30) {
       if (h === 19 && m === 30) continue; // stop at 19:00
 
@@ -338,11 +346,9 @@ export const DELIVERY_TIME_OPTIONS: DeliveryTimeOption[] = (() => {
       const value = `${hourStr}:${minStr}`;
 
       const displayHour = h > 12 ? h - 12 : h;
-      const ampm = h >= 12 ? "PM" : "AM";
-      const label = `${displayHour}:${minStr} ${ampm}`;
+      const label = `${displayHour}:${minStr} PM`;
 
-      const fee = h < 12 ? 0 : 10; // 9:00–11:59 free, 12:00+ €10
-      slots.push({ value, label, fee, isFree: fee === 0 });
+      slots.push({ value, label, fee: 10, isFree: false });
     }
   }
   return slots;
@@ -350,39 +356,39 @@ export const DELIVERY_TIME_OPTIONS: DeliveryTimeOption[] = (() => {
 
 export const DELIVERY_TIME_VALUES = DELIVERY_TIME_OPTIONS.map((o) => o.value);
 
-// Collection: 12:00 PM – 8:30 PM every 30 min
+// Collection: fixed times 12:00 PM – 7:00 PM every 30 min (+£10 each),
+// 7:30 PM (+£15) and 8:30 PM (+£30). "After 5:00 PM" is the free standard
+// pickup and "Overnight Collection" keeps the castle overnight (+£40).
+// 8:00 PM was withdrawn and the morning grid does not apply to collections.
 export const COLLECTION_TIME_OPTIONS: DeliveryTimeOption[] = (() => {
   const slots: DeliveryTimeOption[] = [];
-  for (let h = 12; h <= 20; h++) {
+
+  for (let h = 12; h <= 19; h++) {
     for (let m = 0; m < 60; m += 30) {
       const value = `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 
       const displayHour = h > 12 ? h - 12 : h;
-      const ampm = h >= 12 ? "PM" : "AM";
-      const labelTime = `${displayHour}:${m.toString().padStart(2, "0")} ${ampm}`;
+      const label = `${displayHour}:${m.toString().padStart(2, "0")} PM`;
 
-      let fee = 10;
-      let isFree = false;
-      let labelSuffix = "";
-
-      if (h >= 17) {
-        fee = 0;
-        isFree = true;
-        labelSuffix = " (Free)";
-      }
-
-      // Special rule: exactly 20:30 → €20
-      if (value === "20:30") {
-        fee = 20;
-        isFree = false;
-        labelSuffix = " (+€20)";
-      }
-
-      const label = labelTime + labelSuffix;
-
-      slots.push({ value, label, fee, isFree });
+      slots.push({ value, label, fee: 10, isFree: false });
     }
   }
+
+  slots.push({ value: "19:30", label: "7:30 PM", fee: 15, isFree: false });
+  slots.push({ value: "20:30", label: "8:30 PM", fee: 30, isFree: false });
+  slots.push({
+    value: "Overnight Collection",
+    label: "Overnight Collection",
+    fee: 40,
+    isFree: false,
+  });
+  slots.push({
+    value: "After 5:00 PM",
+    label: "After 5:00 PM",
+    fee: 0,
+    isFree: true,
+  });
+
   return slots;
 })();
 
@@ -400,33 +406,55 @@ export class DeliveryTimeManager {
     type: "delivery" | "collection" = "delivery",
   ): string {
     if (!input) {
-      return type === "delivery" ? "09:00" : "17:00";
+      return type === "delivery" ? "09:00" : "After 5:00 PM";
     }
 
-    const cleaned = input.trim().replace(/\s+/g, "").toLowerCase();
+    const raw = input.trim();
+    const cleaned = raw.replace(/\s+/g, "").toLowerCase();
 
+    // The free standard windows and the overnight keep have their own labels.
+    if (/standard|free|after5/.test(cleaned)) {
+      return type === "delivery" ? "09:00" : "After 5:00 PM";
+    }
+    if (/overnight/.test(cleaned)) {
+      return "Overnight Collection";
+    }
+
+    // Values that only still exist for older clients. Anything mapped here
+    // must exist in the option tables above, or the schema enum rejects it.
     const commonMappings: Record<string, string> = {
       "9": "09:00",
       "9am": "09:00",
       "9.00": "09:00",
-      "930": "09:30",
-      "9:30": "09:30",
-      "10": "10:00",
-      "1030": "10:30",
       "5pm": "17:00",
       "1700": "17:00",
       "17": "17:00",
-      "8pm": "20:00",
+      "8pm": "20:30",
       "830pm": "20:30",
+      "730pm": "19:30",
+      "1930": "19:30",
+      "2030": "20:30",
     };
 
     if (commonMappings[cleaned]) return commonMappings[cleaned];
 
-    // Direct match
+    // Direct match (e.g. "17:00", "After 5:00 PM", "Overnight Collection")
     const allValues = [...DELIVERY_TIME_VALUES, ...COLLECTION_TIME_VALUES];
+    if (allValues.includes(raw)) return raw;
     if (allValues.includes(cleaned)) return cleaned;
 
-    return type === "delivery" ? "09:00" : "17:00";
+    // Human labels such as "7:30 PM" or "7:30 PM (+£15)"
+    const labelMatch = raw.match(/(\d{1,2}):(\d{2})\s*(am|pm)/i);
+    if (labelMatch) {
+      let hour = Number(labelMatch[1]);
+      const ampm = labelMatch[3].toLowerCase();
+      if (ampm === "pm") hour = (hour % 12) + 12;
+      if (ampm === "am" && hour === 12) hour = 0;
+      const value = `${hour.toString().padStart(2, "0")}:${labelMatch[2]}`;
+      if (allValues.includes(value)) return value;
+    }
+
+    return type === "delivery" ? "09:00" : "After 5:00 PM";
   }
 
   static getDeliveryOption(value: string): DeliveryTimeOption | undefined {
@@ -438,25 +466,27 @@ export class DeliveryTimeManager {
   }
 
   static getDeliveryFee(value: string): number {
-    return this.getDeliveryOption(value)?.fee ?? 10;
+    // Unknown/legacy delivery values (e.g. the withdrawn morning slots) were
+    // standard-window picks, so they stay free.
+    return this.getDeliveryOption(value)?.fee ?? 0;
   }
 
   static getCollectionFee(value: string): number {
     const option = this.getCollectionOption(value);
-    // fallback 10 if somehow invalid (but shouldn't happen)
+    // Fallback 10 for legacy values we no longer list (e.g. "20:00").
     return option?.fee ?? 10;
   }
 
   static formatDelivery(value: string): string {
     const opt = this.getDeliveryOption(value);
-    if (!opt) return "9:00 AM";
-    return `${opt.label}${opt.isFree ? " (Free)" : ` (€${opt.fee})`}`;
+    if (!opt) return value || "Standard (8:00 AM – 12:00 PM)";
+    return `${opt.label}${opt.isFree ? " (Free)" : ` (+£${opt.fee})`}`;
   }
 
   static formatCollection(value: string): string {
     const opt = this.getCollectionOption(value);
-    if (!opt) return "5:00 PM";
-    return `${opt.label}${opt.isFree ? " (Free)" : ` (€${opt.fee})`}`;
+    if (!opt) return value || "After 5:00 PM";
+    return `${opt.label}${opt.isFree ? " (Free)" : ` (+£${opt.fee})`}`;
   }
 
   static isValidDelivery(value: string): boolean {

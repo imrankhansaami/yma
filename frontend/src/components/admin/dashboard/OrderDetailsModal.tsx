@@ -137,12 +137,6 @@ const statusOptions: { value: OrderStatus; label: string; color: string }[] = [
 
 const deliveryTimeOptions = [
   "Standard delivery 8AM to 12PM (Free)",
-  "9:00 AM (+£10)",
-  "9:30 AM (+£10)",
-  "10:00 AM (+£10)",
-  "10:30 AM (+£10)",
-  "11:00 AM (+£10)",
-  "11:30 AM (+£10)",
   "12:00 PM (+£10)",
   "12:30 PM (+£10)",
   "1:00 PM (+£10)",
@@ -159,6 +153,8 @@ const deliveryTimeOptions = [
   "6:30 PM (+£10)",
   "7:00 PM (+£10)",
 ];
+
+const OVERNIGHT_COLLECTION_LABEL = "Overnight Collection (+£40)";
 
 const collectionTimeOptions = [
   "Standard collection time after 5PM (Free)",
@@ -177,9 +173,9 @@ const collectionTimeOptions = [
   "6:00 PM (+£10)",
   "6:30 PM (+£10)",
   "7:00 PM (+£10)",
-  "7:30 PM (+£10)",
-  "8:00 PM (+£10)",
-  "8:30 PM (+£20)",
+  "7:30 PM (+£15)",
+  "8:30 PM (+£30)",
+  OVERNIGHT_COLLECTION_LABEL,
 ];
 
 const accessibilityOptions = ["Accessible from street", "Through a building"];
@@ -264,11 +260,24 @@ const normalizeDeliveryLabel = (value?: string) => {
 const normalizeCollectionLabel = (value?: string) => {
   if (!value) return "";
   const lower = value.toLowerCase();
-  if (lower.includes("standard") || lower.includes("free")) {
+  if (
+    lower.includes("standard") ||
+    lower.includes("free") ||
+    lower.includes("after 5")
+  ) {
     return collectionTimeOptions[0];
   }
+  if (lower.includes("overnight")) {
+    return OVERNIGHT_COLLECTION_LABEL;
+  }
   const timeLabel = formatTimeLabel(value);
-  const fee = timeLabel.toLowerCase() === "8:30 pm" ? "+£20" : "+£10";
+  const lowerLabel = timeLabel.toLowerCase();
+  const fee =
+    lowerLabel === "8:30 pm"
+      ? "+£30"
+      : lowerLabel === "7:30 pm"
+        ? "+£15"
+        : "+£10";
   const label = `${timeLabel} (${fee})`;
   return normalizeOptionValue(label, collectionTimeOptions);
 };
@@ -297,7 +306,8 @@ const normalizeDeliveryTimeValue = (value?: string) => {
 const normalizeCollectionTimeValue = (value?: string) => {
   const cleaned = stripFeeLabel(value);
   if (!cleaned) return "";
-  if (/standard collection/i.test(cleaned)) return "17:00";
+  if (/standard|after 5/i.test(cleaned)) return "After 5:00 PM";
+  if (/overnight/i.test(cleaned)) return "Overnight Collection";
   return parseTimeLabelToValue(cleaned);
 };
 

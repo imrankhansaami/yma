@@ -6,7 +6,7 @@ import ApiError from "../../utils/apiError";
 import Order from "../../modules/Order/order.model";
 import Product from "../../modules/Product/product.model";
 import type { IOrderItemExtra } from "../../modules/Order/order.interface";
-import { PlacementFeeManager } from "../../modules/Order/order.interface";
+import { DeliveryTimeManager, PlacementFeeManager } from "../../modules/Order/order.interface";
 import User from "../../modules/Auth/user.model";
 import bcrypt from "bcryptjs";
 import { PromoService } from "../../modules/promos/promos.service";
@@ -79,32 +79,20 @@ const createOrGetUser = async (
 };
 
 // ==================== ENHANCED CALCULATE DELIVERY FEE ====================
-const toMinutes = (value?: string) => {
-  const match = /^(\d{1,2}):(\d{2})$/.exec(String(value || "").trim());
-  if (!match) return null;
-  return Number(match[1]) * 60 + Number(match[2]);
-};
-
+// One fee table, shared with the order model and the storefront: the free
+// standard windows are "09:00" (delivery 8AM–12PM) and "After 5:00 PM"
+// (collection); every fixed slot is charged at its listed price.
 const calculateDeliveryFee = (
   deliveryTime: string | undefined,
   collectionTime: string | undefined,
 ) => {
-  let fee = 0;
-
-  // Delivery: 8am-2pm free, any other slot £10.
-  const deliveryMinutes = toMinutes(deliveryTime);
-  if (deliveryMinutes === null || deliveryMinutes < 8 * 60 || deliveryMinutes >= 14 * 60) {
-    fee += 10;
-  }
-
-  // Collection: before 5pm free, 5pm onwards £10.
-  const collectionMinutes = toMinutes(collectionTime);
-  if (collectionMinutes !== null && collectionMinutes >= 17 * 60) {
-    fee += 10;
-  }
-
-  // Overnight is charged separately as overnightFee, never twice.
-  return fee;
+  const deliveryFee = DeliveryTimeManager.getDeliveryFee(
+    DeliveryTimeManager.normalize(deliveryTime, "delivery"),
+  );
+  const collectionFee = DeliveryTimeManager.getCollectionFee(
+    DeliveryTimeManager.normalize(collectionTime, "collection"),
+  );
+  return deliveryFee + collectionFee;
 };
 
 // ==================== APPLY PROMO ====================
@@ -726,41 +714,34 @@ export const checkAvailability = asyncHandler(
 
 export const calculateDeliveryFeeAPI = asyncHandler(
   async (req: Request, res: Response) => {
-    const { deliveryTime, collectionTime, keepOvernight = false } = req.body;
+    // Normalize first so callers can send raw labels ("7:30 PM (+£15)").
+    const normalizedDelivery = DeliveryTimeManager.normalize(
+      req.body?.deliveryTime,
+      "delivery",
+    );
+    const normalizedCollection = DeliveryTimeManager.normalize(
+      req.body?.collectionTime,
+      "collection",
+    );
 
-    const deliveryFee = calculateDeliveryFee(deliveryTime, collectionTime);
-    const overnightFee = keepOvernight ? 30 : 0;
-    const totalFee = deliveryFee + overnightFee;
-
-    // Fee breakdown (same rules as calculateDeliveryFee).
-    const deliveryMinutes = toMinutes(deliveryTime);
-    const deliveryBreakdown =
-      deliveryMinutes === null ||
-      deliveryMinutes < 8 * 60 ||
-      deliveryMinutes >= 14 * 60
-        ? 10
-        : 0;
-
-    const collectionMinutes = toMinutes(collectionTime);
-    const collectionBreakdown =
-      collectionMinutes !== null && collectionMinutes >= 17 * 60 ? 10 : 0;
+    const deliveryFee = DeliveryTimeManager.getDeliveryFee(normalizedDelivery);
+    const collectionFee = DeliveryTimeManager.getCollectionFee(
+      normalizedCollection,
+    );
 
     res.status(200).json({
       success: true,
       data: {
         deliveryFee,
-        overnightFee,
-        totalFee,
+        collectionFee,
+        totalFee: deliveryFee + collectionFee,
         breakdown: {
-          delivery: deliveryBreakdown,
-          collection: collectionBreakdown,
-          overnight: overnightFee,
+          delivery: deliveryFee,
+          collection: collectionFee,
         },
         details: {
-          deliveryTime: deliveryTime || "Standard (8am-2pm: Free, Others: €10)",
-          collectionTime:
-            collectionTime || "Standard (Before 5pm: Free, After 5pm: €10)",
-          keepOvernight: keepOvernight || false,
+          deliveryTime: normalizedDelivery,
+          collectionTime: normalizedCollection,
         },
       },
     });

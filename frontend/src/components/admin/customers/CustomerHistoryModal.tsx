@@ -188,12 +188,6 @@ const statusOptions: { value: OrderStatus; label: string; color: string }[] = [
 
 const deliveryTimeOptions = [
   "Standard delivery 8AM to 12PM (Free)",
-  "9:00 AM (+£10)",
-  "9:30 AM (+£10)",
-  "10:00 AM (+£10)",
-  "10:30 AM (+£10)",
-  "11:00 AM (+£10)",
-  "11:30 AM (+£10)",
   "12:00 PM (+£10)",
   "12:30 PM (+£10)",
   "1:00 PM (+£10)",
@@ -228,9 +222,9 @@ const collectionTimeOptions = [
   "6:00 PM (+£10)",
   "6:30 PM (+£10)",
   "7:00 PM (+£10)",
-  "7:30 PM (+£10)",
-  "8:00 PM (+£10)",
-  "8:30 PM (+£20)",
+  "7:30 PM (+£15)",
+  "8:30 PM (+£30)",
+  "Overnight Collection (+£40)",
 ];
 
 const accessibilityOptions = ["Accessible from street", "Through a building"];
