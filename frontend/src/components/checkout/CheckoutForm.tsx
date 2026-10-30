@@ -327,7 +327,9 @@ export default function CheckoutForm({
         ? `${streetMain || ""}`.trim()
         : `${streetMain || ""}`.trim();
 
-      const accessibility = values.accessibility || "";
+      // The Location Accessibility field was removed from the checkout form;
+      // orders carry an empty value for it.
+      const accessibility = "";
       const deliveryTime = normalizeDeliveryTime(values.deliveryTime || "");
       const collectionTime = normalizeCollectionTime(
         values.collectionTime || "",
@@ -609,24 +611,48 @@ export default function CheckoutForm({
             </Field>
           ) : null}
 
-          {/* Accessibility */}
-          <Field label="Location Accessibility" id="accessibility">
-            <select
-              id="accessibility"
-              className={`${baseSelect} ${
-                errors.accessibility ? errorBorder : ""
+          {/* Checkboxes. Sits with the address fields, directly after the
+              postal code, because it decides which address block is used. */}
+          <div className="space-y-4 min-w-0 w-full md:col-span-2">
+            <div
+              className={`rounded-lg border px-4 py-3 transition-colors ${
+                shipDifferentLive
+                  ? "border-brand-orange-400 bg-brand-orange-50"
+                  : "border-slate-200 bg-slate-50"
               }`}
-              {...register("accessibility")}
-              defaultValue=""
             >
-              <option value="" disabled className="text-gray-100">
-                Select location accessibility
-              </option>
-              <option>Accessible from street</option>
-              <option>Through a building</option>
-            </select>
-            <ErrorText msg={errors.accessibility?.message} />
-          </Field>
+              <Controller
+                control={control}
+                name="shipDifferent"
+                render={({ field }) => (
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="shipDifferent"
+                      className={`${checkboxClass} mt-0.5 h-5 w-5`}
+                      checked={field.value}
+                      onCheckedChange={(v) => {
+                        const b = Boolean(v);
+                        field.onChange(b);
+                        onShipDifferentChange?.(b);
+                      }}
+                    />
+                    <div className="space-y-0.5">
+                      <Label
+                        htmlFor="shipDifferent"
+                        className="cursor-pointer text-sm font-semibold leading-5 text-ink-900"
+                      >
+                        Deliver to a Different Address?
+                      </Label>
+                      <p className="text-xs leading-5 text-ink-700">
+                        Tick this if delivery location is not your billing
+                        address.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              />
+            </div>
+          </div>
 
           {/* Delivery Time + tooltip */}
           <div className="space-y-1.5 min-w-0 w-full">
@@ -785,48 +811,6 @@ export default function CheckoutForm({
             </select>
             <ErrorText msg={errors.userType?.message} />
           </Field>
-
-          {/* Checkboxes */}
-          <div className="space-y-4 min-w-0 w-full md:col-span-2">
-            <div
-              className={`rounded-lg border px-4 py-3 transition-colors ${
-                shipDifferentLive
-                  ? "border-brand-orange-400 bg-brand-orange-50"
-                  : "border-slate-200 bg-slate-50"
-              }`}
-            >
-              <Controller
-                control={control}
-                name="shipDifferent"
-                render={({ field }) => (
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      id="shipDifferent"
-                      className={`${checkboxClass} mt-0.5 h-5 w-5`}
-                      checked={field.value}
-                      onCheckedChange={(v) => {
-                        const b = Boolean(v);
-                        field.onChange(b);
-                        onShipDifferentChange?.(b);
-                      }}
-                    />
-                    <div className="space-y-0.5">
-                      <Label
-                        htmlFor="shipDifferent"
-                        className="cursor-pointer text-sm font-semibold leading-5 text-ink-900"
-                      >
-                        Deliver to a Different Address?
-                      </Label>
-                      <p className="text-xs leading-5 text-ink-700">
-                        Tick this if delivery location is not your billing
-                        address.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              />
-            </div>
-          </div>
 
           {/* Hire Occasion */}
           <div className="md:col-span-2 space-y-1.5 min-w-0 w-full">
