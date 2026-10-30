@@ -53,11 +53,16 @@ if ! npm run build; then
 fi
 
 log "Clearing the ISR cache"
-# The ISR cache still holds pages rendered by the *previous* build, and their
-# HTML names asset files this build no longer publishes (chunk names change).
-# Without this, a cached page can 404 its own JavaScript for up to five minutes
-# after the restart. Pages are simply re-rendered on first request instead.
+# Two runtime caches can still hold pages rendered by the *previous* build:
+#   - .next/cache             (data/fetch cache)
+#   - .next/server/route-cache (server route cache, Next 15.5+; it shadows the
+#     freshly built prerenders, so /checkout kept serving the old form after a
+#     deploy until this directory was removed)
+# Their HTML names asset files this build no longer publishes (chunk names
+# change). Without clearing them, a cached page can 404 its own JavaScript or
+# serve stale markup after the restart. Pages re-render on first request.
 rm -rf "$FRONTEND_DIR/.next/cache"
+rm -rf "$FRONTEND_DIR/.next/server/route-cache"
 
 log "Reloading PM2 ($PM2_APP)"
 pm2 restart "$PM2_APP" --update-env
