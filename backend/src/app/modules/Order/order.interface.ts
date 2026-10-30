@@ -365,6 +365,8 @@ export const COLLECTION_TIME_OPTIONS: DeliveryTimeOption[] = (() => {
 
   for (let h = 12; h <= 19; h++) {
     for (let m = 0; m < 60; m += 30) {
+      if (h === 19 && m === 30) continue; // stop at 19:00 — 7:30 PM is its own fee
+
       const value = `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 
       const displayHour = h > 12 ? h - 12 : h;
