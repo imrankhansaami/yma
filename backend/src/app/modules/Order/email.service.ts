@@ -15,7 +15,10 @@ interface EmailConfig {
 }
 
 const emailConfig: EmailConfig = {
-  adminEmail: process.env.ADMIN_EMAIL || "admin@ymabouncycastle.co.uk",
+  adminEmail:
+    process.env.ADMIN_EMAIL ||
+    process.env.EMAIL_USER ||
+    "admin@ymabouncycastle.co.uk",
 };
 
 // Generate product table HTML

@@ -11,7 +11,7 @@ dotenv.config();
 
 // Helper functions
 const formatCurrency = (amount: number): string => {
-  return `Â£${amount.toFixed(2)}`;
+  return `£${amount.toFixed(2)}`;
 };
 
 const formatDate = (date?: Date | string): string => {
@@ -72,19 +72,19 @@ const getEmailFooter = () => `
           
           <div style="margin-bottom: 25px;">
             <a href="https://www.ymabouncycastle.co.uk" style="display: inline-block; margin: 0 12px; color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 15px;">Website</a>
-            <span style="color: #cbd5e0;">â€¢</span>
+            <span style="color: #cbd5e0;">•</span>
             <a href="tel:07951431111" style="display: inline-block; margin: 0 12px; color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 15px;">Call Us</a>
-            <span style="color: #cbd5e0;">â€¢</span>
+            <span style="color: #cbd5e0;">•</span>
             <a href="https://wa.me/447951431111" style="display: inline-block; margin: 0 12px; color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 15px;">WhatsApp</a>
           </div>
           
           <div style="color: #6b7280; font-size: 14px; line-height: 1.6; max-width: 500px; margin: 0 auto;">
             <p style="margin: 0 0 12px 0;">
-              <strong>ðŸ“ž Customer Support:</strong> 07951 431111<br>
-              <strong>ðŸ•’ Business Hours:</strong> Mon-Sun 8:00 AM - 8:00 PM
+              <strong>📞 Customer Support:</strong> 07951 431111<br>
+              <strong>🕒 Business Hours:</strong> Mon-Sun 8:00 AM - 8:00 PM
             </p>
             <p style="margin: 0 0 8px 0; font-size: 12px;">
-              Â© ${new Date().getFullYear()} YMA Bouncy Castle. All rights reserved.<br>
+              © ${new Date().getFullYear()} YMA Bouncy Castle. All rights reserved.<br>
               London, United Kingdom
             </p>
             <p style="margin: 0; font-size: 11px; color: #9ca3af;">
@@ -113,21 +113,21 @@ const generateProductTable = (
         }</div>
         ${
           item.hireOccasion
-            ? `<div style="color: #6b7280; font-size: 14px; margin-top: 4px;">ðŸŽ‰ ${item.hireOccasion
+            ? `<div style="color: #6b7280; font-size: 14px; margin-top: 4px;">🎉 ${item.hireOccasion
                 .replace(/_/g, " ")
                 .toUpperCase()}</div>`
             : ""
         }
         ${
           item.startDate
-            ? `<div style="color: #6b7280; font-size: 14px; margin-top: 4px;">ðŸ“… Event Date: ${formatDate(
+            ? `<div style="color: #6b7280; font-size: 14px; margin-top: 4px;">📅 Event Date: ${formatDate(
                 item.startDate,
               )}</div>`
             : ""
         }
         ${
           item.keepOvernight
-            ? '<div style="color: #6b7280; font-size: 14px; margin-top: 4px;">ðŸŒ™ Overnight Keeping: Yes (Â£30)</div>'
+            ? '<div style="color: #6b7280; font-size: 14px; margin-top: 4px;">🌙 Overnight Keeping: Yes (£30)</div>'
             : ""
         }
       </td>
@@ -265,7 +265,9 @@ export const sendInvoiceEmail = async (
 ): Promise<boolean> => {
   try {
     const adminEmail =
-      process.env.ADMIN_EMAIL || "admin@ymabouncycastle.co.uk";
+      process.env.ADMIN_EMAIL ||
+      process.env.EMAIL_USER ||
+      "admin@ymabouncycastle.co.uk";
     const invoiceNumber = invoiceNumberFor(order);
 
     let attachments: { filename: string; content: string }[] | undefined;
@@ -328,7 +330,7 @@ export const sendOrderReceivedEmail = async (
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>We've Received Your Order - YMA Bouncy Castle ðŸŽ‰</title>
+    <title>We've Received Your Order - YMA Bouncy Castle 🎉</title>
     <style>
         @media only screen and (max-width: 600px) {
             .container { width: 100% !important; padding: 10px !important; }
@@ -346,7 +348,7 @@ export const sendOrderReceivedEmail = async (
                 <td align="center" style="padding: 50px 30px 40px;">
                     <img src="${WHITE_LOGO_URL}" alt="YMA Bouncy Castle" style="max-width: 200px; height: auto; margin-bottom: 25px; filter: brightness(0) invert(1);" />
                     <h1 style="margin: 0 0 15px 0; color: white; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; text-align: center;">
-                        ðŸŽ‰ We've Received Your Order!
+                        🎉 We've Received Your Order!
                     </h1>
                     <p style="margin: 0; color: rgba(255, 255, 255, 0.95); font-size: 18px; line-height: 1.5; text-align: center;">
                         Hi ${customerName},
@@ -362,7 +364,7 @@ export const sendOrderReceivedEmail = async (
                     <!-- Introduction -->
                     <div style="margin-bottom: 30px;">
                         <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                            Thank you for booking with <strong>YMA Bouncy Castle ðŸŽˆ</strong><br>
+                            Thank you for booking with <strong>YMA Bouncy Castle 🎈</strong><br>
                             We're excited to be part of your upcoming party!
                         </p>
                     </div>
@@ -370,7 +372,7 @@ export const sendOrderReceivedEmail = async (
                     <!-- Order Details Card -->
                     <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 5px solid #0ea5e9;">
                         <h2 style="margin: 0 0 20px 0; color: #0369a1; font-size: 22px; font-weight: 700;">
-                            ðŸ§¾ Order Details
+                            🧾 Order Details
                         </h2>
                         <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 15px;">
                             <tr>
@@ -398,8 +400,8 @@ export const sendOrderReceivedEmail = async (
                                 <td style="padding: 10px 0; color: #111827; font-weight: 700; font-size: 16px;">
                                   ${
                                     order.paymentMethod === "cash_on_delivery"
-                                      ? "ðŸ’° Cash on Delivery"
-                                      : "ðŸ’³ Online Payment"
+                                      ? "💰 Cash on Delivery"
+                                      : "💳 Online Payment"
                                   }
                                 </td>
                             </tr>
@@ -415,7 +417,7 @@ export const sendOrderReceivedEmail = async (
                         ? `
                     <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 5px solid #10b981;">
                         <h2 style="margin: 0 0 20px 0; color: #065f46; font-size: 22px; font-weight: 700;">
-                            ðŸ’· Cash on Delivery
+                            💷 Cash on Delivery
                         </h2>
                         <div style="background: white; padding: 20px; border-radius: 8px; border: 2px dashed #10b981;">
                             <p style="margin: 0; color: #065f46; font-size: 17px; font-weight: 600;">
@@ -433,7 +435,7 @@ export const sendOrderReceivedEmail = async (
                     <!-- Setup Requirements -->
                     <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 5px solid #f59e0b;">
                         <h2 style="margin: 0 0 20px 0; color: #92400e; font-size: 22px; font-weight: 700;">
-                            ðŸ§¹ Important Setup Requirement
+                            🧹 Important Setup Requirement
                         </h2>
                         <p style="margin: 0 0 15px 0; color: #78350f; font-size: 16px; line-height: 1.6;">
                             For safety and hygiene reasons, please ensure the area where the bouncy castle will be placed is clean and clear before our team arrives.
@@ -454,14 +456,14 @@ export const sendOrderReceivedEmail = async (
                     <!-- Urgent Notice -->
                     <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border: 3px solid #dc2626;">
                         <h2 style="margin: 0 0 20px 0; color: #991b1b; font-size: 22px; font-weight: 700;">
-                            âš ï¸ Important â€“ Events Within 72 Hours
+                            ⚠ï¸ Important – Events Within 72 Hours
                         </h2>
                         <p style="margin: 0 0 15px 0; color: #7f1d1d; font-size: 16px; line-height: 1.6;">
                             If your party or event is happening within the next 72 hours, please call us immediately to confirm availability and delivery arrangements:
                         </p>
                         <div style="text-align: center; margin: 25px 0;">
                             <a href="tel:07951431111" style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 18px; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);">
-                                ðŸ“ž Call Now: 07951 431111
+                                📞 Call Now: 07951 431111
                             </a>
                         </div>
                         <p style="margin: 15px 0 0 0; color: #7f1d1d; font-size: 15px; line-height: 1.5;">
@@ -472,7 +474,7 @@ export const sendOrderReceivedEmail = async (
                     <!-- Product Table -->
                     <div style="margin-bottom: 30px;">
                         <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 22px; font-weight: 700;">
-                            ðŸ“‹ Order Summary
+                            📋 Order Summary
                         </h2>
                         ${generateProductTable(order)}
                     </div>
@@ -483,8 +485,8 @@ export const sendOrderReceivedEmail = async (
                             If you have any questions, want to add extras, or need help with anything else, feel free to give us a call or send a message on WhatsApp.
                         </p>
                         <p style="margin: 0; color: #5b21b6; font-size: 18px; font-weight: 700; line-height: 1.6;">
-                            Thanks again for choosing YMA Bouncy Castle â€”<br>
-                            let's make it a day to remember! ðŸŽŠ
+                            Thanks again for choosing YMA Bouncy Castle —<br>
+                            let's make it a day to remember! 🎊
                         </p>
                     </div>
                 </td>
@@ -499,14 +501,14 @@ export const sendOrderReceivedEmail = async (
     `;
 
     const text = `
-WE'VE RECEIVED YOUR ORDER - YMA Bouncy Castle ðŸŽ‰
+WE'VE RECEIVED YOUR ORDER - YMA Bouncy Castle 🎉
 
 Hi ${customerName},
 
-Thank you for booking with YMA Bouncy Castle ðŸŽˆ
+Thank you for booking with YMA Bouncy Castle 🎈
 We're excited to be part of your upcoming party!
 
-ðŸ§¾ ORDER DETAILS
+🧾 ORDER DETAILS
 Order ID: ${orderId}
 Bouncy Castle: ${productName}
 Event Date: ${eventDate}
@@ -523,28 +525,28 @@ Our team is now reviewing your booking and will prepare everything to ensure tim
 ${
   order.paymentMethod === "cash_on_delivery"
     ? `
-ðŸ’· CASH ON DELIVERY
+💷 CASH ON DELIVERY
 Please have the exact amount ready when our driver arrives:
 ${formatCurrency(order.totalAmount)}
 `
     : ""
 }
 
-ðŸ§¹ IMPORTANT SETUP REQUIREMENT
+🧹 IMPORTANT SETUP REQUIREMENT
 For safety and hygiene reasons, please ensure the area where the bouncy castle will be placed is clean and clear before our team arrives.
 This includes removing:
-â€¢ Dog or animal waste
-â€¢ Wood, stones, sharp objects
-â€¢ Garden or backyard waste
+• Dog or animal waste
+• Wood, stones, sharp objects
+• Garden or backyard waste
 A clean surface helps us set up quickly and keeps everyone safe.
 
-âš ï¸ IMPORTANT â€“ EVENTS WITHIN 72 HOURS
+⚠ï¸ IMPORTANT – EVENTS WITHIN 72 HOURS
 If your party or event is happening within the next 72 hours, please call us immediately to confirm availability and delivery arrangements:
-ðŸ“ž 07951 431111
+📞 07951 431111
 
 This helps us avoid last-minute issues and ensures we can serve you properly.
 
-ðŸ“‹ ORDER SUMMARY
+📋 ORDER SUMMARY
 ${order.items
   .map(
     (item) =>
@@ -579,26 +581,26 @@ Total: ${formatCurrency(order.totalAmount)}
 
 If you have any questions, want to add extras, or need help with anything else, feel free to give us a call or send a message on WhatsApp.
 
-Thanks again for choosing YMA Bouncy Castle â€” let's make it a day to remember! ðŸŽŠ
+Thanks again for choosing YMA Bouncy Castle — let's make it a day to remember! 🎊
 
 Warm regards,
 YMA Bouncy Castle Team
-ðŸŒ www.ymabouncycastle.co.uk
-ðŸ“ž 07951 431111
+🌐 www.ymabouncycastle.co.uk
+📞 07951 431111
 `;
 
     const mailOptions = {
       to: customerEmail,
-      subject: `We've Received Your Order â€“ YMA Bouncy Castle ðŸŽ‰`,
+      subject: `We've Received Your Order – YMA Bouncy Castle 🎉`,
       html: html,
       text: text,
     };
 
     await sendEmail(mailOptions);
-    console.log(`âœ… Order received email sent to ${customerEmail}`);
+    console.log(`✅ Order received email sent to ${customerEmail}`);
     return true;
   } catch (error) {
-    console.error("âŒ Error sending order received email:", error);
+    console.error("❌ Error sending order received email:", error);
     return false;
   }
 };
@@ -634,7 +636,7 @@ export const sendUserCredentialsEmail = async (
                 <td align="center" style="padding: 50px 30px 40px;">
                     <img src="${WHITE_LOGO_URL}" alt="YMA Bouncy Castle" style="max-width: 200px; height: auto; margin-bottom: 25px; filter: brightness(0) invert(1);" />
                     <h1 style="margin: 0 0 15px 0; color: white; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; text-align: center;">
-                        ðŸŽ‰ Welcome to YMA Bouncy Castle!
+                        🎉 Welcome to YMA Bouncy Castle!
                     </h1>
                     <p style="margin: 0; color: rgba(255, 255, 255, 0.95); font-size: 18px; line-height: 1.5; text-align: center;">
                         Hi ${firstName},
@@ -650,7 +652,7 @@ export const sendUserCredentialsEmail = async (
                     <!-- Introduction -->
                     <div style="margin-bottom: 30px;">
                         <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                            Thank you for booking with <strong>YMA Bouncy Castle</strong>! ðŸŽˆ
+                            Thank you for booking with <strong>YMA Bouncy Castle</strong>! 🎈
                         </p>
                         <p style="margin: 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
                             We've automatically created an account for you to make future bookings easier and faster. You can now track your orders, view your booking history, and manage your details all in one place.
@@ -660,7 +662,7 @@ export const sendUserCredentialsEmail = async (
                     <!-- Login Credentials -->
                     <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 5px solid #3b82f6;">
                         <h2 style="margin: 0 0 20px 0; color: #1e40af; font-size: 22px; font-weight: 700;">
-                            ðŸ” Your Login Credentials
+                            🔐 Your Login Credentials
                         </h2>
                         <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #3b82f6;">
                             <table width="100%" cellpadding="0" cellspacing="0">
@@ -675,21 +677,21 @@ export const sendUserCredentialsEmail = async (
                             </table>
                         </div>
                         <p style="margin: 0; color: #1e40af; font-size: 15px; line-height: 1.6;">
-                            <strong>âš ï¸ Important:</strong> Please save these credentials in a secure place. We recommend changing your password after your first login.
+                            <strong>⚠ï¸ Important:</strong> Please save these credentials in a secure place. We recommend changing your password after your first login.
                         </p>
                     </div>
 
                     <!-- Login Button -->
                     <div style="text-align: center; margin-bottom: 30px;">
                         <a href="https://www.ymabouncycastle.co.uk/login" style="display: inline-block; padding: 16px 48px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 18px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);">
-                            ðŸ”‘ Login to Your Account
+                            🔑 Login to Your Account
                         </a>
                     </div>
 
                     <!-- Account Benefits -->
                     <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 5px solid #10b981;">
                         <h2 style="margin: 0 0 20px 0; color: #065f46; font-size: 22px; font-weight: 700;">
-                            âœ¨ Your Account Benefits
+                            ✨ Your Account Benefits
                         </h2>
                         <ul style="margin: 0; padding-left: 20px; color: #065f46;">
                             <li style="margin-bottom: 12px; font-size: 16px; line-height: 1.6;">
@@ -713,7 +715,7 @@ export const sendUserCredentialsEmail = async (
                     <!-- Security Notice -->
                     <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 25px; margin-bottom: 30px; border-left: 5px solid #f59e0b;">
                         <h3 style="margin: 0 0 15px 0; color: #92400e; font-size: 18px; font-weight: 700;">
-                            ðŸ”’ Security Tips
+                            🔒 Security Tips
                         </h3>
                         <ul style="margin: 0; padding-left: 20px; color: #78350f;">
                             <li style="margin-bottom: 8px; font-size: 14px;">Change your password after first login</li>
@@ -729,7 +731,7 @@ export const sendUserCredentialsEmail = async (
                             If you have any questions about your account or need help logging in, feel free to contact us anytime.
                         </p>
                         <p style="margin: 0; color: #5b21b6; font-size: 18px; font-weight: 700; line-height: 1.6;">
-                            Welcome to the YMA family! ðŸŽŠ
+                            Welcome to the YMA family! 🎊
                         </p>
                     </div>
 
@@ -739,9 +741,9 @@ export const sendUserCredentialsEmail = async (
                             <strong>Need Help?</strong>
                         </p>
                         <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                            ðŸ“ž Call us: 07951 431111<br>
-                            ðŸ’¬ WhatsApp: <a href="https://wa.me/447951431111" style="color: #4f46e5; text-decoration: none;">+44 7951 431111</a><br>
-                            ðŸ“§ Email: <a href="mailto:support@ymabouncycastle.co.uk" style="color: #4f46e5; text-decoration: none;">support@ymabouncycastle.co.uk</a>
+                            📞 Call us: 07951 431111<br>
+                            💬 WhatsApp: <a href="https://wa.me/447951431111" style="color: #4f46e5; text-decoration: none;">+44 7951 431111</a><br>
+                            📧 Email: <a href="mailto:support@ymabouncycastle.co.uk" style="color: #4f46e5; text-decoration: none;">support@ymabouncycastle.co.uk</a>
                         </p>
                     </div>
                 </td>
@@ -760,58 +762,58 @@ WELCOME TO YMA BOUNCY CASTLE!
 
 Hi ${firstName},
 
-Thank you for booking with YMA Bouncy Castle! ðŸŽˆ
+Thank you for booking with YMA Bouncy Castle! 🎈
 
 We've automatically created an account for you to make future bookings easier and faster. You can now track your orders, view your booking history, and manage your details all in one place.
 
-ðŸ” YOUR LOGIN CREDENTIALS
+🔐 YOUR LOGIN CREDENTIALS
 Email: ${email}
 Password: ${password}
 
-âš ï¸ Important: Please save these credentials in a secure place. We recommend changing your password after your first login.
+⚠ï¸ Important: Please save these credentials in a secure place. We recommend changing your password after your first login.
 
 Login here: https://www.ymabouncycastle.co.uk/login
 
-âœ¨ YOUR ACCOUNT BENEFITS
-â€¢ Quick Checkout: Your details are saved for faster future bookings
-â€¢ Order Tracking: View all your current and past orders in one place
-â€¢ Booking History: Access invoices and order details anytime
-â€¢ Exclusive Offers: Get notified about special promotions and discounts
-â€¢ Manage Profile: Update your contact details and preferences easily
+✨ YOUR ACCOUNT BENEFITS
+• Quick Checkout: Your details are saved for faster future bookings
+• Order Tracking: View all your current and past orders in one place
+• Booking History: Access invoices and order details anytime
+• Exclusive Offers: Get notified about special promotions and discounts
+• Manage Profile: Update your contact details and preferences easily
 
-ðŸ”’ SECURITY TIPS
-â€¢ Change your password after first login
-â€¢ Use a strong, unique password
-â€¢ Never share your credentials with anyone
-â€¢ Log out when using shared devices
+🔒 SECURITY TIPS
+• Change your password after first login
+• Use a strong, unique password
+• Never share your credentials with anyone
+• Log out when using shared devices
 
 If you have any questions about your account or need help logging in, feel free to contact us anytime.
 
-Welcome to the YMA family! ðŸŽŠ
+Welcome to the YMA family! 🎊
 
 NEED HELP?
-ðŸ“ž Call us: 07951 431111
-ðŸ’¬ WhatsApp: +44 7951 431111
-ðŸ“§ Email: support@ymabouncycastle.co.uk
+📞 Call us: 07951 431111
+💬 WhatsApp: +44 7951 431111
+📧 Email: support@ymabouncycastle.co.uk
 
 Warm regards,
 YMA Bouncy Castle Team
-ðŸŒ www.ymabouncycastle.co.uk
-ðŸ“ž 07951 431111
+🌐 www.ymabouncycastle.co.uk
+📞 07951 431111
 `;
 
     const mailOptions = {
       to: email,
-      subject: `Welcome to YMA Bouncy Castle - Your Account Details ðŸŽ‰`,
+      subject: `Welcome to YMA Bouncy Castle - Your Account Details 🎉`,
       html: html,
       text: text,
     };
 
     await sendEmail(mailOptions);
-    console.log(`âœ… User credentials email sent to ${email}`);
+    console.log(`✅ User credentials email sent to ${email}`);
     return true;
   } catch (error) {
-    console.error("âŒ Error sending user credentials email:", error);
+    console.error("❌ Error sending user credentials email:", error);
     return false;
   }
 };
@@ -821,7 +823,10 @@ export const sendOrderNotificationToAdmin = async (
   order: IOrderDocument,
 ): Promise<boolean> => {
   try {
-    const adminEmail = process.env.ADMIN_EMAIL || "admin@ymabouncycastle.co.uk";
+    const adminEmail =
+      process.env.ADMIN_EMAIL ||
+      process.env.EMAIL_USER ||
+      "admin@ymabouncycastle.co.uk";
     const orderId =
       order.orderNumber || `ORD-${order._id.toString().slice(-8)}`;
     const customerName = `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`;
@@ -842,7 +847,7 @@ export const sendOrderNotificationToAdmin = async (
             <tr>
                 <td align="center" style="padding: 40px 20px 30px;">
                     <h1 style="margin: 0 0 15px 0; color: white; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; text-align: center;">
-                        ðŸš¨ NEW ORDER NOTIFICATION
+                        🚨 NEW ORDER NOTIFICATION
                     </h1>
                     <p style="margin: 0; color: rgba(255, 255, 255, 0.95); font-size: 18px; font-weight: 500; text-align: center;">
                         Action Required: Immediate processing needed
@@ -856,7 +861,7 @@ export const sendOrderNotificationToAdmin = async (
                 <td style="padding: 35px 30px;">
                     <div style="background: #fed7d7; border-radius: 10px; padding: 25px; margin-bottom: 30px; border: 3px solid #fc8181;">
                         <h2 style="margin: 0; color: #c53030; font-size: 20px; font-weight: 700;">
-                            âš ï¸ URGENT: NEW ORDER RECEIVED
+                            ⚠ï¸ URGENT: NEW ORDER RECEIVED
                         </h2>
                         <p style="margin: 15px 0 0 0; color: #742a2a; font-size: 16px; line-height: 1.5;">
                             Order #${orderId} requires immediate attention and processing.
@@ -888,7 +893,7 @@ export const sendOrderNotificationToAdmin = async (
                     <!-- Customer Details -->
                     <div style="background: #f7fafc; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
                         <h3 style="margin: 0 0 15px 0; color: #2d3748; font-size: 18px; font-weight: 600;">
-                            ðŸ‘¤ Customer Information
+                            👤 Customer Information
                         </h3>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                             <div>
@@ -919,7 +924,7 @@ export const sendOrderNotificationToAdmin = async (
                     <!-- Order Items -->
                     <div style="background: #f7fafc; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
                         <h3 style="margin: 0 0 15px 0; color: #2d3748; font-size: 18px; font-weight: 600;">
-                            ðŸ“¦ Order Items
+                            📦 Order Items
                         </h3>
                         <div style="color: #2d3748; font-size: 16px; font-weight: 500;">${productName}</div>
                         <div style="margin-top: 10px;">
@@ -927,7 +932,7 @@ export const sendOrderNotificationToAdmin = async (
                               .map(
                                 (item) => `
                                 <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
-                                    <span>${item.name} Ã— ${item.quantity}</span>
+                                    <span>${item.name} × ${item.quantity}</span>
                                     <span style="font-weight: 600;">${formatCurrency(
                                       item.price * item.quantity,
                                     )}</span>
@@ -945,14 +950,14 @@ export const sendOrderNotificationToAdmin = async (
                             <div style="color: #234e52; font-size: 16px; font-weight: 600;">
                               ${
                                 order.paymentMethod === "cash_on_delivery"
-                                  ? "ðŸ’° Cash on Delivery"
-                                  : "ðŸ’³ Online Payment"
+                                  ? "💰 Cash on Delivery"
+                                  : "💳 Online Payment"
                               }
                             </div>
                         </div>
                         <div style="background: #feebc8; border-radius: 8px; padding: 15px; border-left: 4px solid #dd6b20;">
                             <div style="color: #7b341e; font-size: 13px; margin-bottom: 4px;">Order Status</div>
-                            <div style="color: #7b341e; font-size: 16px; font-weight: 600;">ðŸ“ ${
+                            <div style="color: #7b341e; font-size: 16px; font-weight: 600;">📝 ${
                               order.status || "Pending"
                             }</div>
                         </div>
@@ -976,15 +981,15 @@ export const sendOrderNotificationToAdmin = async (
 
     const mailOptions = {
       to: adminEmail,
-      subject: `ðŸš¨ NEW ORDER #${orderId} - ${customerName} - ${totalAmount}`,
+      subject: `🚨 NEW ORDER #${orderId} - ${customerName} - ${totalAmount}`,
       html: html,
     };
 
     await sendEmail(mailOptions);
-    console.log(`âœ… Admin notification sent for order #${orderId}`);
+    console.log(`✅ Admin notification sent for order #${orderId}`);
     return true;
   } catch (error) {
-    console.error("âŒ Error sending admin notification:", error);
+    console.error("❌ Error sending admin notification:", error);
     return false;
   }
 };
@@ -1017,7 +1022,7 @@ export const sendOrderConfirmedEmail = async (
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your YMA Bouncy Castle Booking Is Fully Confirmed âœ…</title>
+    <title>Your YMA Bouncy Castle Booking Is Fully Confirmed ✅</title>
     <style>
         @media only screen and (max-width: 600px) {
             .container { width: 100% !important; padding: 10px !important; }
@@ -1035,7 +1040,7 @@ export const sendOrderConfirmedEmail = async (
                 <td align="center" style="padding: 50px 30px 40px;">
                     <img src="${WHITE_LOGO_URL}" alt="YMA Bouncy Castle" style="max-width: 200px; height: auto; margin-bottom: 25px; filter: brightness(0) invert(1);" />
                     <h1 style="margin: 0 0 15px 0; color: white; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; text-align: center;">
-                        âœ… Booking Fully Confirmed!
+                        ✅ Booking Fully Confirmed!
                     </h1>
                     <p style="margin: 0; color: rgba(255, 255, 255, 0.95); font-size: 18px; line-height: 1.5; text-align: center;">
                         Hi ${customerName},
@@ -1051,7 +1056,7 @@ export const sendOrderConfirmedEmail = async (
                     <!-- Introduction -->
                     <div style="margin-bottom: 30px;">
                         <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                            Great news! ðŸŽ‰<br>
+                            Great news! 🎉<br>
                             Your booking with <strong>YMA Bouncy Castle</strong> has been reviewed and confirmed by our team.
                         </p>
                         <p style="margin: 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
@@ -1062,7 +1067,7 @@ export const sendOrderConfirmedEmail = async (
                     <!-- Confirmation Details -->
                     <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 5px solid #10b981;">
                         <h2 style="margin: 0 0 20px 0; color: #065f46; font-size: 22px; font-weight: 700;">
-                            âœ… Confirmed Booking Details
+                            ✅ Confirmed Booking Details
                         </h2>
                         <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 15px;">
                             <tr>
@@ -1091,7 +1096,7 @@ export const sendOrderConfirmedEmail = async (
                     <!-- What Happens Next -->
                     <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 5px solid #3b82f6;">
                         <h2 style="margin: 0 0 20px 0; color: #1e40af; font-size: 22px; font-weight: 700;">
-                            ðŸšš What Happens Next
+                            🚚 What Happens Next
                         </h2>
                         <ul style="margin: 0; padding-left: 20px; color: #1e40af;">
                             <li style="margin-bottom: 10px; font-size: 16px; line-height: 1.6;">
@@ -1109,7 +1114,7 @@ export const sendOrderConfirmedEmail = async (
                     <!-- Product Table -->
                     <div style="margin-bottom: 30px;">
                         <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 22px; font-weight: 700;">
-                            ðŸ“‹ Order Summary
+                            📋 Order Summary
                         </h2>
                         ${generateProductTable(order)}
                     </div>
@@ -1120,8 +1125,8 @@ export const sendOrderConfirmedEmail = async (
                             If you have any questions, want to add extras, or need help with anything else, feel free to give us a call or send a message on WhatsApp.
                         </p>
                         <p style="margin: 0; color: #5b21b6; font-size: 18px; font-weight: 700; line-height: 1.6;">
-                            Thank you for choosing YMA Bouncy Castle â€”<br>
-                            we're excited to be part of your celebration! ðŸŽˆ
+                            Thank you for choosing YMA Bouncy Castle —<br>
+                            we're excited to be part of your celebration! 🎈
                         </p>
                     </div>
                 </td>
@@ -1135,27 +1140,27 @@ export const sendOrderConfirmedEmail = async (
 </html>
     `;
 
-    const text = `YOUR YMA BOUNCY CASTLE BOOKING IS FULLY CONFIRMED âœ…
+    const text = `YOUR YMA BOUNCY CASTLE BOOKING IS FULLY CONFIRMED ✅
 
 Hi ${customerName},
 
-Great news! ðŸŽ‰
+Great news! 🎉
 Your booking with YMA Bouncy Castle has been reviewed and confirmed by our team.
 Everything is now locked in, and we're all set to deliver and set up for your event.
 
-âœ… CONFIRMED BOOKING DETAILS
+✅ CONFIRMED BOOKING DETAILS
 Order ID: ${orderId}
 Bouncy Castle: ${productName}
 Event Date: ${eventDate}
 Delivery Time: ${deliveryTime}
 Delivery Address: ${deliveryAddress}
 
-ðŸšš WHAT HAPPENS NEXT
-â€¢ Our delivery team will arrive around the confirmed delivery time
-â€¢ Please ensure someone is available at the address to receive and approve the setup
-â€¢ We'll take care of installation and safety checks
+🚚 WHAT HAPPENS NEXT
+• Our delivery team will arrive around the confirmed delivery time
+• Please ensure someone is available at the address to receive and approve the setup
+• We'll take care of installation and safety checks
 
-ðŸ“‹ ORDER SUMMARY
+📋 ORDER SUMMARY
 ${order.items
   .map(
     (item) =>
@@ -1190,26 +1195,26 @@ Total: ${formatCurrency(order.totalAmount)}
 
 If you have any questions, want to add extras, or need help with anything else, feel free to give us a call or send a message on WhatsApp.
 
-Thank you for choosing YMA Bouncy Castle â€” we're excited to be part of your celebration! ðŸŽˆ
+Thank you for choosing YMA Bouncy Castle — we're excited to be part of your celebration! 🎈
 
 Warm regards,
 YMA Bouncy Castle Team
-ðŸŒ www.ymabouncycastle.co.uk
-ðŸ“ž 07951 431111
+🌐 www.ymabouncycastle.co.uk
+📞 07951 431111
 `;
 
     const mailOptions = {
       to: customerEmail,
-      subject: `Your YMA Bouncy Castle Booking Is Fully Confirmed âœ…`,
+      subject: `Your YMA Bouncy Castle Booking Is Fully Confirmed ✅`,
       html: html,
       text: text,
     };
 
     await sendEmail(mailOptions);
-    console.log(`âœ… Order confirmed email sent to ${customerEmail}`);
+    console.log(`✅ Order confirmed email sent to ${customerEmail}`);
     return true;
   } catch (error) {
-    console.error("âŒ Error sending order confirmed email:", error);
+    console.error("❌ Error sending order confirmed email:", error);
     return false;
   }
 };
@@ -1258,7 +1263,7 @@ export const sendOrderCancellationEmail = async (
                 <td align="center" style="padding: 50px 30px 40px;">
                     <img src="${WHITE_LOGO_URL}" alt="YMA Bouncy Castle" style="max-width: 200px; height: auto; margin-bottom: 25px; filter: brightness(0) invert(1);" />
                     <h1 style="margin: 0 0 15px 0; color: white; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; text-align: center;">
-                        âŒ Order Cancelled
+                        ❌ Order Cancelled
                     </h1>
                     <p style="margin: 0; color: rgba(255, 255, 255, 0.95); font-size: 18px; line-height: 1.5; text-align: center;">
                         Hi ${customerName},
@@ -1281,7 +1286,7 @@ export const sendOrderCancellationEmail = async (
                     <!-- Cancellation Details -->
                     <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 5px solid #ef4444;">
                         <h2 style="margin: 0 0 20px 0; color: #991b1b; font-size: 22px; font-weight: 700;">
-                            âŒ Cancelled Order Details
+                            ❌ Cancelled Order Details
                         </h2>
                         <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 15px;">
                             <tr>
@@ -1317,7 +1322,7 @@ export const sendOrderCancellationEmail = async (
                     <!-- Next Steps -->
                     <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 5px solid #3b82f6;">
                         <h2 style="margin: 0 0 20px 0; color: #1e40af; font-size: 22px; font-weight: 700;">
-                            ðŸ”„ What To Do Next
+                            🔄 What To Do Next
                         </h2>
                         <div style="background: white; padding: 20px; border-radius: 8px; border: 2px solid #3b82f6;">
                             <p style="margin: 0 0 15px 0; color: #1e40af; font-size: 16px; line-height: 1.6;">
@@ -1329,7 +1334,7 @@ export const sendOrderCancellationEmail = async (
                         </div>
                         <div style="text-align: center; margin-top: 25px;">
                             <a href="tel:07951431111" style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 18px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);">
-                                ðŸ“ž 07951 431111
+                                📞 07951 431111
                             </a>
                         </div>
                     </div>
@@ -1337,7 +1342,7 @@ export const sendOrderCancellationEmail = async (
                     <!-- Cancelled Order Summary -->
                     <div style="margin-bottom: 30px;">
                         <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 22px; font-weight: 700;">
-                            ðŸ“‹ Cancelled Order Summary
+                            📋 Cancelled Order Summary
                         </h2>
                         ${generateProductTable(order, false)}
                     </div>
@@ -1346,7 +1351,7 @@ export const sendOrderCancellationEmail = async (
                     <div style="text-align: center; padding: 30px; background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-radius: 12px; margin-bottom: 30px;">
                         <p style="margin: 0; color: #4b5563; font-size: 18px; font-weight: 700; line-height: 1.6;">
                             Thank you for considering YMA Bouncy Castle.<br>
-                            We hope to be part of your celebration in the future ðŸŽˆ
+                            We hope to be part of your celebration in the future 🎈
                         </p>
                     </div>
                 </td>
@@ -1366,7 +1371,7 @@ Hi ${customerName},
 
 We're writing to confirm that your YMA Bouncy Castle order has been cancelled.
 
-âŒ CANCELLED ORDER DETAILS
+❌ CANCELLED ORDER DETAILS
 Order ID: ${orderId}
 Bouncy Castle: ${productName}
 Event Date: ${eventDate}
@@ -1375,9 +1380,9 @@ ${reason ? `Reason for cancellation: ${reason}` : ""}
 
 If this cancellation was requested by you, no further action is needed.
 If you believe this cancellation was made by mistake or you'd like to rebook for a different date or product, please get in touch with us as soon as possible and we'll be happy to help.
-ðŸ“ž 07951 431111
+📞 07951 431111
 
-ðŸ“‹ CANCELLED ORDER SUMMARY
+📋 CANCELLED ORDER SUMMARY
 ${order.items
   .map(
     (item) =>
@@ -1388,12 +1393,12 @@ ${order.items
   .join("\n")}
 
 Thank you for considering YMA Bouncy Castle.
-We hope to be part of your celebration in the future ðŸŽˆ
+We hope to be part of your celebration in the future 🎈
 
 Warm regards,
 YMA Bouncy Castle Team
-ðŸŒ www.ymabouncycastle.co.uk
-ðŸ“ž 07951 431111
+🌐 www.ymabouncycastle.co.uk
+📞 07951 431111
 `;
 
     const mailOptions = {
@@ -1404,10 +1409,10 @@ YMA Bouncy Castle Team
     };
 
     await sendEmail(mailOptions);
-    console.log(`âœ… Order cancellation email sent to ${customerEmail}`);
+    console.log(`✅ Order cancellation email sent to ${customerEmail}`);
     return true;
   } catch (error) {
-    console.error("âŒ Error sending order cancellation email:", error);
+    console.error("❌ Error sending order cancellation email:", error);
     return false;
   }
 };
@@ -1433,7 +1438,7 @@ export const sendDeliveryReminderEmail = async (
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>We're Preparing Your Bouncy Castle â€“ Delivery Reminder ðŸŽˆ</title>
+    <title>We're Preparing Your Bouncy Castle – Delivery Reminder 🎈</title>
     <style>
         @media only screen and (max-width: 600px) {
             .container { width: 100% !important; padding: 10px !important; }
@@ -1451,7 +1456,7 @@ export const sendDeliveryReminderEmail = async (
                 <td align="center" style="padding: 50px 30px 40px;">
                     <img src="${WHITE_LOGO_URL}" alt="YMA Bouncy Castle" style="max-width: 200px; height: auto; margin-bottom: 25px; filter: brightness(0) invert(1);" />
                     <h1 style="margin: 0 0 15px 0; color: white; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; text-align: center;">
-                        ðŸŽˆ Delivery Reminder
+                        🎈 Delivery Reminder
                     </h1>
                     <p style="margin: 0; color: rgba(255, 255, 255, 0.95); font-size: 18px; line-height: 1.5; text-align: center;">
                         Hi ${customerName},
@@ -1467,24 +1472,24 @@ export const sendDeliveryReminderEmail = async (
                     <!-- Introduction -->
                     <div style="margin-bottom: 30px;">
                         <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                            We're getting everything ready for your <strong>YMA Bouncy Castle</strong> ðŸŽ‰
+                            We're getting everything ready for your <strong>YMA Bouncy Castle</strong> 🎉
                         </p>
                         <p style="margin: 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
                             Our team is currently preparing your bouncy castle to ensure it arrives clean, safe, and ready for fun.
                         </p>
                         <p style="margin: 20px 0 0 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                            Please take a moment to review the important delivery details below ðŸ‘‡
+                            Please take a moment to review the important delivery details below 👇
                         </p>
                     </div>
 
                     <!-- Delivery Time Reminder -->
                     <div style="background: linear-gradient(135deg, #c7d2fe 0%, #a5b4fc 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 5px solid #4f46e5;">
                         <h2 style="margin: 0 0 20px 0; color: #3730a3; font-size: 22px; font-weight: 700;">
-                            ðŸšš Delivery Time Reminder
+                            🚚 Delivery Time Reminder
                         </h2>
                         <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #4f46e5;">
                             <p style="margin: 0 0 15px 0; color: #4f46e5; font-weight: 700; font-size: 18px;">
-                                ðŸ•’ ${selectedTime}
+                                🕒 ${selectedTime}
                             </p>
                             <ul style="margin: 0; padding-left: 20px; color: #4b5563;">
                                 <li style="margin-bottom: 10px; font-size: 15px;">
@@ -1506,7 +1511,7 @@ export const sendDeliveryReminderEmail = async (
                         ? `
                     <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 5px solid #10b981;">
                         <h2 style="margin: 0 0 20px 0; color: #065f46; font-size: 22px; font-weight: 700;">
-                            ðŸ’· Cash on Delivery Reminder
+                            💷 Cash on Delivery Reminder
                         </h2>
                         <div style="background: white; padding: 20px; border-radius: 8px; border: 2px dashed #10b981;">
                             <p style="margin: 0; color: #065f46; font-size: 17px; font-weight: 600;">
@@ -1524,7 +1529,7 @@ export const sendDeliveryReminderEmail = async (
                     <!-- Product Table -->
                     <div style="margin-bottom: 30px;">
                         <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 22px; font-weight: 700;">
-                            ðŸ“‹ Your Booking Details
+                            📋 Your Booking Details
                         </h2>
                         ${generateProductTable(order)}
                     </div>
@@ -1536,12 +1541,12 @@ export const sendDeliveryReminderEmail = async (
                         </p>
                         <div style="margin-bottom: 20px;">
                             <a href="tel:07951431111" style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);">
-                                ðŸ“ž 07951 431111
+                                📞 07951 431111
                             </a>
                         </div>
                         <p style="margin: 0; color: #5b21b6; font-size: 18px; font-weight: 700; line-height: 1.6;">
-                            Thank you for choosing YMA Bouncy Castle â€”<br>
-                            we look forward to delivering the fun! ðŸŽˆ
+                            Thank you for choosing YMA Bouncy Castle —<br>
+                            we look forward to delivering the fun! 🎈
                         </p>
                     </div>
                 </td>
@@ -1555,33 +1560,33 @@ export const sendDeliveryReminderEmail = async (
 </html>
     `;
 
-    const text = `WE'RE PREPARING YOUR BOUNCY CASTLE â€“ DELIVERY REMINDER ðŸŽˆ
+    const text = `WE'RE PREPARING YOUR BOUNCY CASTLE – DELIVERY REMINDER 🎈
 
 Hi ${customerName},
 
-We're getting everything ready for your YMA Bouncy Castle ðŸŽ‰
+We're getting everything ready for your YMA Bouncy Castle 🎉
 Our team is currently preparing your bouncy castle to ensure it arrives clean, safe, and ready for fun.
-Please take a moment to review the important delivery details below ðŸ‘‡
+Please take a moment to review the important delivery details below 👇
 
-ðŸšš DELIVERY TIME REMINDER
+🚚 DELIVERY TIME REMINDER
 We will arrive at your selected delivery time:
-ðŸ•’ ${selectedTime}
+🕒 ${selectedTime}
 
-â€¢ If you selected our standard delivery time, delivery will take place between 8:00 AM and 12:00 PM
-â€¢ If you selected a specific delivery time, please allow a 15-minute window in case of traffic or unexpected circumstances
-â€¢ Kindly make sure someone is available at the address during this time
+• If you selected our standard delivery time, delivery will take place between 8:00 AM and 12:00 PM
+• If you selected a specific delivery time, please allow a 15-minute window in case of traffic or unexpected circumstances
+• Kindly make sure someone is available at the address during this time
 
 ${
   order.paymentMethod === "cash_on_delivery"
     ? `
-ðŸ’· CASH ON DELIVERY REMINDER
+💷 CASH ON DELIVERY REMINDER
 Please have the exact amount ready when our driver arrives:
 ${formatCurrency(order.totalAmount)}
 `
     : ""
 }
 
-ðŸ“‹ YOUR BOOKING DETAILS
+📋 YOUR BOOKING DETAILS
 ${order.items
   .map(
     (item) =>
@@ -1615,28 +1620,28 @@ ${
 Total: ${formatCurrency(order.totalAmount)}
 
 If you have any questions, want to add extras, or need help with anything else, feel free to give us a call or send a message on WhatsApp.
-ðŸ“ž 07951 431111
+📞 07951 431111
 
-Thank you for choosing YMA Bouncy Castle â€” we look forward to delivering the fun! ðŸŽˆ
+Thank you for choosing YMA Bouncy Castle — we look forward to delivering the fun! 🎈
 
 Warm regards,
 YMA Bouncy Castle Team
-ðŸŒ www.ymabouncycastle.co.uk
-ðŸ“ž 07951 431111
+🌐 www.ymabouncycastle.co.uk
+📞 07951 431111
 `;
 
     const mailOptions = {
       to: customerEmail,
-      subject: `We're Preparing Your Bouncy Castle â€“ Delivery Reminder ðŸŽˆ`,
+      subject: `We're Preparing Your Bouncy Castle – Delivery Reminder 🎈`,
       html: html,
       text: text,
     };
 
     await sendEmail(mailOptions);
-    console.log(`âœ… Delivery reminder email sent to ${customerEmail}`);
+    console.log(`✅ Delivery reminder email sent to ${customerEmail}`);
     return true;
   } catch (error) {
-    console.error("âŒ Error sending delivery reminder email:", error);
+    console.error("❌ Error sending delivery reminder email:", error);
     return false;
   }
 };
