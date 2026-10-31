@@ -1,6 +1,11 @@
 // src/modules/order/email.service.ts
 import { sendEmail } from "../../utils/resendEmail.service";
 import { IOrderDocument } from "./order.interface";
+import {
+  invoiceNumberFor,
+  renderInvoiceHtml,
+  renderInvoicePdf,
+} from "./invoice.renderer";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -1151,20 +1156,33 @@ export const sendOrderCancelledEmail = async (
   }
 };
 
-// Send invoice email WITHOUT attachments
+// Send the invoice email with the PDF attached.
 export const sendInvoiceEmail = async (
   order: IOrderDocument
 ): Promise<void> => {
   try {
-    const html = emailTemplates.invoice(order);
+    const invoiceNumber = invoiceNumberFor(order);
+
+    let attachments: { filename: string; content: string }[] | undefined;
+    try {
+      const pdf = await renderInvoicePdf(order);
+      attachments = [
+        {
+          filename: `invoice-${order.orderNumber || "order"}.pdf`,
+          content: pdf.toString("base64"),
+        },
+      ];
+    } catch (pdfError) {
+      console.error("[Invoice] PDF generation failed:", pdfError);
+    }
 
     await sendEmail({
       to: order.shippingAddress.email,
       bcc: emailConfig.adminEmail,
-      subject: `🧾 Invoice #INV-${order.orderNumber} - YMA Bouncy Castle`,
-      html: html,
-      text: `Invoice for order ${order.orderNumber}. Total: £${order.totalAmount}.`,
-      // NO ATTACHMENTS - invoice is included in email body
+      subject: `🧾 Invoice ${invoiceNumber} - YMA Bouncy Castle`,
+      html: renderInvoiceHtml(order),
+      text: `Invoice ${invoiceNumber} for order ${order.orderNumber}. Total: £${order.totalAmount}.`,
+      attachments,
     });
 
     console.log(`✅ Invoice email sent to ${order.shippingAddress.email}`);

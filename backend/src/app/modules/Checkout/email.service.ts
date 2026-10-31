@@ -2,6 +2,11 @@
 import dotenv from "dotenv";
 import { IOrderDocument } from "../../modules/Order/order.interface";
 import { sendEmail } from "../../utils/resendEmail.service";
+import {
+  invoiceNumberFor,
+  renderInvoiceHtml,
+  renderInvoicePdf,
+} from "../Order/invoice.renderer";
 dotenv.config();
 
 // Helper functions
@@ -251,6 +256,51 @@ const generateProductTable = (
 };
 
 // ==================== 1. ORDER RECEIVED EMAIL ====================
+/**
+ * The order receipt and invoice in one email: the invoice is the body, with a
+ * PDF copy attached. This replaces the old "order received" email at checkout.
+ */
+export const sendInvoiceEmail = async (
+  order: IOrderDocument,
+): Promise<boolean> => {
+  try {
+    const adminEmail =
+      process.env.ADMIN_EMAIL || "admin@ymabouncycastle.co.uk";
+    const invoiceNumber = invoiceNumberFor(order);
+
+    let attachments: { filename: string; content: string }[] | undefined;
+    try {
+      const pdf = await renderInvoicePdf(order);
+      attachments = [
+        {
+          filename: `invoice-${order.orderNumber || "order"}.pdf`,
+          content: pdf.toString("base64"),
+        },
+      ];
+    } catch (pdfError) {
+      // The email still goes out, just without the attachment.
+      console.error("[Invoice] PDF generation failed:", pdfError);
+    }
+
+    await sendEmail({
+      to: order.shippingAddress.email,
+      bcc: adminEmail,
+      subject: `🧾 Invoice ${invoiceNumber} — YMA Bouncy Castle`,
+      html: renderInvoiceHtml(order),
+      text: `Thanks for your order #${order.orderNumber}. Your invoice ${invoiceNumber} totals £${Number(
+        order.totalAmount || 0,
+      ).toFixed(2)}.`,
+      attachments,
+    });
+
+    console.log(`✅ Invoice email sent to ${order.shippingAddress.email}`);
+    return true;
+  } catch (error) {
+    console.error("❌ Failed to send invoice email:", error);
+    return false;
+  }
+};
+
 export const sendOrderReceivedEmail = async (
   order: IOrderDocument,
 ): Promise<boolean> => {

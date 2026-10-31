@@ -12,7 +12,7 @@ import bcrypt from "bcryptjs";
 import { PromoService } from "../../modules/promos/promos.service";
 import crypto from "crypto";
 import {
-  sendOrderReceivedEmail,
+  sendInvoiceEmail,
   sendOrderNotificationToAdmin,
   sendUserCredentialsEmail,
   sendOrderConfirmedEmail,
@@ -380,7 +380,7 @@ export const checkoutFromCart = asyncHandler(
 
       // Send emails (non-critical, won't fail the response)
       try {
-        await sendOrderReceivedEmail(createdOrder);
+        await sendInvoiceEmail(createdOrder);
         await sendOrderNotificationToAdmin(createdOrder);
 
         if (isNewUser && password) {
@@ -1025,8 +1025,8 @@ export const quickCheckout = asyncHandler(
         ).catch((err) => console.error("Credentials Email Failed", err));
       }
 
-      sendOrderReceivedEmail(order).catch((err) =>
-        console.error("Order Receipt Email Failed", err),
+      sendInvoiceEmail(order).catch((err) =>
+        console.error("Invoice Email Failed", err),
       );
 
       //       // Send emails (non-critical, won't fail the response)

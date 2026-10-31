@@ -13,6 +13,13 @@ interface SendMailOptions {
   subject: string;
   html?: string;
   text?: string;
+  attachments?: EmailAttachment[];
+}
+
+export interface EmailAttachment {
+  filename: string;
+  /** Base64-encoded file contents, as the Resend API expects. */
+  content: string;
 }
 
 interface ParsedEmailAddress {
@@ -82,6 +89,7 @@ export const sendEmail = async (options: SendMailOptions) => {
     subject: options.subject,
     html: options.html,
     text: options.text,
+    attachments: options.attachments,
   };
 
   const logContext = {

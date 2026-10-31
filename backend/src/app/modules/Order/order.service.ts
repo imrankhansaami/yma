@@ -17,13 +17,13 @@ import {
   IShippingAddress,
 } from "./order.interface";
 import {
-  sendOrderReceivedEmail,
   sendOrderConfirmedEmail,
   sendDeliveryReminderEmail,
   sendOrderCancelledEmail,
   sendInvoiceEmail,
   notifyAdminNewOrder,
 } from "./email.service";
+import { renderInvoiceHtml } from "./invoice.renderer";
 
 const parseDateBoundary = (
   raw: string,
@@ -257,7 +257,7 @@ export const createOrder = async (
     await session.commitTransaction();
 
     Promise.allSettled([
-      sendOrderReceivedEmail(order),
+      sendInvoiceEmail(order),
       notifyAdminNewOrder(order),
     ]).catch((err) => console.error("Email notification failed:", err));
 
@@ -1187,7 +1187,7 @@ export const downloadInvoice = async (
     throw new ApiError("You are not authorized to download this invoice", 403);
   }
 
-  const html = generateInvoiceHtml(order);
+  const html = renderInvoiceHtml(order);
   const filename = `invoice-${order.orderNumber}.html`;
 
   return { html, filename };
@@ -1212,7 +1212,7 @@ export const previewInvoice = async (
     throw new ApiError("You are not authorized to view this invoice", 403);
   }
 
-  return generateInvoiceHtml(order);
+  return renderInvoiceHtml(order);
 };
 
 const generateInvoiceHtml = (order: IOrderDocument): string => {
