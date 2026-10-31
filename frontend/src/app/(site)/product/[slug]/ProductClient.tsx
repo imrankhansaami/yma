@@ -336,6 +336,25 @@ export default function ProductClient({
     [isBooked, today],
   );
 
+  // Every "Other Options" entry starts ticked (quantity 1). Seeded once per
+  // product, so a refetch never re-ticks an option the customer has unticked.
+  const extrasSeededFor = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    const options = (product?.extraOptions ?? []).filter(
+      (option) => option.enabled !== false,
+    );
+    const productKey = String(product?.id ?? productSlug ?? "");
+    if (!productKey || !options.length) return;
+    if (extrasSeededFor.current === productKey) return;
+    extrasSeededFor.current = productKey;
+    setSelectedExtras(
+      options.reduce<Record<string, number>>((acc, option) => {
+        acc[option.key] = 1;
+        return acc;
+      }, {}),
+    );
+  }, [product, productSlug]);
+
   const isMissing = (!product && !isLoading) || isError;
 
   if (isLoading) {
