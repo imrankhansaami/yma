@@ -252,27 +252,6 @@ export default function CheckoutForm({
     }
   }, [paymentMethodProp, paymentMethod, setValue]);
 
-  // Shipping status for the SHIPMENT block. Deliberately mirrors OrderOverview
-  // so the form and the order summary can never disagree: the standard windows
-  // (delivery 8AM–12PM, collection after 5PM) are free, fixed deliveries are
-  // £10, fixed collections £10 (£15 at 7:30 PM, £30 at 8:30 PM) and Overnight
-  // Collection £40.
-  const deliveryLabel = watch("deliveryTime") || "";
-  const collectionLabel = watch("collectionTime") || "";
-  const deliveryCharge =
-    /standard/i.test(deliveryLabel) || !deliveryLabel ? 0 : 10;
-  const collectionCharge =
-    /standard/i.test(collectionLabel) || !collectionLabel
-      ? 0
-      : /overnight/i.test(collectionLabel)
-        ? 40
-        : /8:30/i.test(collectionLabel)
-          ? 30
-          : /7:30/i.test(collectionLabel)
-            ? 15
-            : 10;
-  const shippingFee = deliveryCharge + collectionCharge;
-
   /**
    * Fills the address block a picked Google suggestion belongs to. Only the
    * parts we actually received are written, so anything typed by hand survives.
@@ -921,42 +900,6 @@ export default function CheckoutForm({
               </div>
             </div>
           )}
-
-          {/* Shipment. Personal orders show the shipping status for the times
-              chosen above; the charge itself still follows the delivery rules. */}
-          {purchaseType === PURCHASE_TYPE_OPTIONS[0] ? (
-            <div className="md:col-span-2 space-y-2 min-w-0 w-full">
-              <p className="text-[13px] font-semibold uppercase tracking-wide text-ink-700">
-                Shipment
-              </p>
-              <label
-                htmlFor="shippingFree"
-                className="flex items-start gap-3 rounded-lg border border-slate-200 px-4 py-3 cursor-default"
-              >
-                <input
-                  id="shippingFree"
-                  type="radio"
-                  name="shipping"
-                  value="default"
-                  checked
-                  onChange={() => {}}
-                  className="mt-0.5 h-4 w-4 accent-brand-orange-500"
-                />
-                <span className="space-y-0.5">
-                  <span className="block text-sm font-medium text-ink-900">
-                    {shippingFee === 0
-                      ? "Free shipping"
-                      : `Delivery & collection — £${shippingFee.toFixed(2)}`}
-                  </span>
-                  <span className="block text-xs leading-5 text-ink-700">
-                    {shippingFee === 0
-                      ? "Your chosen delivery and collection times are both free."
-                      : "Your chosen delivery or collection times carry a fee."}
-                  </span>
-                </span>
-              </label>
-            </div>
-          ) : null}
 
           {/* Payment method. The existing option stays on top; the business
               bank-transfer option is added underneath it. */}
