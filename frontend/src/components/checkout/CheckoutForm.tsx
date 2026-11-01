@@ -641,6 +641,87 @@ export default function CheckoutForm({
             </div>
           </div>
 
+          {/* Delivery address (conditional). Sits directly under the tick so
+              the fields it reveals appear right where the customer is. */}
+          {shipDifferentLive && (
+            <div className="col-span-1 md:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="First Name" id="shipFirstName" required>
+                  <Input
+                    id="shipFirstName"
+                    placeholder="Enter first name"
+                    className={`${baseInput} ${
+                      errors.shipFirstName ? errorBorder : ""
+                    }`}
+                    {...register("shipFirstName")}
+                  />
+                  <ErrorText msg={errors.shipFirstName?.message} />
+                </Field>
+
+                <Field label="Last Name" id="shipLastName" required>
+                  <Input
+                    id="shipLastName"
+                    placeholder="Enter last name"
+                    className={`${baseInput} ${
+                      errors.shipLastName ? errorBorder : ""
+                    }`}
+                    {...register("shipLastName")}
+                  />
+                  <ErrorText msg={errors.shipLastName?.message} />
+                </Field>
+
+                <Field label="Street Address" id="shipStreet1" required>
+                  <AddressAutocomplete
+                    id="shipStreet1"
+                    placeholder="House number & street name"
+                    className={`${baseInput} ${
+                      errors.shipStreet1 ? errorBorder : ""
+                    }`}
+                    inputProps={register("shipStreet1")}
+                    onSelect={(parts) => applyAddressParts(parts, "alt")}
+                  />
+                  <ErrorText msg={errors.shipStreet1?.message} />
+                </Field>
+
+                <Field label="Town/City" id="shipTownCity" required>
+                  <Input
+                    id="shipTownCity"
+                    placeholder="Enter your city name"
+                    className={`${baseInput} ${
+                      errors.shipTownCity ? errorBorder : ""
+                    }`}
+                    {...register("shipTownCity")}
+                  />
+                  <ErrorText msg={errors.shipTownCity?.message} />
+                </Field>
+
+                <Field label="State/County" id="shipStateCounty">
+                  <Input
+                    id="shipStateCounty"
+                    placeholder="Enter your state"
+                    className={`${baseInput} ${
+                      errors.shipStateCounty ? errorBorder : ""
+                    }`}
+                    {...register("shipStateCounty")}
+                  />
+                  <ErrorText msg={errors.shipStateCounty?.message} />
+                </Field>
+
+                <Field label="Postal / Zip code" id="shipPostalCode" required>
+                  <Input
+                    id="shipPostalCode"
+                    placeholder="Enter postal/zip code"
+                    className={`${baseInput} ${
+                      errors.shipPostalCode ? errorBorder : ""
+                    }`}
+                    {...register("shipPostalCode")}
+                  />
+                  <ErrorText msg={errors.shipPostalCode?.message} />
+                </Field>
+              </div>
+            </div>
+          )}
+
           {/* Delivery Time + tooltip */}
           <div className="space-y-1.5 min-w-0 w-full">
             <div className="flex items-center gap-2">
@@ -819,87 +900,6 @@ export default function CheckoutForm({
               <option>Corporate Funday</option>
             </select>
           </div>
-
-          {/* Secondary address block (conditional). Shows the full delivery
-              address when the customer ticks "Deliver to a Different Address?". */}
-          {shipDifferentLive && (
-            <div className="col-span-1 md:col-span-2">
-              <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="First Name" id="shipFirstName" required>
-                  <Input
-                    id="shipFirstName"
-                    placeholder="Enter first name"
-                    className={`${baseInput} ${
-                      errors.shipFirstName ? errorBorder : ""
-                    }`}
-                    {...register("shipFirstName")}
-                  />
-                  <ErrorText msg={errors.shipFirstName?.message} />
-                </Field>
-
-                <Field label="Last Name" id="shipLastName" required>
-                  <Input
-                    id="shipLastName"
-                    placeholder="Enter last name"
-                    className={`${baseInput} ${
-                      errors.shipLastName ? errorBorder : ""
-                    }`}
-                    {...register("shipLastName")}
-                  />
-                  <ErrorText msg={errors.shipLastName?.message} />
-                </Field>
-
-                <Field label="Street Address" id="shipStreet1" required>
-                  <AddressAutocomplete
-                    id="shipStreet1"
-                    placeholder="House number & street name"
-                    className={`${baseInput} ${
-                      errors.shipStreet1 ? errorBorder : ""
-                    }`}
-                    inputProps={register("shipStreet1")}
-                    onSelect={(parts) => applyAddressParts(parts, "alt")}
-                  />
-                  <ErrorText msg={errors.shipStreet1?.message} />
-                </Field>
-
-                <Field label="Town/City" id="shipTownCity" required>
-                  <Input
-                    id="shipTownCity"
-                    placeholder="Enter your city name"
-                    className={`${baseInput} ${
-                      errors.shipTownCity ? errorBorder : ""
-                    }`}
-                    {...register("shipTownCity")}
-                  />
-                  <ErrorText msg={errors.shipTownCity?.message} />
-                </Field>
-
-                <Field label="State/County" id="shipStateCounty">
-                  <Input
-                    id="shipStateCounty"
-                    placeholder="Enter your state"
-                    className={`${baseInput} ${
-                      errors.shipStateCounty ? errorBorder : ""
-                    }`}
-                    {...register("shipStateCounty")}
-                  />
-                  <ErrorText msg={errors.shipStateCounty?.message} />
-                </Field>
-
-                <Field label="Postal / Zip code" id="shipPostalCode" required>
-                  <Input
-                    id="shipPostalCode"
-                    placeholder="Enter postal/zip code"
-                    className={`${baseInput} ${
-                      errors.shipPostalCode ? errorBorder : ""
-                    }`}
-                    {...register("shipPostalCode")}
-                  />
-                  <ErrorText msg={errors.shipPostalCode?.message} />
-                </Field>
-              </div>
-            </div>
-          )}
 
           {/* Payment method. The existing option stays on top; the business
               bank-transfer option is added underneath it. */}
