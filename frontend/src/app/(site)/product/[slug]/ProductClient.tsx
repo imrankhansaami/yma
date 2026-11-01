@@ -793,15 +793,17 @@ export default function ProductClient({
                                     </span>
                                   </span>
                                 )}
-                                <span className="shrink-0 text-[13px] font-medium text-brand-ink-900">
-                                  £{option.price}
-                                  {option.pricingType === "per_day" ? (
-                                    <span className="text-[11px] font-normal text-brand-zinc-400">
-                                      {" "}
-                                      / day
-                                    </span>
-                                  ) : null}
-                                </span>
+                                {option.price > 0 ? (
+                                  <span className="shrink-0 text-[13px] font-medium text-brand-ink-900">
+                                    £{option.price}
+                                    {option.pricingType === "per_day" ? (
+                                      <span className="text-[11px] font-normal text-brand-zinc-400">
+                                        {" "}
+                                        / day
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                ) : null}
                               </div>
                             );
                           })}
