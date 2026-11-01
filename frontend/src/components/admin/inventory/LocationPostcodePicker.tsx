@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import api from "@/api/api";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAdminToast } from "@/components/ui/admin-toast";
+import { comparePostcodes, sortPostcodes } from "@/lib/locations";
 import { cn } from "@/lib/utils";
 
 export type PostcodeChoice = {
@@ -81,7 +82,9 @@ export default function LocationPostcodePicker({
       }))
       // Hide soft-deleted locations so a removed area cannot be re-selected.
       .filter((l) => l.isActive)
-      .filter((l) => l.name || l.postcode);
+      .filter((l) => l.name || l.postcode)
+      // A-Z with the number in order: CM5 before CM14, E2 before E10.
+      .sort((a, b) => comparePostcodes(labelOf(a), labelOf(b)));
 
     const term = query.trim().toLowerCase();
     if (!term) return cleaned;
@@ -208,7 +211,7 @@ export default function LocationPostcodePicker({
                 Select postcodes this product covers
               </span>
             ) : (
-              selected.map((s) => (
+              sortPostcodes(selected).map((s) => (
                 <span
                   key={s}
                   className="px-2 py-[2px] rounded bg-brand-gray-110 text-brand-ink-950 text-[12px]"

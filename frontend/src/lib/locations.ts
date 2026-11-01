@@ -129,11 +129,36 @@ export function isDistrictLocation(
   return POSTCODE_DISTRICT.test(String(name || "").trim());
 }
 
-/** The subset of a location list that a delivery filter can use. */
+/**
+ * Natural A-Z order for postcode districts: CM5 before CM14, E2 before E10.
+ *
+ * A plain string sort reads as unsorted to anyone looking at the list ("CM5"
+ * after "CM23", "E2" after "E17"), so every postcode list uses this.
+ */
+export function comparePostcodes(a: string, b: string): number {
+  return String(a ?? "")
+    .trim()
+    .localeCompare(String(b ?? "").trim(), "en", {
+      numeric: true,
+      sensitivity: "base",
+    });
+}
+
+/** The same list, in natural postcode order. */
+export function sortPostcodes<T extends string>(codes: T[]): T[] {
+  return [...codes].sort(comparePostcodes);
+}
+
+/** The subset of a location list that a delivery filter can use, in A-Z order. */
 export function districtLocations<T>(locations: T[] | null | undefined): T[] {
-  return (Array.isArray(locations) ? locations : []).filter((loc) =>
-    isDistrictLocation(loc as { name?: string }),
-  );
+  return (Array.isArray(locations) ? locations : [])
+    .filter((loc) => isDistrictLocation(loc as { name?: string }))
+    .sort((a, b) =>
+      comparePostcodes(
+        String((a as { name?: string })?.name ?? ""),
+        String((b as { name?: string })?.name ?? ""),
+      ),
+    );
 }
 
 function toTitle(value: string) {
