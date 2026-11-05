@@ -162,11 +162,11 @@ export default function Footer() {
             © {new Date().getFullYear()} YMA Bouncy Castle– Fun Supplier.{" "}
             <span className="text-brand-gray-175">Developed By</span>{" "}
             <Link
-              href="https://butterflydigital.ca"
+              href="https://simplif-ai.co"
               target="_blank"
               className="underline hover:text-white"
             >
-              Butterfly Digital
+              SimplifAI
             </Link>
           </p>
         </div>
