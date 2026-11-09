@@ -1014,6 +1014,51 @@ export const deleteProduct = async (productId: string): Promise<void> => {
 };
 
 /* =========================
+   DUPLICATE PRODUCT
+========================= */
+/**
+ * Copy a product into a new draft.
+ *
+ * Everything the admin filled in travels with the copy (copy, price, images,
+ * categories, options, location, certificates). Identity fields do not: the
+ * copy gets its own id, a slug built from its new name (the model hook makes it
+ * unique) and no URL aliases, so the original's addresses stay with the
+ * original. Ratings describe the original listing, so they start at zero.
+ */
+export const duplicateProduct = async (productId: string): Promise<any> => {
+  if (!Types.ObjectId.isValid(productId)) {
+    throw new ApiError("Invalid product ID", 400);
+  }
+
+  const source = await Product.findById(productId).lean();
+  if (!source) {
+    throw new ApiError("Product not found", 404);
+  }
+
+  const {
+    _id,
+    createdAt,
+    updatedAt,
+    __v,
+    slug,
+    slugAliases,
+    ...fields
+  } = source as any;
+
+  const copy = await Product.create({
+    ...fields,
+    name: `${String(fields.name || "Product").trim()} (Copy)`,
+    slugAliases: [],
+    // A copy starts as a draft until the admin has reviewed it.
+    isActive: false,
+    ratingsAverage: 0,
+    ratingsQuantity: 0,
+  });
+
+  return copy.populate("categories", "name description");
+};
+
+/* =========================
    PRODUCTS BY STATE
 ========================= */
 export const getProductsByState = async (

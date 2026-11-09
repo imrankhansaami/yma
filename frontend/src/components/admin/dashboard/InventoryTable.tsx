@@ -1,9 +1,9 @@
 "use client";
 
-import { Eye } from "lucide-react";
+import { Eye, Copy } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import SampleImage from "@/assets/images/bg1.png";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { TableFooter } from "@/components/admin/shared/TableFooter";
+import { useAdminToast } from "@/components/ui/admin-toast";
 import ProductDetailsModal from "../inventory/ProductDetailsModal";
-import type { ApiProduct } from "@/services/product.service";
+import { duplicateProduct, type ApiProduct } from "@/services/product.service";
 import { fetchCategories } from "@/services/category.service";
 
 type ProductStatus = "Active" | "Paused";
@@ -65,10 +66,33 @@ export function InventoryTable({
   onPageChange,
 }: InventoryTableProps) {
   const [selectedProduct, setSelectedProduct] = useState<ApiProduct | null>(null);
+  const queryClient = useQueryClient();
+  const { notify } = useAdminToast();
   const { data: categories = [] } = useQuery({
     queryKey: ["admin-categories"],
     queryFn: fetchCategories,
     staleTime: 5 * 60 * 1000,
+  });
+
+  // Duplicate makes a draft copy the admin can edit and publish.
+  const duplicateMutation = useMutation({
+    mutationFn: (productId: string) => duplicateProduct(productId),
+    onSuccess: (copy) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      notify({
+        title: "Product duplicated",
+        message: `${copy?.name ?? "The copy"} was saved as a draft.`,
+        variant: "success",
+      });
+    },
+    onError: (error: any) => {
+      notify({
+        title: "Could not duplicate",
+        message: error?.response?.data?.message || "Please try again.",
+        variant: "error",
+      });
+    },
   });
 
   const categoryNameById = useMemo(() => {
@@ -271,14 +295,27 @@ export function InventoryTable({
 
                       {/* Action */}
                       <TableCell className="px-4 py-4 text-right">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8 rounded-lg border-brand-gray-125 bg-white text-brand-black-950 hover:bg-brand-gray-50"
-                          onClick={() => setSelectedProduct(row.original)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg border-brand-gray-125 bg-white text-brand-black-950 hover:bg-brand-gray-50"
+                            title="Duplicate as a draft"
+                            aria-label={`Duplicate ${row.productName}`}
+                            disabled={duplicateMutation.isPending}
+                            onClick={() => duplicateMutation.mutate(String(row.id))}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg border-brand-gray-125 bg-white text-brand-black-950 hover:bg-brand-gray-50"
+                            onClick={() => setSelectedProduct(row.original)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

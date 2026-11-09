@@ -461,6 +461,15 @@ export async function deleteProduct(productId: string): Promise<void> {
   await api.delete(`/products/${productId}`);
 }
 
+/**
+ * Copy a product into a new draft (inactive) product. The copy gets its own id
+ * and a unique URL slug; everything else travels with it.
+ */
+export async function duplicateProduct(productId: string): Promise<ApiProduct> {
+  const res = await api.post(`/products/${productId}/duplicate`);
+  return res.data?.product ?? res.data?.data?.product ?? res.data?.data;
+}
+
 export async function updateProduct(productId: string, data: FormData): Promise<ApiProduct> {
   const res = await api.patch(`/products/${productId}`, data, {
     headers: {

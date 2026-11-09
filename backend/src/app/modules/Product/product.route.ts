@@ -19,6 +19,7 @@ import {
   markAsTopPick,
   getTopPicks,
   getProductBySlug,
+  duplicateProduct,
   // ADD THESE NEW IMPORTS:
   getFrequentlyBoughtTogether,
   getCartRecommendations,
@@ -86,6 +87,11 @@ router.delete(
   "/:id",
   restrictTo("superadmin", "admin", "editor"),
   deleteProduct,
+);
+router.post(
+  "/:id/duplicate",
+  restrictTo("superadmin", "admin", "editor"),
+  duplicateProduct,
 );
 router.patch(
   "/:id/stock",

@@ -745,6 +745,22 @@ export const getProductBySlug = asyncHandler(
   },
 );
 
+/* =========================
+   DUPLICATE PRODUCT (admin)
+========================= */
+export const duplicateProduct = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const copy = await productService.duplicateProduct(req.params.id);
+
+    // The copy is a draft, so nothing on the storefront changes yet.
+    res.status(201).json({
+      status: "success",
+      message: `${copy?.name || "Product"} saved as a draft`,
+      data: { product: copy },
+    });
+  },
+);
+
 export const deleteProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const productId = req.params.id;
