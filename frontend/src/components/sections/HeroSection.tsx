@@ -51,6 +51,7 @@ export const DEFAULT_HERO: HeroContent = {
     { label: "Garden Games", category: "Garden Games" },
     { label: "Obstacle Slides", category: "Obstacle Course/Slides" },
     { label: "Fun Food", category: "Fun Food" },
+    { label: "Marquee & Chairs", category: "Marquee, chairs and table" },
   ],
 };
 
@@ -61,14 +62,7 @@ const PILL_STYLES = [
   "bg-brand-cyan-500 hover:bg-brand-cyan-600 shadow-brand-cyan-500 hover:shadow-brand-cyan-600",
   "bg-brand-orange-500 hover:bg-brand-orange-600 shadow-brand-orange-500 hover:shadow-brand-orange-600",
   "bg-brand-emerald-600 hover:bg-brand-green-650 shadow-brand-emerald-600 hover:shadow-brand-green-650",
-];
-
-const PILL_WRAPPER = [
-  "",
-  "",
-  "",
-  "",
-  "col-span-2 sm:col-span-1 justify-self-center w-full max-w-[210px] sm:max-w-none",
+  "bg-brand-red-600 hover:bg-brand-red-700 shadow-brand-red-600 hover:shadow-brand-red-700",
 ];
 
 export default function HeroSection({ content }: { content?: HeroContent }) {
@@ -618,7 +612,7 @@ export default function HeroSection({ content }: { content?: HeroContent }) {
           </div>
 
           <div className="mt-10 lg:mt-32">
-            <div className="grid grid-cols-2 gap-4 sm:gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-4 sm:gap-2 sm:grid-cols-3 lg:grid-cols-6">
               {pills.map((pill, index) => (
                 <Button
                   key={`${pill.label}-${index}`}
@@ -628,7 +622,7 @@ export default function HeroSection({ content }: { content?: HeroContent }) {
                   }
                   className={`w-full rounded-full px-6 py-5 text-white font-bold text-base md:text-[22px] whitespace-normal shadow-[0_3px_0_var(--alpha-black-30)] border border-white transition-colors duration-300 ${
                     PILL_STYLES[index % PILL_STYLES.length]
-                  } ${PILL_WRAPPER[index] ?? ""}`}
+                  }`}
                 >
                   {pill.label}{" "}
                   <ChevronRight className="ml-2 h-5 w-5 font-bold" />
