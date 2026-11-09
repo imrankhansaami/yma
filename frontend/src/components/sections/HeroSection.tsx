@@ -65,6 +65,14 @@ const PILL_STYLES = [
   "bg-brand-red-600 hover:bg-brand-red-700 shadow-brand-red-600 hover:shadow-brand-red-700",
 ];
 
+/**
+ * Labels shortened for the six-across desktop row, where the pills are narrow;
+ * phones (and the three-across tablet row) keep the full label.
+ */
+const COMPACT_DESKTOP_LABELS: Record<string, string> = {
+  "Marquee & Chairs": "Marquee",
+};
+
 export default function HeroSection({ content }: { content?: HeroContent }) {
   const hero = { ...DEFAULT_HERO, ...(content || {}) };
   const pills = hero.pills?.length ? hero.pills : DEFAULT_HERO.pills;
@@ -624,7 +632,16 @@ export default function HeroSection({ content }: { content?: HeroContent }) {
                     PILL_STYLES[index % PILL_STYLES.length]
                   }`}
                 >
-                  {pill.label}{" "}
+                  {COMPACT_DESKTOP_LABELS[pill.label] ? (
+                    <>
+                      <span className="lg:hidden">{pill.label}</span>
+                      <span className="hidden lg:inline">
+                        {COMPACT_DESKTOP_LABELS[pill.label]}
+                      </span>
+                    </>
+                  ) : (
+                    pill.label
+                  )}{" "}
                   <ChevronRight className="ml-2 h-5 w-5 font-bold" />
                 </Button>
               ))}
