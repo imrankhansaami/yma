@@ -299,8 +299,14 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     if (data.canonicalUrl) formData.append("canonicalUrl", data.canonicalUrl);
     if (data.customJsonLd) formData.append("customJsonLd", data.customJsonLd);
     formData.append("price", String(data.price));
-    formData.append("stock", "1");
-    formData.append("isActive", "true");
+    formData.append("stock", String(data.stock ?? 1));
+    // A new product starts active. On edit the product keeps the status it has:
+    // the modal's Active/Paused switch changes that on its own, so saving the
+    // form must not quietly publish a paused product or a draft copy.
+    formData.append(
+      "isActive",
+      isEdit ? String((initialData as any)?.isActive !== false) : "true",
+    );
 
     // Dimensions - Try brackets for safer nesting
     formData.append("dimensions[length]", String(data.dimensions.length));
@@ -970,7 +976,25 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
              {errors.price && <p className="text-red-500 text-xs">{errors.price.message}</p>}
           </div>
 
-          <input {...register("stock")} type="hidden" value={1} />
+          <div className="flex flex-col gap-[6px]">
+            <label className="text-[14px] font-medium text-brand-black-950">
+              Quantity
+            </label>
+            <input
+              {...register("stock")}
+              type="number"
+              min={1}
+              step={1}
+              className="bg-white border border-brand-gray-125 rounded-[8px] px-[12px] py-[7px] text-[14px] w-full focus:outline-none focus:border-brand-orange-500"
+            />
+            <p className="text-[12px] text-brand-zinc-400">
+              How many units you own. Customers can book up to this many for the
+              same dates, and each unit frees itself when its hire ends.
+            </p>
+            {errors.stock && (
+              <p className="text-red-500 text-xs">{errors.stock.message}</p>
+            )}
+          </div>
 
           <div className="flex flex-col gap-[6px]">
             <label className="text-[14px] font-medium text-brand-black-950">Delivery Fee</label>

@@ -20,7 +20,12 @@ export const addProductSchema = yup.object().shape({
   
   // Pricing & Stock
   price: yup.number().typeError("Price must be a number").required("Price is required"),
-  stock: yup.number().typeError("Stock must be a number").default(1),
+  stock: yup
+    .number()
+    .typeError("Quantity must be a number")
+    .integer("Quantity must be a whole number")
+    .min(1, "Quantity must be at least 1")
+    .default(1),
   
   // Dimensions
   dimensions: yup.object().shape({

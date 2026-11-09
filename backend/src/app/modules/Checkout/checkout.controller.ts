@@ -167,17 +167,14 @@ const validateAndProcessCartItems = async (cartItems: any[], session: any) => {
       throw new ApiError(`Product not found: ${cartItem.productId}`, 404);
     }
 
-    // Check stock (show actual numbers)
+    // Check stock (show actual numbers). `stock` is the number of units that
+    // exist; the unit is only held for the booked dates (see quickCheckout).
     if (product.stock < cartItem.quantity) {
       throw new ApiError(
         `${product.name}: Available ${product.stock}, Requested ${cartItem.quantity}`,
         400,
       );
     }
-
-    // Update product stock
-    product.stock -= cartItem.quantity;
-    await product.save({ session });
 
     // Use cart item price or product price
     const price = cartItem.price || product.price || 0;
@@ -677,19 +674,14 @@ export const cancelOrder = asyncHandler(async (req: Request, res: Response) => {
   order.cancellationReason = reason;
   await order.save();
 
-  // Return stock
-  const restoredProductIds: string[] = [];
-  for (const item of order.items) {
-    const product = await Product.findById(item.product);
-    if (product) {
-      product.stock += item.quantity;
-      await product.save();
-      restoredProductIds.push(String(product._id));
-    }
-  }
+  // Nothing to put back: a booking never took a unit out of `stock`, it only
+  // held it for its dates. Cancelling simply frees those dates again.
+  const freedProductIds = (order.items || [])
+    .map((item: any) => String(item?.product || ""))
+    .filter(Boolean);
 
   // The products may be free again — refresh the cached storefront copies.
-  productTagsForIds(restoredProductIds)
+  productTagsForIds(freedProductIds)
     .then((tags) => revalidatePaths([], tags))
     .catch(() => undefined);
 
@@ -936,9 +928,9 @@ export const quickCheckout = asyncHandler(
         if (product.stock < quantity)
           throw new ApiError(`${product.name} out of stock`, 400);
 
-        // A product is a single unit: refuse dates it is already booked for.
-        // The storefront hides booked products, but a direct link (or two
-        // customers at the same time) could still reach checkout.
+        // `stock` is how many units exist, not a counter that a booking keeps.
+        // A unit is held only for the booked dates, so the quantity is checked
+        // against overlapping orders (below) and never drawn down here.
         const bookingStart = p.startDate ? new Date(p.startDate) : null;
         const bookingEnd = p.endDate ? new Date(p.endDate) : null;
         if (
@@ -961,8 +953,6 @@ export const quickCheckout = asyncHandler(
             );
           }
         }
-
-        product.stock -= quantity;
 
         // Price any selected add-ons from the product's own definitions.
         const { extras, extrasTotal } = resolveExtras(

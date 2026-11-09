@@ -154,9 +154,8 @@ export const createOrder = async (
         );
       }
 
-      product.stock -= 1;
-      await product.save({ session });
-
+      // `stock` counts how many units exist; a booking holds a unit only for
+      // its dates, so the quantity is not drawn down here.
       const itemTotal = product.price;
       subtotalAmount += itemTotal;
 
