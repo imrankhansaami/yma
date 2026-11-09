@@ -1016,6 +1016,28 @@ export const deleteProduct = async (productId: string): Promise<void> => {
 /* =========================
    DUPLICATE PRODUCT
 ========================= */
+
+/**
+ * Fetch a product for the admin screens.
+ *
+ * Unlike `getProductById`, no storefront availability filter is applied, so a
+ * draft or paused product can still be opened, edited or deleted.
+ */
+export const getProductByIdForAdmin = async (
+  productId: string,
+): Promise<any> => {
+  if (!Types.ObjectId.isValid(productId)) {
+    throw new ApiError("Invalid product ID", 400);
+  }
+
+  const product = await Product.findById(productId).lean();
+  if (!product) {
+    throw new ApiError("Product not found", 404);
+  }
+
+  return product;
+};
+
 /**
  * Copy a product into a new draft.
  *
