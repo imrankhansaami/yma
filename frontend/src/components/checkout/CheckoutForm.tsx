@@ -436,6 +436,12 @@ export default function CheckoutForm({
   const baseSelect =
     "block w-full min-w-0 h-10 rounded-md border bg-white px-3 text-[15px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
+  // Street addresses run long, so their box starts two lines tall and grows with
+  // the text (the element sets its own height; see AddressAutocomplete).
+  const baseTextarea =
+    "block w-full min-w-0 rounded-md border bg-white px-3 py-2 text-[15px] leading-5 resize-none overflow-hidden placeholder:text-gray-400 " +
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-emphasis";
+
   const errorBorder = "border-red-500";
   const checkboxClass =
     "data-[state=checked]:bg-brand-orange-500 data-[state=checked]:border-brand-orange-500 data-[state=checked]:text-white";
@@ -529,7 +535,7 @@ export default function CheckoutForm({
             <AddressAutocomplete
               id="street1"
               placeholder="House number & street name"
-              className={`${baseInput} ${errors.street1 ? errorBorder : ""}`}
+              className={`${baseTextarea} ${errors.street1 ? errorBorder : ""}`}
               inputProps={register("street1")}
               onSelect={(parts) => applyAddressParts(parts, "main")}
             />
@@ -674,7 +680,7 @@ export default function CheckoutForm({
                   <AddressAutocomplete
                     id="shipStreet1"
                     placeholder="House number & street name"
-                    className={`${baseInput} ${
+                    className={`${baseTextarea} ${
                       errors.shipStreet1 ? errorBorder : ""
                     }`}
                     inputProps={register("shipStreet1")}

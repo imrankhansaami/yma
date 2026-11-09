@@ -99,6 +99,9 @@ async function searchAddresses(input: string): Promise<Suggestion[]> {
   }
 }
 
+/** The street box renders a textarea, so refs and handlers cover both. */
+type StreetField = HTMLInputElement | HTMLTextAreaElement;
+
 export default function AddressAutocomplete({
   id,
   placeholder,
@@ -109,12 +112,12 @@ export default function AddressAutocomplete({
   id: string;
   placeholder?: string;
   className?: string;
-  /** Props from react-hook-form's register(), spread onto the input. */
+  /** Props from react-hook-form's register(), spread onto the field. */
   inputProps: {
     name: string;
-    onChange: React.ChangeEventHandler<HTMLInputElement>;
-    onBlur: React.FocusEventHandler<HTMLInputElement>;
-    ref: React.Ref<HTMLInputElement>;
+    onChange: React.ChangeEventHandler<StreetField>;
+    onBlur: React.FocusEventHandler<StreetField>;
+    ref: React.Ref<StreetField>;
   };
   /** Called with the parts of the picked address. */
   onSelect: (parts: AddressParts) => void;
@@ -129,6 +132,49 @@ export default function AddressAutocomplete({
     setOpen(false);
     setActive(-1);
   }, []);
+
+  const field = useRef<StreetField | null>(null);
+
+  /** Keep the box as tall as its content; it starts at two rows. */
+  const autoGrow = useCallback(() => {
+    const el = field.current as HTMLTextAreaElement | null;
+    if (!el || typeof el.scrollHeight !== "number") return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
+
+  // A saved address (or one restored by the browser) may already overflow.
+  useEffect(() => {
+    autoGrow();
+  }, [autoGrow]);
+
+  const attachRef = useCallback(
+    (el: StreetField | null) => {
+      field.current = el;
+      const ref = inputProps.ref as unknown as
+        | ((instance: StreetField | null) => void)
+        | { current: StreetField | null }
+        | null
+        | undefined;
+      if (typeof ref === "function") ref(el);
+      else if (ref && typeof ref === "object") ref.current = el;
+    },
+    [inputProps.ref],
+  );
+
+  /** Apply a suggestion, then grow the box around the filled value. */
+  const pick = useCallback(
+    (index: number) => {
+      const suggestion = items[index];
+      if (!suggestion) return;
+      onSelect(suggestion.parts);
+      close();
+      // react-hook-form writes the value after this tick, so resize after it.
+      requestAnimationFrame(autoGrow);
+      setTimeout(autoGrow, 80);
+    },
+    [items, onSelect, close, autoGrow],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -158,19 +204,26 @@ export default function AddressAutocomplete({
 
   return (
     <div ref={wrapper} className="relative">
-      <input
+      <textarea
+        {...inputProps}
         id={id}
-        type="text"
+        ref={attachRef}
+        rows={2}
         autoComplete="off"
         placeholder={placeholder}
         className={className}
-        {...inputProps}
         onChange={(event) => {
           inputProps.onChange(event);
           scheduleSearch(event.target.value);
+          autoGrow();
         }}
         onKeyDown={(event) => {
-          if (!open) return;
+          if (!open) {
+            // The box wraps long addresses by itself, so Return must not add a
+            // line break of its own (or submit the form from inside the field).
+            if (event.key === "Enter") event.preventDefault();
+            return;
+          }
           if (event.key === "ArrowDown") {
             event.preventDefault();
             setActive((i) => Math.min(i + 1, items.length - 1));
@@ -180,10 +233,7 @@ export default function AddressAutocomplete({
           } else if (event.key === "Enter") {
             // Never let a suggestion submit the checkout form.
             event.preventDefault();
-            if (active >= 0 && items[active]) {
-              onSelect(items[active].parts);
-              close();
-            }
+            if (active >= 0) pick(active);
           } else if (event.key === "Escape") {
             event.preventDefault();
             close();
@@ -209,10 +259,7 @@ export default function AddressAutocomplete({
               aria-selected={index === active}
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => setActive(index)}
-              onClick={() => {
-                onSelect(suggestion.parts);
-                close();
-              }}
+              onClick={() => pick(index)}
               className={`block w-full px-3 py-2 text-left leading-5 ${
                 index === active
                   ? "bg-brand-gray-25 text-brand-ink-900"
