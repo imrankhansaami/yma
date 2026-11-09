@@ -23,7 +23,9 @@ async function fetchProductBySlug(slug: string) {
 
     const res = await fetch(`${baseUrl}/api/v1/products/slug/${slug}`, {
       next: {
-        revalidate: 3600,
+        // Short window: a product becomes bookable again the day after its
+        // booked range ends, and nothing purges the tag at that moment.
+        revalidate: 300,
         // Tagged so an admin edit can purge this exact entry via /api/revalidate.
         tags: [PRODUCTS_TAG, productTag(slug)],
       },

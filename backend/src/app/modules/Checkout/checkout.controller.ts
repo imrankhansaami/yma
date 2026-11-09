@@ -23,6 +23,27 @@ import {
 // Import cart store
 import { cartStore } from "../Cart/cart.store";
 import Customer from "../../modules/customer/customer.model";
+import { collectBookedQuantities } from "../Product/product.service";
+import {
+  PRODUCTS_TAG,
+  productTag,
+  revalidatePaths,
+} from "../../utils/revalidate";
+
+/** Cache tags for a set of ordered products, so storefront copies refresh. */
+const productTagsForIds = async (productIds: string[]): Promise<string[]> => {
+  const validIds = productIds.filter((id) => Types.ObjectId.isValid(id));
+  if (validIds.length === 0) return [PRODUCTS_TAG];
+
+  const docs = await Product.find({ _id: { $in: validIds } })
+    .select("slug")
+    .lean();
+
+  return [
+    PRODUCTS_TAG,
+    ...docs.map((doc: any) => productTag(doc.slug)).filter(Boolean),
+  ];
+};
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -657,13 +678,20 @@ export const cancelOrder = asyncHandler(async (req: Request, res: Response) => {
   await order.save();
 
   // Return stock
+  const restoredProductIds: string[] = [];
   for (const item of order.items) {
     const product = await Product.findById(item.product);
     if (product) {
       product.stock += item.quantity;
       await product.save();
+      restoredProductIds.push(String(product._id));
     }
   }
+
+  // The products may be free again — refresh the cached storefront copies.
+  productTagsForIds(restoredProductIds)
+    .then((tags) => revalidatePaths([], tags))
+    .catch(() => undefined);
 
   // Send cancellation email
   try {
@@ -908,6 +936,32 @@ export const quickCheckout = asyncHandler(
         if (product.stock < quantity)
           throw new ApiError(`${product.name} out of stock`, 400);
 
+        // A product is a single unit: refuse dates it is already booked for.
+        // The storefront hides booked products, but a direct link (or two
+        // customers at the same time) could still reach checkout.
+        const bookingStart = p.startDate ? new Date(p.startDate) : null;
+        const bookingEnd = p.endDate ? new Date(p.endDate) : null;
+        if (
+          bookingStart &&
+          bookingEnd &&
+          !Number.isNaN(bookingStart.getTime()) &&
+          !Number.isNaN(bookingEnd.getTime())
+        ) {
+          const bookedForRange = await collectBookedQuantities(
+            bookingStart,
+            bookingEnd,
+            session,
+          );
+          const alreadyBooked =
+            bookedForRange.get(String(product._id))?.quantity ?? 0;
+          if (alreadyBooked + quantity > (Number(product.stock) || 0)) {
+            throw new ApiError(
+              `${product.name} is already booked for the selected dates. Please choose different dates.`,
+              409,
+            );
+          }
+        }
+
         product.stock -= quantity;
 
         // Price any selected add-ons from the product's own definitions.
@@ -1014,6 +1068,12 @@ export const quickCheckout = asyncHandler(
       // 4. COMMIT TRANSACTION
       await session.commitTransaction();
       session.endSession();
+
+      // The ordered products are now booked for their dates — refresh the
+      // cached storefront copies so they disappear right away.
+      productTagsForIds(orderItems.map((item) => String(item.product)))
+        .then((tags) => revalidatePaths([], tags))
+        .catch(() => undefined);
 
       // 5. ASYNCHRONOUS EMAILS (Don't 'await' these before sending response to user)
       // Sending after commit ensures user only gets email if DB update succeeded

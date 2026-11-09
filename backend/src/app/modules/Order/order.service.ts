@@ -24,6 +24,28 @@ import {
   notifyAdminNewOrder,
 } from "./email.service";
 import { renderInvoiceHtml } from "./invoice.renderer";
+import {
+  PRODUCTS_TAG,
+  productTag,
+  revalidatePaths,
+} from "../../utils/revalidate";
+
+/** Cache tags for the products on an order, so storefront copies refresh. */
+const orderProductTags = async (orderItems: any[]): Promise<string[]> => {
+  const ids = (orderItems || [])
+    .map((item: any) => String(item?.product || ""))
+    .filter((id: string) => mongoose.Types.ObjectId.isValid(id));
+  if (ids.length === 0) return [PRODUCTS_TAG];
+
+  const docs = await Product.find({ _id: { $in: ids } })
+    .select("slug")
+    .lean();
+
+  return [
+    PRODUCTS_TAG,
+    ...docs.map((doc: any) => productTag(doc.slug)).filter(Boolean),
+  ];
+};
 
 const parseDateBoundary = (
   raw: string,
@@ -926,6 +948,16 @@ export const updateOrderStatus = async (
   }
 
   await order.save();
+
+  // Cancelling (or re-activating) an order changes whether its products are
+  // bookable, so refresh the cached storefront copies.
+  const wasCancelled = previousStatus === ORDER_STATUS.CANCELLED;
+  const isCancelled = status === ORDER_STATUS.CANCELLED;
+  if (wasCancelled !== isCancelled) {
+    orderProductTags(order.items as any[])
+      .then((tags) => revalidatePaths([], tags))
+      .catch(() => undefined);
+  }
 
   // Email notifications...
   if (status !== previousStatus) {

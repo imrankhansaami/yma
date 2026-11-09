@@ -1,7 +1,7 @@
 import Category from "../Category/category.model";
 import Product, { IProductModel } from "./product.model";
 import ApiError from "../../utils/apiError";
-import { ObjectId, Types } from "mongoose";
+import { ObjectId, Types, type ClientSession } from "mongoose";
 import {
   CreateProductData,
   DeepPartial,
@@ -25,6 +25,120 @@ const getAvailableProductFilter = (referenceDate: Date = new Date()) => ({
   availableFrom: { $lte: referenceDate },
   availableUntil: { $gte: referenceDate },
 });
+
+/** Start-of-day and end-of-day bounds for the calendar day of `date`. */
+export const dayBounds = (date: Date = new Date()) => {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+};
+
+type BookedSummary = { quantity: number; until: Date | null };
+
+/**
+ * Non-cancelled bookings per product for a date range.
+ *
+ * Orders hold the customer's bookings; the Bookings collection holds the ones
+ * an admin synced from an order. Both count, so the storefront reads the same
+ * availability whether or not a booking was synced.
+ */
+export const collectBookedQuantities = async (
+  startDate: Date,
+  endDate: Date,
+  session?: ClientSession,
+): Promise<Map<string, BookedSummary>> => {
+  const itemsOverlapping = {
+    items: {
+      $elemMatch: {
+        startDate: { $lte: endDate },
+        endDate: { $gte: startDate },
+      },
+    },
+  };
+
+  const ordersQuery = Order.find({
+    status: { $nin: ["cancelled"] },
+    ...itemsOverlapping,
+  })
+    .select("items.product items.startDate items.endDate items.quantity")
+    .lean();
+
+  const bookingsQuery = Booking.find({
+    status: { $nin: ["cancelled", "completed"] },
+    ...itemsOverlapping,
+  })
+    .select("items.product items.startDate items.endDate items.quantity")
+    .lean();
+
+  const [orders, bookings] = await Promise.all([
+    session ? ordersQuery.session(session) : ordersQuery,
+    session ? bookingsQuery.session(session) : bookingsQuery,
+  ]);
+
+  const result = new Map<string, BookedSummary>();
+
+  for (const doc of [...orders, ...bookings]) {
+    for (const item of ((doc as any).items || []) as any[]) {
+      if (!item?.product) continue;
+
+      const itemStart = item.startDate ? new Date(item.startDate) : null;
+      const itemEnd = item.endDate ? new Date(item.endDate) : null;
+      if (!itemStart || !itemEnd) continue;
+      if (itemStart > endDate || itemEnd < startDate) continue;
+
+      const id = String(item.product);
+      const qty = Number(item.quantity);
+      const current = result.get(id);
+      const nextQuantity =
+        (current?.quantity ?? 0) + (Number.isFinite(qty) && qty > 0 ? qty : 1);
+      const nextUntil =
+        itemEnd && (!current?.until || itemEnd > current.until)
+          ? itemEnd
+          : (current?.until ?? null);
+
+      result.set(id, { quantity: nextQuantity, until: nextUntil });
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Drop products whose whole stock is booked for the range. Each product is a
+ * single unit, so any overlapping booking makes it invisible.
+ */
+const excludeFullyBookedProducts = async (
+  query: Record<string, any>,
+  bookedQuantityByProduct: Map<string, BookedSummary>,
+) => {
+  if (bookedQuantityByProduct.size === 0) return;
+
+  const candidateIds = Array.from(bookedQuantityByProduct.keys())
+    .filter((id) => Types.ObjectId.isValid(id))
+    .map((id) => new Types.ObjectId(id));
+  if (candidateIds.length === 0) return;
+
+  const stockDocs = await Product.find({ _id: { $in: candidateIds } })
+    .select("_id stock")
+    .lean();
+
+  const unavailableIds = stockDocs
+    .filter((doc: any) => {
+      const bookedQty = bookedQuantityByProduct.get(String(doc._id))?.quantity ?? 0;
+      const totalStock = Number(doc.stock) || 0;
+      return bookedQty >= totalStock;
+    })
+    .map((doc: any) => doc._id as Types.ObjectId);
+
+  if (unavailableIds.length > 0) {
+    query._id = {
+      ...(query._id || {}),
+      $nin: unavailableIds,
+    };
+  }
+};
 
 const toSlug = (value: string) => normalizeSlug(value);
 
@@ -648,91 +762,11 @@ export const getAllProducts = async (
     query.availableFrom = { $lte: effectiveEndDate };
     query.availableUntil = { $gte: effectiveStartDate };
 
-    const overlappingBookings = await Booking.find({
-      status: { $nin: ["cancelled", "completed"] },
-      items: {
-        $elemMatch: {
-          startDate: { $lte: effectiveEndDate },
-          endDate: { $gte: effectiveStartDate },
-        },
-      },
-    })
-      .select("items.product items.startDate items.endDate items.quantity")
-      .lean();
-
-    const overlappingOrders = await Order.find({
-      status: { $nin: ["cancelled"] },
-      items: {
-        $elemMatch: {
-          startDate: { $lte: effectiveEndDate },
-          endDate: { $gte: effectiveStartDate },
-        },
-      },
-    })
-      .select("items.product items.startDate items.endDate items.quantity")
-      .lean();
-
-    const bookedQuantityByProduct = new Map<string, number>();
-    const addBookedQuantity = (productId: string, quantity: number) => {
-      const prev = bookedQuantityByProduct.get(productId) ?? 0;
-      bookedQuantityByProduct.set(productId, prev + quantity);
-    };
-
-    overlappingBookings.forEach((booking: any) => {
-      (booking.items || []).forEach((item: any) => {
-        if (!item?.product) return;
-        const itemStart = item.startDate ? new Date(item.startDate) : null;
-        const itemEnd = item.endDate ? new Date(item.endDate) : null;
-        if (!itemStart || !itemEnd) return;
-        if (itemStart <= effectiveEndDate! && itemEnd >= effectiveStartDate!) {
-          const qty = Number(item.quantity);
-          addBookedQuantity(
-            String(item.product),
-            Number.isFinite(qty) && qty > 0 ? qty : 1,
-          );
-        }
-      });
-    });
-
-    overlappingOrders.forEach((order: any) => {
-      (order.items || []).forEach((item: any) => {
-        if (!item?.product) return;
-        const itemStart = item.startDate ? new Date(item.startDate) : null;
-        const itemEnd = item.endDate ? new Date(item.endDate) : null;
-        if (!itemStart || !itemEnd) return;
-        if (itemStart <= effectiveEndDate! && itemEnd >= effectiveStartDate!) {
-          const qty = Number(item.quantity);
-          addBookedQuantity(
-            String(item.product),
-            Number.isFinite(qty) && qty > 0 ? qty : 1,
-          );
-        }
-      });
-    });
-
-    if (bookedQuantityByProduct.size > 0) {
-      const candidateIds = Array.from(bookedQuantityByProduct.keys()).map(
-        (id) => new Types.ObjectId(id),
-      );
-      const stockDocs = await Product.find({ _id: { $in: candidateIds } })
-        .select("_id stock")
-        .lean();
-
-      const unavailableIds = stockDocs
-        .filter((doc: any) => {
-          const bookedQty = bookedQuantityByProduct.get(String(doc._id)) ?? 0;
-          const totalStock = Number(doc.stock) || 0;
-          return bookedQty >= totalStock;
-        })
-        .map((doc: any) => doc._id as Types.ObjectId);
-
-      if (unavailableIds.length > 0) {
-        query._id = {
-          ...(query._id || {}),
-          $nin: unavailableIds,
-        };
-      }
-    }
+    const bookedForRange = await collectBookedQuantities(
+      effectiveStartDate,
+      effectiveEndDate,
+    );
+    await excludeFullyBookedProducts(query, bookedForRange);
 
     if (!showAll) {
       query.stock = { $gt: 0 };
@@ -741,6 +775,12 @@ export const getAllProducts = async (
     const nowAvailability = getAvailableProductFilter();
     query.availableFrom = nowAvailability.availableFrom;
     query.availableUntil = nowAvailability.availableUntil;
+
+    // No dates were picked: hide the products whose booked range covers today,
+    // so a booked product stays off the storefront while its dates run.
+    const today = dayBounds();
+    const bookedToday = await collectBookedQuantities(today.start, today.end);
+    await excludeFullyBookedProducts(query, bookedToday);
   }
 
   // 6. Execution
@@ -845,8 +885,20 @@ const toProductDetails = async (product: any): Promise<any> => {
   const totalStock = product.stock || 0;
   const availableStock = Math.max(0, totalStock - totalBookedQuantity);
 
+  // A single-unit product is unavailable while a booking covers today. Orders
+  // count even before an admin syncs them into a booking record.
+  const today = dayBounds();
+  const bookedToday = await collectBookedQuantities(today.start, today.end);
+  const todaySummary = bookedToday.get(productId);
+  const bookedNow = Boolean(
+    todaySummary && todaySummary.quantity >= totalStock,
+  );
+
   return {
     ...product,
+    bookedNow,
+    bookedUntil:
+      bookedNow && todaySummary?.until ? todaySummary.until.toISOString() : null,
     bookedDates: bookedDates.map((bd) => ({
       date: bd.date,
       bookingId: bd.bookingId,

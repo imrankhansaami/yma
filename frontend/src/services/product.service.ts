@@ -107,6 +107,10 @@ export interface ApiProduct {
     status?: string;
     quantity?: number;
   }>;
+  /** True while a non-cancelled booking covers today (single-unit product). */
+  bookedNow?: boolean;
+  /** Last booked day (ISO) when bookedNow; the product returns after it. */
+  bookedUntil?: string | null;
   availability?: {
     bookedCount?: number;
     totalStock?: number;

@@ -388,6 +388,12 @@ export default function ProductClient({
   const pricePerWeek = Math.round(pricePerDay * 7);
   const hasPrice =
     product?.priceDiscount !== undefined || product?.price !== undefined;
+  // While a booking covers today the product is out with another customer, so
+  // it cannot be booked from here (each product is a single unit).
+  const isBookedNow = product?.bookedNow === true;
+  const bookedUntilLabel = product?.bookedUntil
+    ? format(new Date(product.bookedUntil), "d MMM")
+    : null;
   const ratingValue = product?.ratingsAverage;
   const ratingCount = Number(product?.ratingsQuantity ?? 0);
   const hasRating = ratingValue != null || ratingCount > 0;
@@ -847,28 +853,42 @@ export default function ProductClient({
                       </Popover>
                     </div>
 
-                    <button
-                      type="button"
-                      className="flex
-                        w-full h-10 sm:h-12
-                        rounded-full
-                        bg-brand-orange-500
-                        text-white font-semibold
-                        items-center justify-center gap-2
-                        text-[14px] sm:text-[16px]
-                        border border-white
-                        shadow-[0_2px_6px_var(--alpha-black-15)]
-                        enabled:hover:bg-brand-orange-450
-                        disabled:bg-brand-gray-150
-                        disabled:text-brand-ink-900/60
-                        disabled:cursor-not-allowed
-                        transition-all duration-200"
-                      onClick={onBook}
-                      disabled={!dateRange?.from || !product || !hasPrice}
-                    >
-                      Book Product
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    {isBookedNow ? (
+                      <div className="rounded-xl border border-brand-orange-400 bg-brand-orange-50 px-4 py-3 text-center">
+                        <div className="text-[14px] font-semibold text-brand-ink-900">
+                          Currently booked
+                        </div>
+                        <div className="mt-1 text-[12px] leading-5 text-brand-gray-700">
+                          This item is a single unit and is out with another
+                          customer
+                          {bookedUntilLabel ? ` until ${bookedUntilLabel}` : ""}.
+                          It cannot be booked for now.
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="flex
+                          w-full h-10 sm:h-12
+                          rounded-full
+                          bg-brand-orange-500
+                          text-white font-semibold
+                          items-center justify-center gap-2
+                          text-[14px] sm:text-[16px]
+                          border border-white
+                          shadow-[0_2px_6px_var(--alpha-black-15)]
+                          enabled:hover:bg-brand-orange-450
+                          disabled:bg-brand-gray-150
+                          disabled:text-brand-ink-900/60
+                          disabled:cursor-not-allowed
+                          transition-all duration-200"
+                        onClick={onBook}
+                        disabled={!dateRange?.from || !product || !hasPrice}
+                      >
+                        Book Product
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
