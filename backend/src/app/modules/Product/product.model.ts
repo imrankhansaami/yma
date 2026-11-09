@@ -476,6 +476,9 @@ const productSchema: Schema = new Schema(
               min: [1, "Extra option max must be at least 1"],
             },
             enabled: { type: Boolean, default: true },
+            // Always applied to a booking (refundable deposit): shown ticked
+            // with nothing to click, and attached by checkout even if missing.
+            locked: { type: Boolean, default: false },
           },
           { _id: false },
         ),

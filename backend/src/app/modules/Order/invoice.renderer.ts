@@ -224,9 +224,12 @@ export const renderInvoiceHtml = (order: IOrderDocument): string => {
           ${
             item.extras.length
               ? `<tr><td class="k">Extra options</td><td class="v">${item.extras
-                  .map(
-                    (extra) =>
-                      `${esc(extra.label)} × ${extra.quantity}: ${money(extra.total)}`,
+                  .map((extra) =>
+                    Number(extra.total) > 0
+                      ? `${esc(extra.label)} × ${extra.quantity}: ${money(extra.total)}`
+                      : // A £0 line (the refundable deposit) is information, so
+                        // it reads as a plain note rather than "…: £0.00".
+                        esc(extra.label),
                   )
                   .join("<br>")}</td></tr>`
               : ""
@@ -477,7 +480,11 @@ export const renderInvoicePdf = async (
     if (item.extras.length) {
       detailLines.push(
         `Extra options: ${item.extras
-          .map((extra) => `${extra.label} x ${extra.quantity}: ${money(extra.total)}`)
+          .map((extra) =>
+            Number(extra.total) > 0
+              ? `${extra.label} x ${extra.quantity}: ${money(extra.total)}`
+              : extra.label,
+          )
           .join(", ")}`,
       );
     }

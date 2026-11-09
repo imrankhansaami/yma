@@ -52,6 +52,7 @@ export default function ProductDetailsModal({
       pricingType: "total" | "per_day" | "per_quantity";
       max: number;
       enabled: boolean;
+      locked: boolean;
     }>;
   } = useMemo(() => {
     const dimensions = product.dimensions;
@@ -131,6 +132,7 @@ export default function ProductDetailsModal({
             pricingType: option.pricingType ?? "total",
             max: Number(option.max) >= 1 ? Number(option.max) : 1,
             enabled: option.enabled !== false,
+            locked: option.locked === true,
           }))
         : [],
       

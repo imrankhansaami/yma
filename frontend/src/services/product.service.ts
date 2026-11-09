@@ -38,6 +38,8 @@ export interface ApiExtraOption {
   pricingType: "total" | "per_day" | "per_quantity";
   max: number;
   enabled: boolean;
+  /** Always applied (the refundable deposit): shown ticked, nothing to click. */
+  locked?: boolean;
 }
 
 export interface ApiProduct {

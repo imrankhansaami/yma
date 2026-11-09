@@ -976,12 +976,35 @@ export const quickCheckout = asyncHandler(
         }
 
         // Price any selected add-ons from the product's own definitions.
-        const { extras, extrasTotal } = resolveExtras(
+        const resolved = resolveExtras(
           product,
           p.extras,
           p.startDate,
           p.endDate,
         );
+        const extras = resolved.extras;
+        let extrasTotal = resolved.extrasTotal;
+
+        // Locked options (the refundable deposit) always apply: a booking that
+        // arrives without one still gets the line, so the invoice and the
+        // customer's order always show it.
+        for (const option of (product.extraOptions || []).filter(
+          (candidate: any) => candidate?.locked === true && candidate.enabled !== false,
+        )) {
+          const key = String(option.key);
+          if (extras.some((extra) => String(extra.key) === key)) continue;
+
+          const lineTotal = Math.round((Number(option.price) || 0) * 100) / 100;
+          extras.push({
+            key,
+            label: String(option.label || ""),
+            price: Number(option.price) || 0,
+            pricingType: option.pricingType || "total",
+            quantity: 1,
+            total: lineTotal,
+          });
+          extrasTotal = Math.round((extrasTotal + lineTotal) * 100) / 100;
+        }
 
         orderItems.push({
           product: product._id,

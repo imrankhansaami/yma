@@ -34,6 +34,8 @@ interface ExtraOptionDraft {
   pricingType: "total" | "per_day" | "per_quantity";
   max: number;
   enabled: boolean;
+  /** Always applied to a booking; customers see it ticked with nothing to click. */
+  locked: boolean;
 }
 
 interface AddProductFormProps {
@@ -105,6 +107,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             pricingType: option.pricingType ?? "total",
             max: Number(option.max) >= 1 ? Number(option.max) : 1,
             enabled: option.enabled !== false,
+            locked: option.locked === true,
           }))
         : [],
     );
@@ -1038,6 +1041,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                       pricingType: "total",
                       max: 1,
                       enabled: true,
+                      locked: false,
                     },
                   ])
                 }
@@ -1182,6 +1186,27 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                     }
                   />
                   Shown to customers
+                </label>
+
+                <label
+                  className="flex items-center gap-[8px] text-[13px] text-brand-black-950"
+                  title="The option is always applied: customers see it ticked and cannot untick it."
+                >
+                  <input
+                    type="checkbox"
+                    checked={option.locked}
+                    className="h-[16px] w-[16px]"
+                    onChange={(event) =>
+                      setExtraOptions((previous) =>
+                        previous.map((item, i) =>
+                          i === index
+                            ? { ...item, locked: event.target.checked }
+                            : item,
+                        ),
+                      )
+                    }
+                  />
+                  Always applied (no untick)
                 </label>
               </div>
             ))}

@@ -16,6 +16,12 @@ export interface IExtraOption {
   /** Maximum quantity a customer may select. 1 renders as a plain checkbox. */
   max: number;
   enabled: boolean;
+  /**
+   * Always applied to a booking, like the refundable deposit: the customer sees
+   * it ticked with nothing to click, and checkout attaches it even when the
+   * request did not carry it, so the invoice always lists it.
+   */
+  locked?: boolean;
 }
 
 export interface IProduct {

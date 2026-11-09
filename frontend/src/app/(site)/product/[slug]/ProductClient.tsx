@@ -101,6 +101,13 @@ const SELF_HIRE_PREFIX = "self-hire-";
 const isSelfHireChoice = (option?: { key?: string } | null) =>
   String(option?.key ?? "").startsWith(SELF_HIRE_PREFIX);
 
+/**
+ * A locked option (the refundable deposit) always applies. It is shown ticked
+ * with nothing to click, and the cart carries it even when nothing was ticked.
+ */
+const isLockedOption = (option?: { locked?: boolean } | null) =>
+  option?.locked === true;
+
 function isPdfAsset(asset: string): boolean {
   return (
     asset.startsWith("data:application/pdf") ||
@@ -352,7 +359,10 @@ export default function ProductClient({
   const extrasSeededFor = React.useRef<string | null>(null);
   React.useEffect(() => {
     const options = (product?.extraOptions ?? []).filter(
-      (option) => option.enabled !== false && !isSelfHireChoice(option),
+      (option) =>
+        option.enabled !== false &&
+        !isSelfHireChoice(option) &&
+        !isLockedOption(option),
     );
     const productKey = String(product?.id ?? productSlug ?? "");
     if (!productKey || !options.length) return;
@@ -430,25 +440,47 @@ export default function ProductClient({
       : 0;
 
   // Add-ons offered for this product (the WordPress "Other Options" list).
-  // The Self Hire choices are picked in the popup instead, so they are left out.
+  // Self Hire choices are picked in the popup and locked options (the deposit)
+  // are always applied, so neither appears as a tickable row here.
   const extraOptions = (product?.extraOptions ?? []).filter(
-    (option) => option.enabled !== false && !isSelfHireChoice(option),
+    (option) =>
+      option.enabled !== false &&
+      !isSelfHireChoice(option) &&
+      !isLockedOption(option),
+  );
+  // Locked options: always applied, shown as a fixed tick.
+  const lockedOptions = (product?.extraOptions ?? []).filter(
+    (option) => option.enabled !== false && isLockedOption(option),
   );
   // Self Hire choices, shown as radio buttons when Book Product is clicked.
   const selfHireChoices = (product?.extraOptions ?? []).filter(
     (option) => option.enabled !== false && isSelfHireChoice(option),
   );
   const isSelfHireProduct = selfHireChoices.length > 0;
-  const chosenExtras: CartExtra[] = extraOptions
-    .map((option) => ({ ...option, quantity: selectedExtras[option.key] ?? 0 }))
-    .filter((option) => option.quantity > 0)
-    .map((option) => ({
+  const chosenExtras: CartExtra[] = [
+    ...extraOptions
+      .map((option) => ({
+        ...option,
+        quantity: selectedExtras[option.key] ?? 0,
+      }))
+      .filter((option) => option.quantity > 0)
+      .map((option) => ({
+        key: option.key,
+        label: option.label,
+        price: option.price,
+        pricingType: option.pricingType,
+        quantity: option.quantity,
+      })),
+    // A locked option is always part of the booking, so it travels even though
+    // there is nothing to tick (the refundable deposit).
+    ...lockedOptions.map((option) => ({
       key: option.key,
       label: option.label,
       price: option.price,
       pricingType: option.pricingType,
-      quantity: option.quantity,
-    }));
+      quantity: 1,
+    })),
+  ];
   const extrasTotal = computeExtrasTotal(chosenExtras, effectiveDays);
   const grandTotal = totalPrice + extrasTotal;
 
@@ -777,12 +809,23 @@ export default function ProductClient({
                       </div>
                     ) : null}
 
-                    {extraOptions.length ? (
+                    {extraOptions.length || lockedOptions.length ? (
                       <div className="mt-4 rounded-lg border border-brand-gray-150 px-3 py-3">
                         <div className="text-[13px] font-medium text-brand-ink-900">
                           Other Options:
                         </div>
                         <div className="mt-2 space-y-2">
+                          {lockedOptions.map((option) => (
+                            <div
+                              key={option.key}
+                              className="flex items-start gap-2"
+                            >
+                              <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-orange-500" />
+                              <span className="text-[13px] leading-5 text-brand-ink-900">
+                                {option.label}
+                              </span>
+                            </div>
+                          ))}
                           {extraOptions.map((option) => {
                             const quantity = selectedExtras[option.key] ?? 0;
                             const isSingle = option.max <= 1;

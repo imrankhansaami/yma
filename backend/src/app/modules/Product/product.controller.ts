@@ -409,6 +409,7 @@ const parseExtraOptions = (raw: unknown): IExtraOption[] => {
         pricingType,
         max: Number.isFinite(max) && max >= 1 ? Math.floor(max) : 1,
         enabled: entry?.enabled === false ? false : true,
+        locked: entry?.locked === true,
       };
     })
     .filter((option) => Boolean(option.label))
