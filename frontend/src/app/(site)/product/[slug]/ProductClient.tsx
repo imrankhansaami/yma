@@ -472,9 +472,7 @@ export default function ProductClient({
       image: images[0],
       dateISO: format(dateRange.from, "yyyy-MM-dd"),
       days: effectiveDays,
-      // A Self Hire product is priced by the option picked in the popup, so the
-      // machine line itself carries no price (see chooseSelfHire).
-      pricePerDay: isSelfHireProduct ? 0 : pricePerDay,
+      pricePerDay,
       extras: chosenExtras,
     });
     checkoutNavigated.current = false;
@@ -482,8 +480,8 @@ export default function ProductClient({
   };
 
   /**
-   * Applies the Self Hire choice to the booking that is already in the cart:
-   * the chosen option is what the machine is charged at.
+   * Adds the staff option picked in the popup to the booking already in the
+   * cart. It is charged on top of the machine's own price.
    */
   const chooseSelfHire = (option: {
     key: string;
@@ -499,7 +497,7 @@ export default function ProductClient({
       image: images[0],
       dateISO: format(dateRange.from, "yyyy-MM-dd"),
       days: effectiveDays,
-      pricePerDay: 0,
+      pricePerDay,
       extras: [
         ...chosenExtras,
         {
@@ -1121,12 +1119,12 @@ export default function ProductClient({
           <div className="px-5 pt-5">
             <DialogTitle className="text-[18px] font-semibold text-brand-ink-900">
               {isSelfHireProduct
-                ? "Self Hire"
+                ? "Do you require staff handling it?"
                 : "Add garden games to your booking?"}
             </DialogTitle>
             <p className="mt-1 text-[13px] leading-5 text-brand-ink-700">
               {isSelfHireProduct ? (
-                `Choose how long our staff attend with ${product?.name ?? "the machine"}. The option you pick is what the booking is charged at.`
+                `Choose how long our staff attend with ${product?.name ?? "the machine"}. The option you pick is added to the price.`
               ) : (
                 <>
                   Optional extras, booked for the same dates as{" "}
