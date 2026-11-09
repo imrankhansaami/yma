@@ -928,6 +928,43 @@ export const quickCheckout = asyncHandler(
         if (product.stock < quantity)
           throw new ApiError(`${product.name} out of stock`, 400);
 
+        // Popup-only choices (self hire): exactly one must be chosen before the
+        // product can be booked. The price comes from the product's own
+        // definitions, never from the request.
+        const popupOptions = (product.extraOptions || []).filter((option: any) =>
+          String(option?.key || "").startsWith("self-hire-"),
+        );
+        const requestedKeys = (Array.isArray(p.extras) ? p.extras : []).map(
+          (extra: any) => String(extra?.key || ""),
+        );
+        const chosenPopup =
+          popupOptions.length > 0
+            ? popupOptions.find((option: any) =>
+                requestedKeys.includes(String(option.key)),
+              )
+            : undefined;
+        if (popupOptions.length > 0 && !chosenPopup) {
+          throw new ApiError(
+            `${product.name}: please choose a self hire option on the product page before booking.`,
+            400,
+          );
+        }
+
+        // A Self Hire product is charged at the chosen option instead of its
+        // own price (the popup replaces it), so the machine line carries that
+        // amount and the option is not added on top of it.
+        const unitPrice = chosenPopup
+          ? Number(chosenPopup.price) || 0
+          : Number(product.price) || 0;
+        const chargedExtras = chosenPopup
+          ? (Array.isArray(p.extras) ? p.extras : []).filter(
+              (extra: any) =>
+                !popupOptions.some(
+                  (option: any) => String(option.key) === String(extra?.key),
+                ),
+            )
+          : p.extras;
+
         // `stock` is how many units exist, not a counter that a booking keeps.
         // A unit is held only for the booked dates, so the quantity is checked
         // against overlapping orders (below) and never drawn down here.
@@ -954,10 +991,11 @@ export const quickCheckout = asyncHandler(
           }
         }
 
-        // Price any selected add-ons from the product's own definitions.
+        // Price any selected add-ons from the product's own definitions. The
+        // Self Hire choice is already the line price, so it is left out here.
         const { extras, extrasTotal } = resolveExtras(
           product,
-          p.extras,
+          chargedExtras,
           p.startDate,
           p.endDate,
         );
@@ -967,13 +1005,13 @@ export const quickCheckout = asyncHandler(
           name: product.name,
           imageCover: product.imageCover,
           quantity: p.quantity,
-          price: product.price,
+          price: unitPrice,
           startDate: p.startDate ? new Date(p.startDate) : undefined,
           endDate: p.endDate ? new Date(p.endDate) : undefined,
           extras,
           extrasTotal,
         });
-        subtotal += product.price * p.quantity + extrasTotal;
+        subtotal += unitPrice * p.quantity + extrasTotal;
       }
 
       // 2. IDENTITY LOGIC (Detect if new user)

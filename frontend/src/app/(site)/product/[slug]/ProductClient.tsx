@@ -92,6 +92,15 @@ function pricePerDayFromProduct(p?: ApiProduct | null): number {
   return Number(p.priceDiscount ?? p.price ?? 0);
 }
 
+/**
+ * A Self Hire product is priced by a popup choice rather than by the machine
+ * itself. Its "self-hire-" options are therefore picked in the booking dialog
+ * and never appear in the sidebar's Other Options list.
+ */
+const SELF_HIRE_PREFIX = "self-hire-";
+const isSelfHireChoice = (option?: { key?: string } | null) =>
+  String(option?.key ?? "").startsWith(SELF_HIRE_PREFIX);
+
 function isPdfAsset(asset: string): boolean {
   return (
     asset.startsWith("data:application/pdf") ||
@@ -276,6 +285,8 @@ export default function ProductClient({
   const router = useRouter();
   // The add-ons popup, shown before checkout when a product is booked.
   const [showAddOns, setShowAddOns] = React.useState(false);
+  /** The Self Hire option chosen in the popup (its key), if any. */
+  const [selfHireKey, setSelfHireKey] = React.useState<string | null>(null);
   const checkoutNavigated = React.useRef(false);
 
   const {
@@ -341,7 +352,7 @@ export default function ProductClient({
   const extrasSeededFor = React.useRef<string | null>(null);
   React.useEffect(() => {
     const options = (product?.extraOptions ?? []).filter(
-      (option) => option.enabled !== false,
+      (option) => option.enabled !== false && !isSelfHireChoice(option),
     );
     const productKey = String(product?.id ?? productSlug ?? "");
     if (!productKey || !options.length) return;
@@ -419,9 +430,15 @@ export default function ProductClient({
       : 0;
 
   // Add-ons offered for this product (the WordPress "Other Options" list).
+  // The Self Hire choices are picked in the popup instead, so they are left out.
   const extraOptions = (product?.extraOptions ?? []).filter(
-    (option) => option.enabled !== false,
+    (option) => option.enabled !== false && !isSelfHireChoice(option),
   );
+  // Self Hire choices, shown as radio buttons when Book Product is clicked.
+  const selfHireChoices = (product?.extraOptions ?? []).filter(
+    (option) => option.enabled !== false && isSelfHireChoice(option),
+  );
+  const isSelfHireProduct = selfHireChoices.length > 0;
   const chosenExtras: CartExtra[] = extraOptions
     .map((option) => ({ ...option, quantity: selectedExtras[option.key] ?? 0 }))
     .filter((option) => option.quantity > 0)
@@ -455,11 +472,45 @@ export default function ProductClient({
       image: images[0],
       dateISO: format(dateRange.from, "yyyy-MM-dd"),
       days: effectiveDays,
-      pricePerDay,
+      // A Self Hire product is priced by the option picked in the popup, so the
+      // machine line itself carries no price (see chooseSelfHire).
+      pricePerDay: isSelfHireProduct ? 0 : pricePerDay,
       extras: chosenExtras,
     });
     checkoutNavigated.current = false;
     setShowAddOns(true);
+  };
+
+  /**
+   * Applies the Self Hire choice to the booking that is already in the cart:
+   * the chosen option is what the machine is charged at.
+   */
+  const chooseSelfHire = (option: {
+    key: string;
+    label: string;
+    price: number;
+    pricingType: "total" | "per_day" | "per_quantity";
+  }) => {
+    if (!dateRange?.from || !product) return;
+    setSelfHireKey(option.key);
+    void addItem({
+      id: String(product?.id ?? productSlug),
+      title: String(product?.name ?? ""),
+      image: images[0],
+      dateISO: format(dateRange.from, "yyyy-MM-dd"),
+      days: effectiveDays,
+      pricePerDay: 0,
+      extras: [
+        ...chosenExtras,
+        {
+          key: option.key,
+          label: option.label,
+          price: option.price,
+          pricingType: option.pricingType,
+          quantity: 1,
+        },
+      ],
+    });
   };
 
   /**
@@ -1055,22 +1106,80 @@ export default function ProductClient({
       <Dialog
         open={showAddOns}
         onOpenChange={(open) => {
-          if (!open) goToCheckout();
+          // A Self Hire booking has to carry one of the options, so the popup
+          // stays put until the customer has picked one.
+          if (!open) {
+            if (isSelfHireProduct && !selfHireKey) return;
+            goToCheckout();
+          }
         }}
       >
-        <DialogContent className="bg-white font-inter p-0 w-[94vw] max-w-[560px] rounded-[18px] max-h-[88vh] overflow-y-auto">
+        <DialogContent
+          showCloseButton={!isSelfHireProduct || Boolean(selfHireKey)}
+          className="bg-white font-inter p-0 w-[94vw] max-w-[560px] rounded-[18px] max-h-[88vh] overflow-y-auto"
+        >
           <div className="px-5 pt-5">
             <DialogTitle className="text-[18px] font-semibold text-brand-ink-900">
-              Add garden games to your booking?
+              {isSelfHireProduct
+                ? "Self Hire"
+                : "Add garden games to your booking?"}
             </DialogTitle>
             <p className="mt-1 text-[13px] leading-5 text-brand-ink-700">
-              Optional extras, booked for the same dates as{" "}
-              {product?.name ?? "your product"}. Skip this and you can still
-              book them later.
+              {isSelfHireProduct ? (
+                `Choose how long our staff attend with ${product?.name ?? "the machine"}. The option you pick is what the booking is charged at.`
+              ) : (
+                <>
+                  Optional extras, booked for the same dates as{" "}
+                  {product?.name ?? "your product"}. Skip this and you can still
+                  book them later.
+                </>
+              )}
             </p>
+
+            {isSelfHireProduct ? (
+              <div className="mt-3 space-y-2">
+                {selfHireChoices.map((option) => {
+                  const active = selfHireKey === option.key;
+                  return (
+                    <label
+                      key={option.key}
+                      className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
+                        active
+                          ? "border-brand-orange-400 bg-brand-orange-50"
+                          : "border-brand-gray-150"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="self-hire"
+                        className="h-4 w-4 accent-brand-orange-500"
+                        checked={active}
+                        onChange={() => chooseSelfHire(option)}
+                      />
+                      <span className="flex-1 text-[14px] text-brand-ink-900">
+                        {option.label.replace(/^Self Hire\s*[—–-]\s*/i, "")}
+                      </span>
+                      <span className="text-[14px] font-semibold text-brand-ink-900">
+                        £{option.price}
+                      </span>
+                    </label>
+                  );
+                })}
+                {!selfHireKey ? (
+                  <p className="text-[12px] text-brand-orange-600">
+                    Choose one option to continue.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <div className="px-5 py-4 space-y-3">
+            {isSelfHireProduct ? (
+              <p className="text-[14px] font-semibold text-brand-ink-900">
+                Add garden games to your booking?
+              </p>
+            ) : null}
             {addOnsLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -1163,6 +1272,7 @@ export default function ProductClient({
               type="button"
               variant="outline"
               onClick={goToCheckout}
+              disabled={isSelfHireProduct && !selfHireKey}
               className="h-11 rounded-full border-brand-gray-300 px-5 text-brand-ink-900"
             >
               Skip
@@ -1170,6 +1280,7 @@ export default function ProductClient({
             <Button
               type="button"
               onClick={goToCheckout}
+              disabled={isSelfHireProduct && !selfHireKey}
               className="h-11 flex-1 rounded-full bg-brand-orange-500 text-white hover:bg-brand-orange-450"
             >
               Continue to checkout
