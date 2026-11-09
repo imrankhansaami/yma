@@ -149,8 +149,17 @@ export function sortPostcodes<T extends string>(codes: T[]): T[] {
   return [...codes].sort(comparePostcodes);
 }
 
-/** The subset of a location list that a delivery filter can use, in A-Z order. */
+/**
+ * The subset of a location list that a delivery filter can use, in A-Z order.
+ *
+ * A district can exist twice — the plain district record and an area page built
+ * for it (E1 + "Stepney Green E1") — and both carry the same code. The filter
+ * only needs the code, so repeats collapse to one entry; the pages themselves
+ * stay untouched and keep their own links.
+ */
 export function districtLocations<T>(locations: T[] | null | undefined): T[] {
+  const seen = new Set<string>();
+
   return (Array.isArray(locations) ? locations : [])
     .filter((loc) => isDistrictLocation(loc as { name?: string }))
     .sort((a, b) =>
@@ -158,7 +167,15 @@ export function districtLocations<T>(locations: T[] | null | undefined): T[] {
         String((a as { name?: string })?.name ?? ""),
         String((b as { name?: string })?.name ?? ""),
       ),
-    );
+    )
+    .filter((loc) => {
+      const name = String((loc as { name?: string })?.name ?? "")
+        .trim()
+        .toUpperCase();
+      if (seen.has(name)) return false;
+      seen.add(name);
+      return true;
+    });
 }
 
 function toTitle(value: string) {
