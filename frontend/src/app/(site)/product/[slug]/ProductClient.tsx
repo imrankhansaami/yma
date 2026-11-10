@@ -804,6 +804,7 @@ export default function ProductClient({
                           </div>
                           <div className="text-[12px] text-brand-gray-500">
                             per day
+                            {isSelfHireProduct ? " · Self Service" : ""}
                           </div>
                         </div>
                       </div>
