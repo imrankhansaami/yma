@@ -109,6 +109,9 @@ function BookingCatalogPageInner({
   // Anchor for the results-count + sort row. Pagination clicks scroll back to
   // it so the new page's first products land just under the sticky header.
   const resultsAnchorRef = useRef<HTMLDivElement | null>(null);
+  // URL state is applied once per searchParams value; a late categories
+  // response may only complete the category-name mapping (see the effect below).
+  const appliedUrlKeyRef = useRef<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [appliedFilters, setAppliedFilters] = useState<{
     categorySelect: string;
@@ -166,6 +169,12 @@ function BookingCatalogPageInner({
 
   // Hydrate filter state from URL (supports both new and legacy params)
   useEffect(() => {
+    // This effect also re-runs when the categories request resolves. That must
+    // never clobber live state (page, sort, filters) — only a real URL change
+    // may reset the whole view.
+    const urlKey = `${searchParams.toString()}|${String(forcedCategoryName || "")}`;
+    const urlChanged = appliedUrlKeyRef.current !== urlKey;
+
     const rawCategoryId = searchParams.get("category")?.trim() || "";
     const rawCategoryName =
       searchParams.get("categoryName")?.trim() ||
@@ -208,6 +217,23 @@ function BookingCatalogPageInner({
 
       nextCategory = String(matched?._id || matched?.id || "");
     }
+
+    if (!urlChanged) {
+      // Late arrival of the categories list: finish the category-name lookup
+      // without touching pagination or the other filters.
+      if (nextCategory) {
+        setCategorySelect((current) =>
+          current === nextCategory ? current : nextCategory,
+        );
+        setAppliedFilters((prev) =>
+          prev.categorySelect === nextCategory
+            ? prev
+            : { ...prev, categorySelect: nextCategory },
+        );
+      }
+      return;
+    }
+    appliedUrlKeyRef.current = urlKey;
 
     const categoryTokenFromUrl = categoryNameForMatch
       .toLowerCase()
