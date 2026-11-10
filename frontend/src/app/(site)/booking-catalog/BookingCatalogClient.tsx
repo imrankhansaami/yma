@@ -8,7 +8,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 import type { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ import {
   type ApiProduct,
   type FetchProductsResponse,
 } from "@/services/product.service";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 /**
@@ -106,6 +106,9 @@ function BookingCatalogPageInner({
   // Mobile only: the filter controls live in a bottom sheet so the products sit
   // near the top of the first screen. Desktop keeps the always-visible card.
   const [sheetOpen, setSheetOpen] = useState(false);
+  // Anchor for the results-count + sort row. Pagination clicks scroll back to
+  // it so the new page's first products land just under the sticky header.
+  const resultsAnchorRef = useRef<HTMLDivElement | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [appliedFilters, setAppliedFilters] = useState<{
     categorySelect: string;
@@ -329,6 +332,10 @@ function BookingCatalogPageInner({
     // With SSR data there is no need to re-request immediately; without it keep
     // the default freshness so the first client fetch happens right away.
     staleTime: seededResponse ? 300_000 : 0,
+    // Keep the current page visible while the next one loads. Without this the
+    // grid collapses to skeletons mid-fetch, the document shrinks and the
+    // browser clamps the viewport down to the bottom of the shorter page.
+    placeholderData: keepPreviousData,
   });
 
   // Safe Data Mapping
@@ -388,6 +395,26 @@ function BookingCatalogPageInner({
     router.push(`${nextPath}${nextQuery ? `?${nextQuery}` : ""}`, {
       scroll: true,
     });
+  };
+
+  // Land the new page's results just under the sticky header. Without this the
+  // viewport stays where the old grid ended (bottom of the page) and the new
+  // products appear above the fold, so the click looks like it went nowhere.
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    const anchor = resultsAnchorRef.current;
+    if (!anchor) {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      return;
+    }
+    // Sticky chrome to clear: navbar on desktop; navbar + compact filter bar
+    // on mobile.
+    const stickyOffset = window.matchMedia("(min-width: 1024px)").matches
+      ? 150
+      : 170;
+    const top =
+      anchor.getBoundingClientRect().top + window.scrollY - stickyOffset;
+    window.scrollTo({ top: Math.max(top, 0), behavior: "auto" });
   };
 
   // Map API items to UI ProductCard props
@@ -628,7 +655,10 @@ function BookingCatalogPageInner({
       </div>
 
       {/* Results count + sort */}
-      <div className="flex items-center justify-between gap-3">
+      <div
+        ref={resultsAnchorRef}
+        className="flex items-center justify-between gap-3"
+      >
         <p className="text-[13px] text-brand-gray-600 lg:text-sm">
           <span className="lg:hidden">
             <span className="font-semibold text-brand-ink-900">{total}</span>{" "}
@@ -698,7 +728,7 @@ function BookingCatalogPageInner({
         <Pagination
           currentPage={currentPage}
           totalPages={pageCount}
-          onPageChange={(page) => setCurrentPage(page)}
+          onPageChange={handlePageChange}
           isLoading={isFetching}
         />
       )}
