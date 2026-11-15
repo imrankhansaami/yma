@@ -175,6 +175,7 @@ const generateDeliveryAddress = (order: IOrderDocument): string => {
           <div style="font-weight: 600; color: #555; font-size: 13px;">Address</div>
           <div style="color: #333; margin-top: 4px;">
             ${addr.street}<br>
+            ${addr.apartment ? addr.apartment + "<br>" : ""}
             ${addr.city}, ${addr.zipCode}<br>
             ${addr.country}
           </div>
@@ -876,6 +877,11 @@ const emailTemplates = {
     }</strong></p>
                   <p>${order.shippingAddress.companyName || ""}</p>
                   <p>${order.shippingAddress.street}</p>
+                  ${
+                    order.shippingAddress.apartment
+                      ? `<p>${order.shippingAddress.apartment}</p>`
+                      : ""
+                  }
                   <p>${order.shippingAddress.city}, ${
       order.shippingAddress.zipCode
     }</p>

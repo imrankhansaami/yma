@@ -1303,6 +1303,11 @@ const generateInvoiceHtml = (order: IOrderDocument): string => {
             <p><strong>${order.shippingAddress.firstName} ${order.shippingAddress.lastName}</strong></p>
             <p>${order.shippingAddress.companyName || ""}</p>
             <p>${order.shippingAddress.street}</p>
+            ${
+              order.shippingAddress.apartment
+                ? `<p>${order.shippingAddress.apartment}</p>`
+                : ""
+            }
             <p>${order.shippingAddress.city}, ${order.shippingAddress.zipCode}</p>
             <p>${order.shippingAddress.country}</p>
             <p>Email: ${order.shippingAddress.email}</p>

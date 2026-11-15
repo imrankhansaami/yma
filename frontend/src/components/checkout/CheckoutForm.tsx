@@ -296,9 +296,10 @@ export default function CheckoutForm({
       const shippingLastName = values.lastName;
 
       const streetMain = useAlt ? values.shipStreet1 : values.street1;
-      // The apartment line was removed from the form; orders carry an empty
-      // second address line unless an admin fills one in later.
-      const street2 = "";
+      // Address line 2 (flat / building / unit). Optional, so it may be empty.
+      const street2 = (
+        (useAlt ? values.shipStreet2 : values.street2) || ""
+      ).trim();
       const city = (useAlt ? values.shipTownCity : values.townCity) || "";
       const stateCounty = (useAlt
         ? values.shipStateCounty
@@ -310,9 +311,7 @@ export default function CheckoutForm({
       const deliveryFirstName = useAlt ? values.shipFirstName || "" : "";
       const deliveryLastName = useAlt ? values.shipLastName || "" : "";
 
-      const streetCombined = street2
-        ? `${streetMain || ""}`.trim()
-        : `${streetMain || ""}`.trim();
+      const streetCombined = (streetMain || "").trim();
 
       // The Location Accessibility field was removed from the checkout form;
       // orders carry an empty value for it.
@@ -336,6 +335,9 @@ export default function CheckoutForm({
 
         // Delivery Information
         street: streetCombined,
+        // The order stores the second line as `apartment`; `street2` rides
+        // along for any older readers of the payload.
+        apartment: street2,
         street2,
         city,
         state: stateCounty,
@@ -542,7 +544,16 @@ export default function CheckoutForm({
             <ErrorText msg={errors.street1?.message} />
           </Field>
 
-          {/* Street 2 removed: one street address field per block. */}
+          {/* Address Line 2 — flat / building / unit (optional) */}
+          <Field label="Address Line 2 (optional)" id="street2">
+            <Input
+              id="street2"
+              placeholder="Flat, building, unit, etc."
+              className={`${baseInput} ${errors.street2 ? errorBorder : ""}`}
+              {...register("street2")}
+            />
+            <ErrorText msg={errors.street2?.message} />
+          </Field>
 
           {/* Town/City */}
           <Field label="Town/City" id="townCity" required>
@@ -687,6 +698,19 @@ export default function CheckoutForm({
                     onSelect={(parts) => applyAddressParts(parts, "alt")}
                   />
                   <ErrorText msg={errors.shipStreet1?.message} />
+                </Field>
+
+                {/* Address Line 2 — flat / building / unit (optional) */}
+                <Field label="Address Line 2 (optional)" id="shipStreet2">
+                  <Input
+                    id="shipStreet2"
+                    placeholder="Flat, building, unit, etc."
+                    className={`${baseInput} ${
+                      errors.shipStreet2 ? errorBorder : ""
+                    }`}
+                    {...register("shipStreet2")}
+                  />
+                  <ErrorText msg={errors.shipStreet2?.message} />
                 </Field>
 
                 <Field label="Town/City" id="shipTownCity" required>

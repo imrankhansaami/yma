@@ -109,6 +109,7 @@ export const buildInvoiceModel = (order: IOrderDocument) => {
   const billedLines = [
     customerName,
     addr.street,
+    addr.apartment,
     addr.city,
     cityLine,
     addr.country,
@@ -119,6 +120,7 @@ export const buildInvoiceModel = (order: IOrderDocument) => {
   const deliverLines = [
     recipient,
     addr.street,
+    addr.apartment,
     addr.city,
     cityLine,
     addr.country,
