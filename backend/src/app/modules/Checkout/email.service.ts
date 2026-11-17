@@ -71,7 +71,7 @@ const getEmailFooter = () => `
           <img src="${COLOR_LOGO_URL}" alt="YMA Bouncy Castle" style="max-width: 180px; height: auto; margin-bottom: 20px;">
           
           <div style="margin-bottom: 25px;">
-            <a href="https://www.ymabouncycastle.co.uk" style="display: inline-block; margin: 0 12px; color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 15px;">Website</a>
+            <a href="https://ymabouncycastles.uk" style="display: inline-block; margin: 0 12px; color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 15px;">Website</a>
             <span style="color: #cbd5e0;">•</span>
             <a href="tel:07951431111" style="display: inline-block; margin: 0 12px; color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 15px;">Call Us</a>
             <span style="color: #cbd5e0;">•</span>
@@ -267,7 +267,7 @@ export const sendInvoiceEmail = async (
     const adminEmail =
       process.env.ADMIN_EMAIL ||
       process.env.EMAIL_USER ||
-      "admin@ymabouncycastle.co.uk";
+      "admin@ymabouncycastles.uk";
     const invoiceNumber = invoiceNumberFor(order);
 
     let attachments: { filename: string; content: string }[] | undefined;
@@ -585,7 +585,7 @@ Thanks again for choosing YMA Bouncy Castle — let's make it a day to remember!
 
 Warm regards,
 YMA Bouncy Castle Team
-🌐 www.ymabouncycastle.co.uk
+🌐 ymabouncycastles.uk
 📞 07951 431111
 `;
 
@@ -683,7 +683,7 @@ export const sendUserCredentialsEmail = async (
 
                     <!-- Login Button -->
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <a href="https://www.ymabouncycastle.co.uk/login" style="display: inline-block; padding: 16px 48px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 18px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);">
+                        <a href="https://ymabouncycastles.uk/login" style="display: inline-block; padding: 16px 48px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 18px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);">
                             🔑 Login to Your Account
                         </a>
                     </div>
@@ -743,7 +743,7 @@ export const sendUserCredentialsEmail = async (
                         <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
                             📞 Call us: 07951 431111<br>
                             💬 WhatsApp: <a href="https://wa.me/447951431111" style="color: #4f46e5; text-decoration: none;">+44 7951 431111</a><br>
-                            📧 Email: <a href="mailto:support@ymabouncycastle.co.uk" style="color: #4f46e5; text-decoration: none;">support@ymabouncycastle.co.uk</a>
+                            📧 Email: <a href="mailto:support@ymabouncycastles.uk" style="color: #4f46e5; text-decoration: none;">support@ymabouncycastles.uk</a>
                         </p>
                     </div>
                 </td>
@@ -772,7 +772,7 @@ Password: ${password}
 
 ⚠ï¸ Important: Please save these credentials in a secure place. We recommend changing your password after your first login.
 
-Login here: https://www.ymabouncycastle.co.uk/login
+Login here: https://ymabouncycastles.uk/login
 
 ✨ YOUR ACCOUNT BENEFITS
 • Quick Checkout: Your details are saved for faster future bookings
@@ -794,11 +794,11 @@ Welcome to the YMA family! 🎊
 NEED HELP?
 📞 Call us: 07951 431111
 💬 WhatsApp: +44 7951 431111
-📧 Email: support@ymabouncycastle.co.uk
+📧 Email: support@ymabouncycastles.uk
 
 Warm regards,
 YMA Bouncy Castle Team
-🌐 www.ymabouncycastle.co.uk
+🌐 ymabouncycastles.uk
 📞 07951 431111
 `;
 
@@ -826,7 +826,7 @@ export const sendOrderNotificationToAdmin = async (
     const adminEmail =
       process.env.ADMIN_EMAIL ||
       process.env.EMAIL_USER ||
-      "admin@ymabouncycastle.co.uk";
+      "admin@ymabouncycastles.uk";
     const orderId =
       order.orderNumber || `ORD-${order._id.toString().slice(-8)}`;
     const customerName = `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`;
@@ -1199,7 +1199,7 @@ Thank you for choosing YMA Bouncy Castle — we're excited to be part of your ce
 
 Warm regards,
 YMA Bouncy Castle Team
-🌐 www.ymabouncycastle.co.uk
+🌐 ymabouncycastles.uk
 📞 07951 431111
 `;
 
@@ -1397,7 +1397,7 @@ We hope to be part of your celebration in the future 🎈
 
 Warm regards,
 YMA Bouncy Castle Team
-🌐 www.ymabouncycastle.co.uk
+🌐 ymabouncycastles.uk
 📞 07951 431111
 `;
 
@@ -1626,7 +1626,7 @@ Thank you for choosing YMA Bouncy Castle — we look forward to delivering the f
 
 Warm regards,
 YMA Bouncy Castle Team
-🌐 www.ymabouncycastle.co.uk
+🌐 ymabouncycastles.uk
 📞 07951 431111
 `;
 

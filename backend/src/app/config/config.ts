@@ -1,6 +1,11 @@
 import path from "path";
 import dotenv from "dotenv";
-dotenv.config({ path: path.join(process.cwd(), ".env") });
+
+// Resolve backend/.env from this file's location so the app loads its env
+// no matter which folder it is started from (repo root, backend/, or a
+// host that runs the built server directly).
+const backendRoot = path.resolve(__dirname, "..", "..", "..");
+dotenv.config({ path: path.join(backendRoot, ".env") });
 
 export const config = {
   env: process.env.NODE_ENV || "development",

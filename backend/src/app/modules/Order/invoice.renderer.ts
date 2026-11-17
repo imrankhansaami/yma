@@ -17,7 +17,7 @@ const COMPANY_ADDRESS = [
 ];
 const COMPANY_PHONE = "07951 431111";
 const COMPANY_EMAIL = "info@ymabouncycastles.uk";
-const COMPANY_SITE = "https://yma.simplif-ai.co";
+const COMPANY_SITE = "https://ymabouncycastles.uk";
 const LOGO_URL =
   "https://res.cloudinary.com/dj785gqtu/image/upload/v1767711924/logo2_xos8xa.png";
 

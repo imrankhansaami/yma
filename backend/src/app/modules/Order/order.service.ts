@@ -1296,7 +1296,7 @@ const generateInvoiceHtml = (order: IOrderDocument): string => {
             <p><strong>YMA Bouncy Castle</strong></p>
             <p>Bristol, United Kingdom</p>
             <p>Phone: 07951 431111</p>
-            <p>Email: orders@ymabouncycastle.co.uk</p>
+            <p>Email: orders@ymabouncycastles.uk</p>
           </div>
           <div class="customer-info">
             <h3>Bill To:</h3>

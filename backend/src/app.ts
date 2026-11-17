@@ -72,7 +72,9 @@ app.use(cookieParser());
 app.use(passport.initialize());
 
 app.set("view engine", "ejs");
-app.set("views", path.join(process.cwd(), "src", "app", "views"));
+// Anchored to the backend folder (not the startup cwd) so the EJS pages
+// render no matter where the process was launched from.
+app.set("views", path.join(__dirname, "..", "src", "app", "views"));
 app.use(requestPerformance);
 app.use(globalCache);
 

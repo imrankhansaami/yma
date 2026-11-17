@@ -2,7 +2,6 @@
  * Canonical public site URL.
  *
  * Set NEXT_PUBLIC_SITE_URL per environment:
- *   - staging:    NEXT_PUBLIC_SITE_URL=https://yma.simplif-ai.co
  *   - production: NEXT_PUBLIC_SITE_URL=https://ymabouncycastles.uk
  *
  * NEXT_PUBLIC_* values are inlined at build time, so a rebuild is required

@@ -18,7 +18,7 @@ const emailConfig: EmailConfig = {
   adminEmail:
     process.env.ADMIN_EMAIL ||
     process.env.EMAIL_USER ||
-    "admin@ymabouncycastle.co.uk",
+    "admin@ymabouncycastles.uk",
 };
 
 // Generate product table HTML
@@ -378,7 +378,7 @@ const emailTemplates = {
               <a href="#" class="social-icon">TW</a>
             </div>
             <p>YMA Bouncy Castle | Making celebrations memorable since 2010</p>
-            <p style="opacity: 0.8; margin-top: 10px;">📍 Bristol, UK | 📞 07951 431111 | ✉️ orders@ymabouncycastle.co.uk</p>
+            <p style="opacity: 0.8; margin-top: 10px;">📍 Bristol, UK | 📞 07951 431111 | ✉️ orders@ymabouncycastles.uk</p>
             <p style="font-size: 12px; opacity: 0.6; margin-top: 20px;">
               This is an automated email. Please do not reply to this message.
             </p>
@@ -868,7 +868,7 @@ const emailTemplates = {
                   <p><strong>YMA Bouncy Castle</strong></p>
                   <p>Bristol, United Kingdom</p>
                   <p>Phone: 07951 431111</p>
-                  <p>Email: orders@ymabouncycastle.co.uk</p>
+                  <p>Email: orders@ymabouncycastles.uk</p>
                 </div>
                 <div class="customer-info">
                   <h3>Bill To:</h3>
@@ -1041,7 +1041,7 @@ const emailTemplates = {
                 You can view and download this invoice anytime from your account dashboard.
               </p>
               <a href="${
-                process.env.FRONTEND_URL || "https://ymabouncycastle.co.uk"
+                process.env.FRONTEND_URL || "https://ymabouncycastles.uk"
               }/dashboard/orders/${order._id}" 
                  style="display: inline-block; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; margin-top: 10px;">
                 View Order in Dashboard
@@ -1053,7 +1053,7 @@ const emailTemplates = {
               <div style="font-size: 18px; font-weight: 700; color: #1976D2; margin: 10px 0;">
                 📞 07951 431111
               </div>
-              <p style="color: #666; margin: 5px 0; font-size: 14px;">📧 accounts@ymabouncycastle.co.uk</p>
+              <p style="color: #666; margin: 5px 0; font-size: 14px;">📧 accounts@ymabouncycastles.uk</p>
               <p style="color: #666; font-size: 12px; margin-top: 10px;">
                 Please quote Invoice #INV-${
                   order.orderNumber
