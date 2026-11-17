@@ -18,7 +18,7 @@ import api from "@/api/api";
 import { orderServices } from "@/services/order.service";
 import { TOrder } from "@/types/order";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { generateInvoice } from "@/lib/invoice-generator";
+import { downloadInvoice } from "@/lib/downloadInvoice";
 import { format, isValid, startOfToday } from "date-fns";
 import {
   Calendar as CalendarIcon,
@@ -500,9 +500,18 @@ export function CustomerHistoryModal({
       });
     },
   });
-  const handleDownloadInvoice = () => {
-    if (orderData) {
-      generateInvoice(orderData);
+  const handleDownloadInvoice = async () => {
+    if (!orderData) return;
+    const orderId = orderData.id || orderData._id;
+    if (!orderId) return;
+    try {
+      await downloadInvoice(orderId, orderData.orderNumber);
+    } catch {
+      notify({
+        title: "Invoice download failed",
+        message: "Please try again in a moment.",
+        variant: "error",
+      });
     }
   };
 

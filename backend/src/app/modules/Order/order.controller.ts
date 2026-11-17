@@ -324,15 +324,15 @@ export const downloadInvoiceHandler = asyncHandler(
     const userId = aReq.user.id;
     const isAdmin = aReq.user.role === "admin";
 
-    const { html, filename } = await orderService.downloadInvoice(
+    const { pdf, filename } = await orderService.downloadInvoice(
       orderId,
       userId,
       isAdmin,
     );
 
-    res.setHeader("Content-Type", "text/html");
+    res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    res.send(html);
+    res.send(pdf);
   },
 );
 

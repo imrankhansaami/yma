@@ -1,8 +1,12 @@
 // Invoice renderer — one source of truth for the invoice HTML (email + preview)
 // and the attached PDF. Used by the checkout receipt, the admin "send invoice"
 // action and the invoice preview/download endpoints, so every surface matches.
+//
+// The PDF mirrors the invoice layout the business already used (logo, company
+// block, billed-to / ship-to / invoice-details columns, booking block inside
+// the product row, fee lines and the payment-details footer). Keep both
+// renderers in step: they show the same fields.
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 import {
   DeliveryTimeManager,
   IOrderDocument,
@@ -21,8 +25,16 @@ const COMPANY_SITE = "https://ymabouncycastles.uk";
 const LOGO_URL =
   "https://res.cloudinary.com/dj785gqtu/image/upload/v1767711924/logo2_xos8xa.png";
 
+/** Bank details printed at the foot of every invoice. */
+const PAYMENT_DETAILS = {
+  accountName: "YMA BOUNCY CASTLES LTD",
+  sortCode: "20-25-19",
+  accountNumber: "60465909",
+};
+
 const ORANGE = "#F97316";
 const INK = "#0F172A";
+const BODY = "#334155";
 const MUTED = "#64748B";
 const BORDER = "#E2E8F0";
 
@@ -38,6 +50,7 @@ const esc = (value: unknown): string =>
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
+/** "15 November 2026" — used in prose. */
 const formatDate = (value?: Date | string): string => {
   if (!value) return "—";
   const date = new Date(value);
@@ -47,6 +60,28 @@ const formatDate = (value?: Date | string): string => {
     month: "long",
     year: "numeric",
   });
+};
+
+/** "November 15, 2026" — the invoice/order date format on the invoice. */
+const formatLongDate = (value?: Date | string): string => {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+/** "21-11-2026" — the booking start/finish format on the invoice. */
+const formatShortDate = (value?: Date | string): string => {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}-${month}-${date.getFullYear()}`;
 };
 
 /** Strips the "(+£10)" style suffix the storefront appends to some labels. */
@@ -126,15 +161,18 @@ export const buildInvoiceModel = (order: IOrderDocument) => {
     addr.country,
   ].filter(Boolean) as string[];
 
+  // "Where" on the booking block is the delivery postcode.
+  const where = addr.zipCode || addr.postcode || addr.location || "—";
+
   const items = (order.items || []).map((item: any) => ({
     name: item.name || "Booking",
     quantity: Number(item.quantity || 1),
     unitPrice: Number(item.price || 0),
     lineTotal: Number(item.price || 0) * Number(item.quantity || 1),
     days: itemDays(item),
-    startDate: formatDate(item.startDate),
-    endDate: formatDate(item.endDate),
-    where: addr.location || "—",
+    startDate: formatShortDate(item.startDate),
+    endDate: formatShortDate(item.endDate),
+    where,
     extras: (item.extras || []).map((extra: any) => ({
       label: extra.label || "Option",
       quantity: Number(extra.quantity || 1),
@@ -142,18 +180,46 @@ export const buildInvoiceModel = (order: IOrderDocument) => {
     })),
   }));
 
+  // The charged delivery/collection money is stored as one figure
+  // (`deliveryFee`). Work out which window caused it so the invoice can name
+  // it the way the customer picked it.
+  const deliverySlot = DeliveryTimeManager.normalize(
+    addr.deliveryTime,
+    "delivery",
+  );
+  const collectionSlot = DeliveryTimeManager.normalize(
+    addr.collectionTime,
+    "collection",
+  );
+  const deliverySlotFee = DeliveryTimeManager.getDeliveryFee(deliverySlot);
+  const collectionSlotFee =
+    DeliveryTimeManager.getCollectionFee(collectionSlot);
+
+  const preferredFeeLabel =
+    deliverySlotFee > 0 && collectionSlotFee > 0
+      ? "Preferred Delivery & Collection Times"
+      : deliverySlotFee > 0
+        ? `Preferred Delivery Time (${deliverySlot})`
+        : collectionSlotFee > 0
+          ? `Preferred Collection Time (${collectionSlot})`
+          : "Preferred Delivery & Collection Times";
+
   return {
     invoiceNumber: invoiceNumberFor(order),
     orderNumber: String(order.orderNumber || "—"),
-    orderDate: formatDate(order.createdAt),
-    invoiceDate: formatDate(new Date()),
+    orderDate: formatLongDate(order.createdAt),
+    invoiceDate: formatLongDate(new Date()),
     payment:
       PAYMENT_LABELS[String(order.paymentMethod || "")] ||
       String(order.paymentMethod || "—"),
     purchaseType: addr.purchaseType || "",
+    // "The product will be" line — where the inflatable gets set up.
     placement: stripFeeSuffix(addr.floorType) || "—",
     deliveryTime: deliveryTimeLabel(addr.deliveryTime),
     collectionTime: collectionTimeLabel(addr.collectionTime),
+    deliverySlot,
+    collectionSlot,
+    preferredFeeLabel,
     billedLines,
     deliverLines,
     items,
@@ -195,7 +261,7 @@ const INVOICE_STYLES = `
 
 /**
  * The invoice as a complete, email-ready HTML document. Also used for the
- * invoice preview/download pages.
+ * invoice preview page.
  */
 export const renderInvoiceHtml = (order: IOrderDocument): string => {
   const m = buildInvoiceModel(order);
@@ -217,8 +283,9 @@ export const renderInvoiceHtml = (order: IOrderDocument): string => {
       (item) => `
     <tr>
       <td>
-        <div style="font-size:13px;font-weight:600;color:${INK};">${esc(item.name)}</div>
+        <div style="font-size:13px;font-weight:600;color:${INK};">Booking</div>
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:8px;">
+          <tr><td class="k">Name</td><td class="v">${esc(item.name)}</td></tr>
           <tr><td class="k">Start date</td><td class="v">${esc(item.startDate)}</td></tr>
           <tr><td class="k">Finish date</td><td class="v">${esc(item.endDate)}</td></tr>
           <tr><td class="k">Days</td><td class="v">${item.days}</td></tr>
@@ -296,17 +363,17 @@ export const renderInvoiceHtml = (order: IOrderDocument): string => {
           ${metaBlock("Billed to", m.billedLines)}
         </td>
         <td width="30%" style="padding:24px 8px 0 8px;vertical-align:top;">
-          ${metaBlock("Deliver to", m.deliverLines)}
+          ${metaBlock("Ship to", m.deliverLines)}
         </td>
         <td width="36%" style="padding:24px 28px 0 8px;vertical-align:top;">
           <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${MUTED};margin-bottom:8px;">Invoice details</div>
           <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
-            ${detailRow("Invoice number", m.invoiceNumber)}
-            ${detailRow("Invoice date", m.invoiceDate)}
-            ${detailRow("Order number", m.orderNumber)}
-            ${detailRow("Order date", m.orderDate)}
-            ${detailRow("Payment method", m.payment)}
-            ${detailRow("Placed in", m.placement)}
+            ${detailRow("Invoice Number", m.invoiceNumber)}
+            ${detailRow("Invoice Date", m.invoiceDate)}
+            ${detailRow("Order Number", m.orderNumber)}
+            ${detailRow("Order Date", m.orderDate)}
+            ${detailRow("Payment Method", m.payment)}
+            ${detailRow("The product will be", m.placement)}
             ${detailRow("Delivery", m.deliveryTime)}
             ${detailRow("Collection", m.collectionTime)}
           </table>
@@ -333,8 +400,8 @@ export const renderInvoiceHtml = (order: IOrderDocument): string => {
           <td width="52%"></td>
           <td width="48%">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-              ${totalRow("Subtotal", money(m.totals.subtotal))}
-              ${totalRow("Delivery &amp; collection", freeOrMoney(m.totals.delivery))}
+              ${totalRow("Shipping", "Free shipping")}
+              ${m.totals.delivery > 0 ? totalRow(m.preferredFeeLabel, money(m.totals.delivery)) : ""}
               ${m.totals.placement > 0 ? totalRow("Outdoor placement", money(m.totals.placement)) : ""}
               ${m.totals.overnight > 0 ? totalRow("Overnight keeping", money(m.totals.overnight)) : ""}
               ${m.totals.discount > 0 ? totalRow("Discount", `-${money(m.totals.discount)}`, { tone: "#DC2626" }) : ""}
@@ -344,6 +411,14 @@ export const renderInvoiceHtml = (order: IOrderDocument): string => {
           </td>
         </tr>
       </table>
+    </div>
+
+    <div class="pad" style="padding-top:8px;padding-bottom:0;">
+      <div style="border-top:1px solid ${BORDER};padding-top:14px;text-align:center;font-size:12px;line-height:1.7;color:${INK};">
+        <strong>PAYMENT DETAILS: ${esc(PAYMENT_DETAILS.accountName)}</strong><br>
+        SC: ${esc(PAYMENT_DETAILS.sortCode)}<br>
+        AC: ${esc(PAYMENT_DETAILS.accountNumber)}
+      </div>
     </div>
 
     <div style="background:${INK};color:#CBD5E1;padding:22px 28px;font-size:12px;line-height:1.7;">
@@ -372,8 +447,8 @@ const loadLogoDataUrl = async (): Promise<string | null> => {
 };
 
 /**
- * The invoice as a PDF, for attaching to the email. Falls back to a text
- * header if the logo cannot be loaded, so the PDF itself never fails.
+ * The invoice as a PDF, for attaching to the email and for the customer /
+ * admin download. Mirrors the layout the business already sends out.
  */
 export const renderInvoicePdf = async (
   order: IOrderDocument,
@@ -382,35 +457,47 @@ export const renderInvoicePdf = async (
   const doc = new jsPDF({ unit: "mm", format: "a4" });
 
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const left = 15;
   const right = pageWidth - 15;
+
+  const BILLED_X = 15;
+  const SHIP_X = 72;
+  const META_LABEL_X = 112;
+  const META_VALUE_X = 142;
+  const META_VALUE_WIDTH = right - META_VALUE_X;
+
+  const QUANTITY_X = 148;
+  const PRICE_X = right - 2;
+
+  const money2 = (value?: number) => `£${Number(value || 0).toFixed(2)}`;
 
   // ── Header: logo (left) and company block (right) ──────────────────────
   const logo = await loadLogoDataUrl();
   if (logo) {
     try {
-      doc.addImage(logo, "PNG", 15, 12, 34, 15);
+      doc.addImage(logo, "PNG", left, 12, 34, 15);
     } catch {
-      // Fall through to the text header below.
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(ORANGE);
-      doc.text("YMA", 15, 22);
+      doc.text("YMA", left, 22);
     }
   } else {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(ORANGE);
-    doc.text("YMA", 15, 22);
+    doc.text("YMA", left, 22);
   }
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(INK);
-  let companyY = 15;
+  let companyY = 14;
   doc.text(COMPANY_NAME, right, companyY, { align: "right" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(MUTED);
+  doc.setTextColor(BODY);
   COMPANY_ADDRESS.forEach((line) => {
     companyY += 4.2;
     doc.text(line, right, companyY, { align: "right" });
@@ -420,115 +507,167 @@ export const renderInvoicePdf = async (
 
   // ── Title ──────────────────────────────────────────────────────────────
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(24);
+  doc.setFontSize(20);
   doc.setTextColor(INK);
-  doc.text("INVOICE", 15, 44);
-  doc.setFillColor(ORANGE);
-  doc.rect(15, 47.5, 22, 1.4, "F");
+  doc.text("INVOICE", left, 43);
 
-  doc.setFontSize(12);
-  doc.text(m.invoiceNumber, right, 40, { align: "right" });
+  // ── Meta columns: billed to / ship to / invoice details ────────────────
+  const columnTop = 54;
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(MUTED);
-  doc.text(m.invoiceDate, right, 45, { align: "right" });
+  doc.setTextColor(BODY);
+  let billedY = columnTop;
+  m.billedLines.forEach((line) => {
+    const wrapped = doc.splitTextToSize(String(line), 52);
+    doc.text(wrapped, BILLED_X, billedY);
+    billedY += wrapped.length * 4.4;
+  });
 
-  // ── Meta columns ───────────────────────────────────────────────────────
-  const columns = [
-    { x: 15, heading: "BILLED TO", lines: m.billedLines },
-    { x: 78, heading: "DELIVER TO", lines: m.deliverLines },
-    {
-      x: 140,
-      heading: "INVOICE DETAILS",
-      lines: [
-        `Invoice: ${m.invoiceNumber}`,
-        `Order: ${m.orderNumber}`,
-        `Order date: ${m.orderDate}`,
-        `Payment: ${m.payment}`,
-        `Placed in: ${m.placement}`,
-        `Delivery: ${m.deliveryTime}`,
-        `Collection: ${m.collectionTime}`,
-      ],
-    },
+  let shipY = columnTop;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(INK);
+  doc.text("Ship To:", SHIP_X, shipY);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(BODY);
+  m.deliverLines.forEach((line) => {
+    shipY += 4.4;
+    const wrapped = doc.splitTextToSize(String(line), 36);
+    doc.text(wrapped, SHIP_X, shipY);
+    shipY += (wrapped.length - 1) * 4.4;
+  });
+
+  const metaRows: [string, string][] = [
+    ["Invoice Number:", m.invoiceNumber],
+    ["Invoice Date:", m.invoiceDate],
+    ["Order Number:", m.orderNumber],
+    ["Order Date:", m.orderDate],
+    ["Payment Method:", m.payment],
+    ["The product will be:", m.placement],
   ];
+  let metaY = columnTop;
+  metaRows.forEach(([label, value]) => {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(BODY);
+    doc.text(label, META_LABEL_X, metaY);
+    doc.setTextColor(INK);
+    const wrapped = doc.splitTextToSize(String(value), META_VALUE_WIDTH);
+    doc.text(wrapped, META_VALUE_X, metaY);
+    metaY += Math.max(5.2, wrapped.length * 4.4 + 0.8);
+  });
 
-  let metaBottom = 58;
-  columns.forEach((column) => {
+  let y = Math.max(billedY, shipY, metaY) + 4;
+
+  // ── Product table ──────────────────────────────────────────────────────
+  const drawTableHeader = (top: number) => {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(left, top, right - left, 8, "F");
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(MUTED);
-    doc.text(column.heading, column.x, 58);
+    doc.setFontSize(9.5);
+    doc.setTextColor("#FFFFFF");
+    doc.text("Product", left + 3, top + 5.4);
+    doc.text("Quantity", QUANTITY_X, top + 5.4, { align: "center" });
+    doc.text("Price", PRICE_X, top + 5.4, { align: "right" });
+  };
+
+  const detailLine = (
+    label: string,
+    value: string,
+    atY: number,
+    indent = 0,
+  ) => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(INK);
+    doc.text(`${label} `, left + 1 + indent, atY);
+    const width = doc.getTextWidth(`${label} `);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(BODY);
+    doc.text(value, left + 1 + indent + width, atY);
+  };
+
+  drawTableHeader(y);
+  let rowY = y + 8;
+
+  const footerReserve = 40;
+
+  m.items.forEach((item) => {
+    const nameLines = doc.splitTextToSize(
+      item.name,
+      right - left - 12,
+    ) as string[];
+    const extraCount = item.extras.length;
+    const blockHeight =
+      5.5 + nameLines.length * 4.4 + (4 + extraCount) * 4.4 + 2.5;
+
+    if (rowY + blockHeight > pageHeight - footerReserve) {
+      doc.addPage();
+      rowY = 20;
+      drawTableHeader(rowY);
+      rowY += 8;
+    }
 
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.setTextColor(BODY);
+    doc.text("Booking", left + 1, rowY + 4);
+    doc.text(String(item.quantity), QUANTITY_X, rowY + 4, { align: "center" });
+    doc.text(money2(item.lineTotal), PRICE_X, rowY + 4, { align: "right" });
+
+    let dy = rowY + 9;
+
+    // Name (wraps onto as many lines as it needs)
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    let y = 63;
-    column.lines.forEach((line) => {
-      doc.setTextColor(line === column.lines[0] ? INK : "#334155");
-      const wrapped = doc.splitTextToSize(String(line), 56);
-      doc.text(wrapped, column.x, y);
-      y += wrapped.length * 4.2;
+    doc.setTextColor(INK);
+    doc.text("Name: ", left + 1, dy);
+    const nameLabelWidth = doc.getTextWidth("Name: ");
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(BODY);
+    doc.text(nameLines, left + 1 + nameLabelWidth, dy);
+    dy += nameLines.length * 4.4;
+
+    detailLine("Start date:", item.startDate, dy);
+    dy += 4.4;
+    detailLine("Finish date:", item.endDate, dy);
+    dy += 4.4;
+    detailLine("Days:", String(item.days), dy);
+    dy += 4.4;
+
+    const postalLines = doc.splitTextToSize(
+      item.where,
+      right - left - 8,
+    ) as string[];
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(INK);
+    doc.text("Where:", left + 1, dy);
+    const whereLabelWidth = doc.getTextWidth("Where: ");
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(BODY);
+    doc.text(postalLines, left + 1 + whereLabelWidth, dy);
+    dy += postalLines.length * 4.4;
+
+    item.extras.forEach((extra) => {
+      const value =
+        Number(extra.total) > 0
+          ? `${extra.label} x ${extra.quantity}: ${money2(extra.total)}`
+          : extra.label;
+      detailLine("Extra:", value, dy);
+      dy += 4.4;
     });
-    metaBottom = Math.max(metaBottom, y);
+
+    rowY = dy + 0.5;
+
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.2);
+    doc.line(left, rowY, right, rowY);
   });
 
-  // ── Items table ────────────────────────────────────────────────────────
-  const body = m.items.map((item) => {
-    const detailLines = [
-      `Start date: ${item.startDate}`,
-      `Finish date: ${item.endDate}`,
-      `Days: ${item.days}`,
-      `Where: ${item.where}`,
-    ];
-    if (item.extras.length) {
-      detailLines.push(
-        `Extra options: ${item.extras
-          .map((extra) =>
-            Number(extra.total) > 0
-              ? `${extra.label} x ${extra.quantity}: ${money(extra.total)}`
-              : extra.label,
-          )
-          .join(", ")}`,
-      );
-    }
-    return [
-      `${item.name}\n${detailLines.join("\n")}`,
-      String(item.quantity),
-      money(item.lineTotal),
-    ];
-  });
-
-  autoTable(doc, {
-    startY: metaBottom + 6,
-    margin: { left: 15, right: 15 },
-    head: [["Product", "Quantity", "Price"]],
-    body,
-    theme: "plain",
-    headStyles: {
-      fillColor: INK,
-      textColor: "#FFFFFF",
-      fontStyle: "bold",
-      fontSize: 10,
-      cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
-    },
-    styles: {
-      fontSize: 9,
-      cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
-      textColor: "#334155",
-      lineColor: BORDER,
-      lineWidth: { bottom: 0.2, top: 0, left: 0, right: 0 },
-      valign: "top",
-    },
-    columnStyles: {
-      1: { halign: "center" },
-      2: { halign: "right", cellWidth: 30 },
-    },
-  });
+  y = rowY + 8;
 
   // ── Totals ─────────────────────────────────────────────────────────────
-  // @ts-expect-error jspdf-autotable attaches lastAutoTable at runtime
-  let y = (doc.lastAutoTable?.finalY || metaBottom + 20) + 8;
-  const labelX = 130;
-  const valueX = right;
+  const totalsLabelX = 114;
+  const totalsValueX = right;
 
   const totalLine = (
     label: string,
@@ -536,16 +675,30 @@ export const renderInvoicePdf = async (
     options: { bold?: boolean; color?: [number, number, number] } = {},
   ) => {
     doc.setFont("helvetica", options.bold ? "bold" : "normal");
-    doc.setFontSize(options.bold ? 12 : 10);
+    doc.setFontSize(options.bold ? 11.5 : 10);
     const [r, g, b] = options.color || [51, 65, 85];
-    doc.setTextColor(r, g, b);
-    doc.text(label, labelX, y);
-    doc.text(value, valueX, y, { align: "right" });
-    y += options.bold ? 6.5 : 5.5;
+    const labelWrapped = doc.splitTextToSize(
+      label,
+      totalsValueX - totalsLabelX - 26,
+    ) as string[];
+    doc.text(labelWrapped, totalsLabelX, y);
+    doc.text(value, totalsValueX, y, { align: "right" });
+    y += labelWrapped.length * 5.2;
+
+    if (!options.bold) {
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.2);
+      doc.line(totalsLabelX, y - 4.6, totalsValueX, y - 4.6);
+    }
   };
 
-  totalLine("Subtotal", money(m.totals.subtotal));
-  totalLine("Delivery & collection", freeOrMoney(m.totals.delivery));
+  doc.setTextColor(BODY);
+  // Standard-window delivery and collection are free; any charge for a
+  // specific window rides on its own line below, so the two never double up.
+  totalLine("Shipping", "Free shipping");
+  if (m.totals.delivery > 0) {
+    totalLine(m.preferredFeeLabel, money(m.totals.delivery));
+  }
   if (m.totals.placement > 0) {
     totalLine("Outdoor placement", money(m.totals.placement));
   }
@@ -557,34 +710,43 @@ export const renderInvoicePdf = async (
       color: [220, 38, 38],
     });
   }
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.4);
-  doc.line(labelX, y - 3, valueX, y - 3);
+
+  doc.setDrawColor(15, 23, 42);
+  doc.setLineWidth(0.5);
+  doc.line(totalsLabelX, y - 3, totalsValueX, y - 3);
   totalLine("Total", money(m.totals.total), { bold: true, color: [15, 23, 42] });
 
-  // ── Footer ─────────────────────────────────────────────────────────────
-  const pageHeight = doc.internal.pageSize.getHeight();
+  // ── Payment details footer ─────────────────────────────────────────────
+  const footerTop = Math.max(y + 12, pageHeight - 34);
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.3);
-  doc.line(15, pageHeight - 26, right, pageHeight - 26);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(MUTED);
-  doc.text(
-    `Questions about this invoice? Call ${COMPANY_PHONE} or email ${COMPANY_EMAIL}.`,
-    15,
-    pageHeight - 20,
-  );
-  doc.text(
-    `Please quote ${m.invoiceNumber} in any correspondence. This invoice is generated automatically.`,
-    15,
-    pageHeight - 15,
-  );
+  doc.line(left, footerTop, right, footerTop);
+
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
   doc.setTextColor(INK);
-  doc.text("Thank you for your business!", pageWidth / 2, pageHeight - 8, {
-    align: "center",
-  });
+  doc.text(
+    `PAYMENT DETAILS: ${PAYMENT_DETAILS.accountName}`,
+    pageWidth / 2,
+    footerTop + 7,
+    { align: "center" },
+  );
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setTextColor(BODY);
+  doc.text(
+    `SC: ${PAYMENT_DETAILS.sortCode}`,
+    pageWidth / 2,
+    footerTop + 12.5,
+    { align: "center" },
+  );
+  doc.text(
+    `AC:${PAYMENT_DETAILS.accountNumber}`,
+    pageWidth / 2,
+    footerTop + 18,
+    { align: "center" },
+  );
 
   const output = doc.output("arraybuffer");
   return Buffer.from(output);

@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
-import { ChevronLeft, ChevronRight, LogOut, Package, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, LogOut, Package, User } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { orderServices } from "@/services/order.service";
+import { downloadInvoice } from "@/lib/downloadInvoice";
 import {
   selectIsAuthenticated,
   selectUser,
@@ -110,6 +111,8 @@ function formatDateRange(startISO?: string, endISO?: string) {
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"profile" | "orders">("profile");
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
+  const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
   const user = useAuthStore(selectUser);
@@ -177,6 +180,20 @@ export default function ProfilePage() {
   const customerName = activeOrder?.shippingAddress
     ? `${activeOrder.shippingAddress.firstName ?? ""} ${activeOrder.shippingAddress.lastName ?? ""}`.trim()
     : "";
+
+  const handleDownloadInvoice = async () => {
+    const orderId = activeOrder?.id || activeOrder?._id;
+    if (!orderId) return;
+    setInvoiceError(null);
+    setIsInvoiceLoading(true);
+    try {
+      await downloadInvoice(orderId, activeOrder?.orderNumber);
+    } catch {
+      setInvoiceError("Could not download the invoice. Please try again.");
+    } finally {
+      setIsInvoiceLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -644,6 +661,23 @@ export default function ProfilePage() {
                           "MMM d, yyyy • h:mm a",
                         )
                       : "—"}
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={handleDownloadInvoice}
+                      disabled={isInvoiceLoading}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand-orange-300 bg-brand-orange-50 px-4 py-2.5 text-sm font-semibold text-brand-orange-700 transition hover:bg-brand-orange-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Download className="h-4 w-4" />
+                      {isInvoiceLoading
+                        ? "Preparing invoice…"
+                        : "Download invoice (PDF)"}
+                    </button>
+                    {invoiceError ? (
+                      <p className="mt-2 text-xs text-red-600">{invoiceError}</p>
+                    ) : null}
                   </div>
                 </div>
               </div>

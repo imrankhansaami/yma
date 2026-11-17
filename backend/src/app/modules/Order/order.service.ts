@@ -23,7 +23,7 @@ import {
   sendInvoiceEmail,
   notifyAdminNewOrder,
 } from "./email.service";
-import { renderInvoiceHtml } from "./invoice.renderer";
+import { renderInvoiceHtml, renderInvoicePdf } from "./invoice.renderer";
 import {
   PRODUCTS_TAG,
   productTag,
@@ -1206,7 +1206,7 @@ export const downloadInvoice = async (
   orderId: string,
   userId?: string,
   isAdmin: boolean = false,
-): Promise<{ html: string; filename: string }> => {
+): Promise<{ pdf: Buffer; filename: string }> => {
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new ApiError("Invalid order ID", 400);
   }
@@ -1218,10 +1218,10 @@ export const downloadInvoice = async (
     throw new ApiError("You are not authorized to download this invoice", 403);
   }
 
-  const html = renderInvoiceHtml(order);
-  const filename = `invoice-${order.orderNumber}.html`;
+  const pdf = await renderInvoicePdf(order);
+  const filename = `invoice-${order.orderNumber || "order"}.pdf`;
 
-  return { html, filename };
+  return { pdf, filename };
 };
 
 export const previewInvoice = async (

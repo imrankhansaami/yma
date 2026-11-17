@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { generateInvoice } from "@/lib/invoice-generator";
+import { downloadInvoice } from "@/lib/downloadInvoice";
 import { PAYMENT_METHOD_LABELS } from "@/lib/validation/checkout-schema";
 import { cn } from "@/lib/utils";
 import { orderServices } from "@/services/order.service";
@@ -733,9 +733,18 @@ export function OrderDetailsModal({
     updateStatusMutation.mutate({ status: "confirmed" });
   };
 
-  const handleDownloadInvoice = () => {
-    if (orderProp) {
-      generateInvoice(orderProp);
+  const handleDownloadInvoice = async () => {
+    if (!orderProp) return;
+    const orderId = orderProp.id || orderProp._id;
+    if (!orderId) return;
+    try {
+      await downloadInvoice(orderId, orderProp.orderNumber);
+    } catch {
+      notify({
+        title: "Invoice download failed",
+        message: "Please try again in a moment.",
+        variant: "error",
+      });
     }
   };
 
