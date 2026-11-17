@@ -1,9 +1,35 @@
 import { NextRequest } from "next/server";
+import { SITE_URL } from "@/lib/site-url";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const METHODS_WITHOUT_BODY = new Set(["GET", "HEAD"]);
+
+/**
+ * Undesirable Host values: when the platform's internal proxy reaches this
+ * server, the Host header is the wildcard bind address (0.0.0.0:3000). If that
+ * leaks into `x-frontend-origin`, the backend builds absolute URLs such as the
+ * Google OAuth callback from it, sending users to https://0.0.0.0:3000.
+ */
+const WILDCARD_BIND = /^(0\.0\.0\.0|\[::\]|::)(:\d+)?$/;
+
+function resolveClientOrigin(req: NextRequest) {
+  const forwardedHost = req.headers
+    .get("x-forwarded-host")
+    ?.split(",")[0]
+    ?.trim();
+  if (forwardedHost && !WILDCARD_BIND.test(forwardedHost)) {
+    const proto =
+      req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "https";
+    return `${proto}://${forwardedHost}`;
+  }
+
+  const origin = new URL(req.url).origin;
+  if (WILDCARD_BIND.test(new URL(origin).host)) return SITE_URL;
+
+  return origin;
+}
 
 function attachUpstreamCookies(upstream: Response, responseHeaders: Headers) {
   const headers = upstream.headers as Headers & {
@@ -46,7 +72,7 @@ async function proxy(req: NextRequest, path: string[]) {
   upstreamHeaders.delete("expect");
   upstreamHeaders.delete("transfer-encoding");
   upstreamHeaders.delete("upgrade");
-  upstreamHeaders.set("x-frontend-origin", sourceUrl.origin);
+  upstreamHeaders.set("x-frontend-origin", resolveClientOrigin(req));
 
   const init: RequestInit = {
     method: req.method,

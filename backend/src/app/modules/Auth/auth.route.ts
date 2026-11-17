@@ -23,9 +23,21 @@ import { protectRoute } from "../../middlewares/auth.middleware";
 import { rateLimit } from "../../middlewares/rateLimit";
 const router = express.Router();
 
+/**
+ * Absolute URLs the backend hands to the browser (Google OAuth callback, OAuth
+ * error redirects) are built from this base. A proxy that reports an internal
+ * bind address - e.g. the wildcard host the platform's own proxy uses - would
+ * send users to https://0.0.0.0:3000, so such values are ignored in favour of
+ * the configured FRONTEND_URL.
+ */
+const UNUSABLE_ORIGIN =
+  /^https?:\/\/(0\.0\.0\.0|127\.0\.0\.1|localhost|\[::1?\]|\[::\]|::)(:\d+)?$/i;
+
 const resolveFrontendBase = (req: express.Request) => {
   const fromHeader = (req.headers["x-frontend-origin"] as string | undefined)?.trim();
-  if (fromHeader) return fromHeader.replace(/\/$/, "");
+  if (fromHeader && !UNUSABLE_ORIGIN.test(fromHeader)) {
+    return fromHeader.replace(/\/$/, "");
+  }
   return (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
 };
 
