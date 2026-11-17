@@ -164,21 +164,35 @@ export const buildInvoiceModel = (order: IOrderDocument) => {
   // "Where" on the booking block is the delivery postcode.
   const where = addr.zipCode || addr.postcode || addr.location || "—";
 
-  const items = (order.items || []).map((item: any) => ({
-    name: item.name || "Booking",
-    quantity: Number(item.quantity || 1),
-    unitPrice: Number(item.price || 0),
-    lineTotal: Number(item.price || 0) * Number(item.quantity || 1),
-    days: itemDays(item),
-    startDate: formatShortDate(item.startDate),
-    endDate: formatShortDate(item.endDate),
-    where,
-    extras: (item.extras || []).map((extra: any) => ({
-      label: extra.label || "Option",
-      quantity: Number(extra.quantity || 1),
-      total: Number(extra.total || 0),
-    })),
-  }));
+  const items = (order.items || []).map((item: any) => {
+    // `price` is the product only; add-ons ride on `extrasTotal` and are part
+    // of `subtotalAmount`. The row price carries both so the itemised rows add
+    // up to the invoiced total.
+    const extrasTotal = Number(
+      item.extrasTotal ??
+        (item.extras || []).reduce(
+          (sum: number, extra: any) => sum + (Number(extra.total) || 0),
+          0,
+        ),
+    );
+    const quantity = Number(item.quantity || 1);
+
+    return {
+      name: item.name || "Booking",
+      quantity,
+      unitPrice: Number(item.price || 0),
+      lineTotal: Number(item.price || 0) * quantity + extrasTotal,
+      days: itemDays(item),
+      startDate: formatShortDate(item.startDate),
+      endDate: formatShortDate(item.endDate),
+      where,
+      extras: (item.extras || []).map((extra: any) => ({
+        label: extra.label || "Option",
+        quantity: Number(extra.quantity || 1),
+        total: Number(extra.total || 0),
+      })),
+    };
+  });
 
   // The charged delivery/collection money is stored as one figure
   // (`deliveryFee`). Work out which window caused it so the invoice can name
