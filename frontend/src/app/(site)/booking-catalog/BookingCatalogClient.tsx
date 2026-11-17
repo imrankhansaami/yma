@@ -7,8 +7,8 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,6 @@ import {
   type FetchProductsResponse,
 } from "@/services/product.service";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
 
 /**
  * Sort choices offered on category pages.
@@ -65,6 +64,28 @@ function resolveSort(value: string) {
   return SORT_OPTIONS.find((o) => o.value === value) ?? SORT_OPTIONS[0];
 }
 
+/**
+ * Reads the query string after mount instead of with useSearchParams().
+ *
+ * useSearchParams() makes Next render the component on the client only, so the
+ * prerendered catalogue HTML was a loading skeleton rather than the product grid
+ * — losing the server-rendered products and their internal links. Reading
+ * window.location keeps the seeded grid in the HTML and applies any URL filters
+ * once hydrated, which is what the urlKey effect below has always done.
+ */
+function useUrlSearchParams() {
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    const read = () => setQuery(window.location.search.replace(/^\?/, ""));
+    read();
+    window.addEventListener("popstate", read);
+    return () => window.removeEventListener("popstate", read);
+  }, []);
+
+  return useMemo(() => new URLSearchParams(query), [query]);
+}
+
 function BookingCatalogPageInner({
   forcedCategoryName,
   initialProducts,
@@ -74,7 +95,7 @@ function BookingCatalogPageInner({
   initialProducts?: ApiProduct[];
   initialTotal?: number;
 }) {
-  const searchParams = useSearchParams();
+  const searchParams = useUrlSearchParams();
   const router = useRouter();
 
   // The sort dropdown appears on the main catalog and on category pages, with
