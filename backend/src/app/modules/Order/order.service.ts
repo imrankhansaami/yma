@@ -263,7 +263,7 @@ export const createOrder = async (
       floorType: shippingAddress?.floorType || "",
       userType: shippingAddress?.userType || "residential",
       keepOvernight: overnightFee > 0,
-      hireOccasion: shippingAddress?.hireOccasion || "birthday",
+      hireOccasion: shippingAddress?.hireOccasion || "birthdayPartyKid",
       notes: shippingAddress?.notes || "",
       differentBillingAddress: !!shippingAddress?.differentBillingAddress,
       billingFirstName: shippingAddress?.billingFirstName || "",
@@ -855,7 +855,7 @@ export const updateOrder = async (
         // Safely parse dates
         startDate: item.startDate ? new Date(item.startDate) : undefined,
         endDate: item.endDate ? new Date(item.endDate) : undefined,
-        hireOccasion: item.hireOccasion || "",
+        hireOccasion: item.hireOccasion || undefined,
         keepOvernight: !!item.keepOvernight,
       });
     }
