@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 
 import {
@@ -223,15 +223,25 @@ function getDimensionsVisualization(product?: ApiProduct | null) {
 
 export default function ProductClient({
   initialProduct = null,
-  availableFrom = null,
-  availableUntil = null,
-  availableOn = null,
+  availableFrom: availableFromProp = null,
+  availableUntil: availableUntilProp = null,
+  availableOn: availableOnProp = null,
 }: {
   initialProduct?: ApiProduct | null;
   availableFrom?: string | null;
   availableUntil?: string | null;
   availableOn?: string | null;
 }) {
+  // The availability hints come from the query string (?availableFrom=…). They
+  // are read here rather than in the server component on purpose: reading
+  // searchParams server-side forces a dynamic render, which pushes the page's
+  // title/description/canonical out of <head> and into the body.
+  const searchParams = useSearchParams();
+  const availableFrom = availableFromProp ?? searchParams.get("availableFrom");
+  const availableUntil =
+    availableUntilProp ?? searchParams.get("availableUntil");
+  const availableOn = availableOnProp ?? searchParams.get("availableOn");
+
   const params = useParams<{ slug: string }>();
   const rawSlug = params?.slug;
   const productSlug = rawSlug ? decodeURIComponent(rawSlug).trim() : rawSlug;

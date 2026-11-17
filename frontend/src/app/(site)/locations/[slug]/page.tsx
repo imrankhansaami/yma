@@ -256,6 +256,33 @@ export async function generateMetadata({
 
 export const revalidate = 300;
 
+// Prerender every locality, including the postcode pages (cm20, rm11 …). Those
+// are the ones served on demand today, and an on-demand render streams the HTML
+// shell before generateMetadata() resolves the fetch — pushing the title,
+// description and canonical out of <head>.
+export async function generateStaticParams(): Promise<Params[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URI;
+    if (!baseUrl) return [];
+
+    const res = await fetch(`${baseUrl}/api/v1/locations?limit=500`, {
+      next: { revalidate },
+    });
+    if (!res.ok) return [];
+
+    const data = (await res.json()) as {
+      data?: Array<{ slug?: string }>;
+    };
+    const list = Array.isArray(data?.data) ? data.data : [];
+
+    return list
+      .map((location) => ({ slug: String(location?.slug || "").trim() }))
+      .filter((entry) => entry.slug.length > 0);
+  } catch {
+    return [];
+  }
+}
+
 export default async function LocationDetailPage({
   params,
 }: {

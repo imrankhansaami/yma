@@ -5,8 +5,38 @@ import { joinCanonicalPath, normalizeCanonicalSlug } from "@/lib/canonical";
 import { SHOW_PRODUCT_REVIEWS } from "@/lib/features";
 import type { ApiProduct } from "@/services/product.service";
 import { notFound, permanentRedirect } from "next/navigation";
+import { Suspense } from "react";
 import { PRODUCTS_TAG, productTag } from "@/lib/productTags";
 import ProductClient from "./ProductClient";
+
+// Prerendered (ISR). If this route renders on demand, Next streams the HTML shell
+// before generateMetadata() has resolved the product fetch, and the title,
+// description, canonical and robots end up in the body — where search engines
+// ignore the canonical. Prerendering keeps them in <head>.
+export const revalidate = 300;
+
+export async function generateStaticParams(): Promise<Params[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URI;
+    if (!baseUrl) return [];
+
+    const res = await fetch(`${baseUrl}/api/v1/products?limit=500`, {
+      next: { revalidate: 300, tags: [PRODUCTS_TAG] },
+    });
+    if (!res.ok) return [];
+
+    const data = (await res.json()) as { data?: Array<{ slug?: string }> };
+    const products = Array.isArray(data?.data) ? data.data : [];
+
+    return products
+      .map((product) => ({ slug: String(product?.slug || "").trim() }))
+      .filter((entry) => entry.slug.length > 0);
+  } catch {
+    // Never fail the build on a data hiccup: the pages fall back to on-demand
+    // rendering until the next successful build.
+    return [];
+  }
+}
 
 type Params = { slug: string };
 
@@ -134,20 +164,10 @@ export async function generateMetadata({
 
 export default async function ProductDetailsPage({
   params,
-  searchParams,
 }: {
   params: Promise<Params>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { slug } = await params;
-  const sp = await searchParams;
-  const pick = (value: string | string[] | undefined) =>
-    Array.isArray(value) ? value[0] : value;
-  const availability = {
-    availableFrom: pick(sp?.availableFrom) ?? null,
-    availableUntil: pick(sp?.availableUntil) ?? null,
-    availableOn: pick(sp?.availableOn) ?? null,
-  };
   const product = await fetchProductBySlug(slug);
   if (!product) {
     notFound();
@@ -194,12 +214,9 @@ export default async function ProductDetailsPage({
           ) : null}
         </>
       ) : null}
-      <ProductClient
-        initialProduct={product}
-        availableFrom={availability.availableFrom}
-        availableUntil={availability.availableUntil}
-        availableOn={availability.availableOn}
-      />
+      <Suspense fallback={null}>
+        <ProductClient initialProduct={product} />
+      </Suspense>
     </>
   );
 }

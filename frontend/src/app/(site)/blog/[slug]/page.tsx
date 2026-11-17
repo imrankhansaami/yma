@@ -15,6 +15,36 @@ export const revalidate = 300;
 
 type Params = { slug: string };
 
+// Prerender the posts at build time. Rendering on demand streams the HTML shell
+// before generateMetadata() resolves the post fetch, which pushes the title,
+// description and canonical into the body instead of <head>.
+export async function generateStaticParams(): Promise<Params[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URI;
+    if (!baseUrl) return [];
+
+    const res = await fetch(`${baseUrl}/api/v1/blogs?limit=200`, {
+      next: { revalidate },
+    });
+    if (!res.ok) return [];
+
+    const data = (await res.json()) as {
+      data?: { blogs?: Array<{ slug?: string }> } | Array<{ slug?: string }>;
+    };
+    const list = Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data?.data?.blogs)
+        ? data.data.blogs
+        : [];
+
+    return list
+      .map((blog) => ({ slug: String(blog?.slug || "").trim() }))
+      .filter((entry) => entry.slug.length > 0);
+  } catch {
+    return [];
+  }
+}
+
 type BlogResponse = {
   data?: {
     blog?: ApiBlog;

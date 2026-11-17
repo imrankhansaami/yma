@@ -8,7 +8,7 @@ import GardenGamesSeoContent from "@/components/catalog/GardenGamesSeoContent";
 import ObstacleCourseSlidesSeoContent from "@/components/catalog/ObstacleCourseSlidesSeoContent";
 import SoftPlaySeoContent from "@/components/catalog/SoftPlaySeoContent";
 import { BreadcrumbJsonLd, ItemListJsonLd } from "@/components/seo/JsonLd";
-import { CATEGORY_PAGE_BY_SLUG } from "@/lib/category-pages";
+import { CATEGORY_PAGE_BY_SLUG, CATEGORY_PAGES } from "@/lib/category-pages";
 import { buildSeoTitle, getSeoDefaults, mergeKeywords } from "@/lib/seo";
 import { PRODUCTS_TAG } from "@/lib/productTags";
 import { joinCanonicalPath } from "@/lib/canonical";
@@ -18,7 +18,6 @@ import type { PageBlock, SeoContentContent } from "@/lib/blocks/types";
 import Script from "next/script";
 
 type Params = { categorySlug: string };
-type SearchParams = Record<string, string | string[] | undefined>;
 type CatalogCategory = {
   _id?: string;
   id?: string;
@@ -31,32 +30,15 @@ type CategoryProduct = {
   image?: string;
 };
 
-const FILTER_PARAM_KEYS = new Set([
-  "search",
-  "sort",
-  "pickup",
-  "city",
-  "location",
-  "availableOn",
-  "start",
-  "end",
-  "startDate",
-  "endDate",
-  "availableFrom",
-  "availableUntil",
-]);
+const CATEGORY_PAGE_SLUGS = CATEGORY_PAGES.map((page) => page.slug);
 
-function isNonEmptyParam(value: string | string[] | undefined) {
-  if (Array.isArray(value)) {
-    return value.some((entry) => typeof entry === "string" && entry.trim());
-  }
-  return typeof value === "string" && value.trim().length > 0;
-}
+// Prerendered (ISR) so the metadata below is resolved into <head> at build time.
+// Rendering this route on demand streams the HTML shell first and leaves the
+// title, description and canonical in the body.
+export const revalidate = 300;
 
-function hasActiveFilters(searchParams: SearchParams) {
-  return Object.entries(searchParams).some(
-    ([key, value]) => FILTER_PARAM_KEYS.has(key) && isNonEmptyParam(value),
-  );
+export function generateStaticParams(): Params[] {
+  return CATEGORY_PAGE_SLUGS.map((categorySlug) => ({ categorySlug }));
 }
 
 function normalizeCategoryToken(value: string) {
@@ -143,16 +125,12 @@ async function fetchCategoryProducts(categorySlug: string): Promise<CategoryProd
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<Params>;
-  searchParams: Promise<SearchParams>;
 }): Promise<Metadata> {
   const { categorySlug } = await params;
   const config = CATEGORY_PAGE_BY_SLUG.get(categorySlug);
   const defaults = await getSeoDefaults();
-  const resolvedSearchParams = await searchParams;
-  const isFiltered = hasActiveFilters(resolvedSearchParams);
 
   if (!config) {
     return {
@@ -186,15 +164,14 @@ export async function generateMetadata({
     alternates: {
       canonical: canonicalPath,
     },
-    robots: isFiltered
-      ? {
-          index: false,
-          follow: true,
-        }
-      : {
-          index: true,
-          follow: true,
-        },
+    // Filtered variants canonicalise to the clean category URL (see above).
+    // The per-query noindex was dropped with the searchParams read: reading the
+    // query string here forced this route to render on demand, which pushed the
+    // title, description and canonical out of <head>.
+    robots: {
+      index: true,
+      follow: true,
+    },
     openGraph: {
       title: seoTitle,
       description: config.seoDescription,

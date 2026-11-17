@@ -8,11 +8,46 @@ import { CmsSections } from "@/components/common/CmsSections";
 import CtaReadySection from "@/components/sections/CtaReadySection";
 import DynamicOneStopPartyShop from "@/components/sections/DynamicOneStopPartyShop";
 import { normalizeCanonicalSlug } from "@/lib/canonical";
+import { isBuiltInCorePageKey } from "@/lib/core-pages";
 import { fetchPageContent } from "@/lib/pageContent";
 import { fetchRedirectTarget, resolveRedirectTarget } from "@/lib/redirects";
 import { buildSeoTitle, getSeoDefaults } from "@/lib/seo";
 
 export const revalidate = 300;
+
+// Prerender the stand-alone core pages (everything except the hand-built routes).
+// On-demand rendering streams the HTML shell before generateMetadata() resolves
+// the CMS fetch, which leaves the title/description/canonical in the body.
+export async function generateStaticParams(): Promise<Params[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URI;
+    if (!baseUrl) return [];
+
+    const res = await fetch(`${baseUrl}/api/v1/page-content/type/core`, {
+      next: { revalidate },
+    });
+    if (!res.ok) return [];
+
+    const result = await res.json();
+    const payload = result?.data;
+    const pages = Array.isArray(payload)
+      ? payload
+      : (payload?.pageContents ?? []);
+
+    return pages
+      .filter(
+        (page: { isActive?: boolean; pageKey?: string }) =>
+          page?.isActive !== false &&
+          page?.pageKey &&
+          !isBuiltInCorePageKey(String(page.pageKey)),
+      )
+      .map((page: { pageKey?: string }) => ({
+        slug: String(page.pageKey),
+      }));
+  } catch {
+    return [];
+  }
+}
 
 type Params = { slug: string };
 
