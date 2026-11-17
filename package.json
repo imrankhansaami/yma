@@ -14,7 +14,7 @@
     "build:backend": "node node_modules/typescript/bin/tsc -p backend",
     "build": "npm run build:frontend && npm run build:backend",
     "start:frontend": "npm run start --workspace=frontend",
-    "start:backend": "npm run start --workspace=backend",
+    "start:backend": "node backend/dist/server.js",
     "start": "npm run start:frontend"
   },
   "devDependencies": {
