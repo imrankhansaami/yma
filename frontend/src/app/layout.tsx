@@ -104,7 +104,21 @@ export async function generateMetadata(): Promise<Metadata> {
       apple: "/apple-touch-icon.png",
     },
     verification: {
-      // google: "your-google-verification-code",
+      // Search-console ownership tags. Set the env var on the frontend app and
+      // redeploy — no code change needed. DNS-TXT verification (Google) and
+      // Bing's import-from-GSC keep working without any deploy at all.
+      //   NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION -> <meta name="google-site-verification">
+      //   NEXT_PUBLIC_BING_SITE_VERIFICATION   -> <meta name="msvalidate.01">
+      ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+        ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+        : {}),
+      ...(process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+        ? {
+            other: {
+              "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION,
+            },
+          }
+        : {}),
     },
   };
 }
