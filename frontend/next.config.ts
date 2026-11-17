@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
+  // Hostinger's Next.js runtime starts the standalone server bundle, so the
+  // build must emit it. Next.js does not support `next start` in this mode —
+  // the process entry becomes .next/standalone/<workspace>/server.js (the
+  // droplet's PM2 definition uses that path).
+  output: "standalone",
   experimental: {
     optimizePackageImports: [
       "lucide-react",

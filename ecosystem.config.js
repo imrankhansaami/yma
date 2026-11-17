@@ -33,15 +33,25 @@ module.exports = {
     {
       name: "yma-frontend",
       cwd: path.join(ROOT, "frontend"),
-      // `next` lives in the root node_modules because of workspace hoisting.
-      script: path.join(ROOT, "node_modules", "next", "dist", "bin", "next"),
-      args: "start --port 3000 --hostname 127.0.0.1",
+      // Next's standalone output is the supported server entry once
+      // `output: "standalone"` is set in frontend/next.config.ts (Hostinger's
+      // runtime starts the same bundle).
+      script: path.join(
+        ROOT,
+        "frontend",
+        ".next",
+        "standalone",
+        "frontend",
+        "server.js",
+      ),
       exec_mode: "fork",
       instances: 1,
       max_memory_restart: "900M",
       kill_timeout: 10000,
       env: {
         NODE_ENV: "production",
+        PORT: 3000,
+        HOSTNAME: "127.0.0.1",
       },
     },
   ],
