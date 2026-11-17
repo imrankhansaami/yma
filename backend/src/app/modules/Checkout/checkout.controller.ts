@@ -119,12 +119,20 @@ const calculateDeliveryFee = (
 // ==================== APPLY PROMO ====================
 const applyPromo = async (promoCode: string, orderAmount: number) => {
   if (!promoCode || promoCode.trim() === "") {
-    return { discount: 0, promoName: "", promoCode: "", success: true };
+    return {
+      discount: 0,
+      promoName: "",
+      promoCode: "",
+      promoId: "",
+      success: true,
+    };
   }
 
   const promoService = new PromoService();
 
   try {
+    // Read-only: the redemption is counted by consumePromo once the order is
+    // actually written, so a failed checkout never burns a code.
     const result = await promoService.applyPromo(promoCode, orderAmount);
 
     if (!result.success) {
@@ -133,8 +141,9 @@ const applyPromo = async (promoCode: string, orderAmount: number) => {
 
     return {
       discount: result.discount,
-      promoName: promoCode,
-      promoCode: promoCode,
+      promoName: result.promoName || promoCode,
+      promoCode: result.promoName || promoCode,
+      promoId: result.promoId || "",
       success: true,
     };
   } catch (error: any) {
@@ -336,12 +345,14 @@ export const checkoutFromCart = asyncHandler(
 
       let discount = 0;
       let appliedPromoCode = "";
+      let appliedPromoId = "";
 
       if (promoCode && promoCode.trim() !== "") {
         try {
           const promoResult = await applyPromo(promoCode, amountBeforePromo);
           discount = promoResult.discount;
           appliedPromoCode = promoResult.promoCode;
+          appliedPromoId = promoResult.promoId;
           console.log("🎟️ Promo applied:", { promoCode, discount });
         } catch (promoError: any) {
           console.log("⚠️ Promo error:", promoError.message);
@@ -349,7 +360,7 @@ export const checkoutFromCart = asyncHandler(
         }
       }
 
-      const totalAmount = amountBeforePromo - discount;
+      const totalAmount = Math.max(0, amountBeforePromo - discount);
 
       console.log("💳 Final amounts:", {
         subtotalAmount,
@@ -395,6 +406,19 @@ export const checkoutFromCart = asyncHandler(
 
       await session.commitTransaction();
       session.endSession();
+
+      // Count the promo redemption only now that the order really exists.
+      if (appliedPromoId) {
+        try {
+          await new PromoService().consumePromo(
+            appliedPromoId,
+            discount,
+            amountBeforePromo,
+          );
+        } catch (promoUsageError) {
+          console.error("Promo usage update failed:", promoUsageError);
+        }
+      }
 
       // Send emails (non-critical, won't fail the response)
       try {
@@ -862,6 +886,7 @@ export const quickCheckout = asyncHandler(
         termsAccepted = false,
         invoiceType = "regular",
         bankDetails,
+        promoCode,
       } = req.body ?? {};
 
       if (!shippingAddress) throw new ApiError("Shipping address required", 400);
@@ -1061,8 +1086,42 @@ export const quickCheckout = asyncHandler(
       const placementFee = PlacementFeeManager.getFee(
         shippingAddress.floorType,
       );
-      const totalAmount =
+
+      const amountBeforePromo =
         subtotal + deliveryFee + overnightFee + placementFee;
+
+      // The discount is recomputed here from the database - a request body can
+      // never name its own price.
+      const requestedPromo =
+        typeof promoCode === "string" ? promoCode.trim() : "";
+      let discountAmount = 0;
+      let appliedPromoId = "";
+      let appliedPromoName = "";
+
+      if (requestedPromo) {
+        const promoResult = await new PromoService().applyPromo(
+          requestedPromo,
+          amountBeforePromo,
+        );
+
+        if (!promoResult.success) {
+          throw new ApiError(
+            `Promo code error: ${promoResult.message || "invalid code"}`,
+            400,
+          );
+        }
+
+        discountAmount = Number(promoResult.discount) || 0;
+        appliedPromoId = promoResult.promoId || "";
+        appliedPromoName = promoResult.promoName || requestedPromo;
+      }
+
+      if (discountAmount < 0) discountAmount = 0;
+      if (discountAmount > amountBeforePromo) {
+        discountAmount = amountBeforePromo;
+      }
+
+      const totalAmount = amountBeforePromo - discountAmount;
 
       // 3. SAVE UPDATES
       await Promise.all(dbProducts.map((p) => p.save({ session })));
@@ -1076,11 +1135,13 @@ export const quickCheckout = asyncHandler(
         deliveryFee,
         overnightFee,
         placementFee,
-        discountAmount: 0,
+        discountAmount: discountAmount,
         totalAmount,
         shippingAddress,
         paymentMethod,
         invoiceType,
+        promoCode: appliedPromoName || undefined,
+        promoDiscount: discountAmount,
         bankDetails:
           invoiceType === "corporate" ? String(bankDetails || "") : "",
       });
@@ -1102,6 +1163,19 @@ export const quickCheckout = asyncHandler(
       // 4. COMMIT TRANSACTION
       await session.commitTransaction();
       session.endSession();
+
+      // Count the promo redemption only now that the order really exists.
+      if (appliedPromoId) {
+        try {
+          await new PromoService().consumePromo(
+            appliedPromoId,
+            discountAmount,
+            amountBeforePromo,
+          );
+        } catch (promoUsageError) {
+          console.error("Promo usage update failed:", promoUsageError);
+        }
+      }
 
       // The ordered products are now booked for their dates — refresh the
       // cached storefront copies so they disappear right away.

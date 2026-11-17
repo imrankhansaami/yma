@@ -60,6 +60,8 @@ type Props = {
   onPurchaseTypeChange?: (v: string) => void;
   /** Chosen elsewhere (the order summary also offers the payment methods). */
   paymentMethod?: PaymentMethod;
+  /** Promo code applied in the order summary; sent so the server can price it. */
+  promoCode?: string;
 };
 
 const BaseTextarea = (
@@ -149,6 +151,7 @@ export default function CheckoutForm({
   onPaymentMethodChange,
   onPurchaseTypeChange,
   paymentMethod: paymentMethodProp,
+  promoCode,
 }: Props) {
   const router = useRouter();
   const user = useAuthStore(selectUser);
@@ -392,6 +395,7 @@ export default function CheckoutForm({
           values.paymentMethod || PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY,
         termsAccepted: true,
         invoiceType: "regular",
+        ...(promoCode ? { promoCode } : {}),
       };
 
       const resp = await api.post("/checkout", payload);

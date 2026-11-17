@@ -426,6 +426,14 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(`Role must be one of: ${validRoles.join(", ")}`, 400);
   }
 
+  // Only a superadmin may create another administrator.
+  if (
+    role === "admin" &&
+    (req as AuthenticatedRequest).user?.role !== "superadmin"
+  ) {
+    throw new ApiError("Only a superadmin can create an administrator", 403);
+  }
+
   // Check if email exists
   const existingUser = await User.findOne({ email: email.toLowerCase() });
   if (existingUser) {
@@ -468,6 +476,13 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const updateData = req.body;
   const photo = req.file;
+
+  // A plain admin must not be able to promote anyone (including themselves)
+  // through the edit form. Role changes go through the role endpoint, which
+  // applies the same rule.
+  if ((req as AuthenticatedRequest).user?.role !== "superadmin") {
+    delete updateData.role;
+  }
 
   // Validate ID
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -716,6 +731,11 @@ export const changeUserRole = asyncHandler(
     const validRoles = ["admin", "editor", "delivery", "user"];
     if (!validRoles.includes(role)) {
       throw new ApiError(`Role must be one of: ${validRoles.join(", ")}`, 400);
+    }
+
+    // Only a superadmin may hand out the admin role.
+    if (role === "admin" && aReq.user.role !== "superadmin") {
+      throw new ApiError("Only a superadmin can assign the admin role", 403);
     }
 
     // Cannot change your own role

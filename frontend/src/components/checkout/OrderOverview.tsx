@@ -23,6 +23,7 @@ export default function OrderOverview({
   paymentMethod = PAYMENT_METHOD_OPTIONS.CASH_ON_DELIVERY,
   onPaymentMethodChange,
   isBusinessOrder = false,
+  onPromoChange,
 }: {
   deliveryTime?: string;
   collectionTime?: string;
@@ -33,33 +34,10 @@ export default function OrderOverview({
   onPaymentMethodChange?: (v: PaymentMethod) => void;
   /** Business orders also get the bank transfer option. */
   isBusinessOrder?: boolean;
+  /** Reports the promo code that is currently applied, so the order can carry it. */
+  onPromoChange?: (code: string) => void;
 }) {
   const store = useCartStore?.() as any;
-
-  const fallbackItems = [
-    {
-      id: "1",
-      title: "Long tail castle name will be like this dummy text if it is....",
-      image:
-        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=200&auto=format&fit=crop",
-      qty: 1,
-      price: 130,
-      from: "From: Nov 21 - 21, 2024",
-      days: 1,
-      extras: [] as CartExtra[],
-    },
-    {
-      id: "2",
-      title: "Long tail castle name will be like this dummy text if it is....",
-      image:
-        "https://images.unsplash.com/photo-1631049552453-54b9c7a3b1ef?q=80&w=200&auto=format&fit=crop",
-      qty: 1,
-      price: 130,
-      from: "From: Nov 21 - 21, 2024",
-      days: 1,
-      extras: [] as CartExtra[],
-    },
-  ];
 
   const items = (store?.items as any[])?.length
     ? (store.items as any[]).map((it) => ({
@@ -67,7 +45,7 @@ export default function OrderOverview({
         title: it.title ?? it.name,
         image: it.image,
         qty: Number(it.quantity ?? 1),
-        price: Number(it.pricePerDay ?? it.price ?? 130),
+        price: Number(it.pricePerDay ?? it.price ?? 0),
         from:
           it.startDateISO && it.endDateISO
             ? `From: ${new Date(it.startDateISO).toLocaleString("en-US", {
@@ -78,11 +56,11 @@ export default function OrderOverview({
                 day: "numeric",
                 year: "numeric",
               })}`
-            : "From: Nov 21 - 21, 2024",
+            : "",
         days: it.days ?? 1,
         extras: (it.extras ?? []) as CartExtra[],
       }))
-    : fallbackItems;
+    : [];
 
   const computedSubtotal = useMemo(
     () =>
@@ -158,6 +136,7 @@ export default function OrderOverview({
           promoCode: couponInput.trim(),
         });
         setCouponApplied(true);
+        onPromoChange?.(couponInput.trim());
         toast.success(response.message || "Promo code applied successfully!");
       }
     } catch (error: any) {
@@ -176,6 +155,7 @@ export default function OrderOverview({
     setCouponApplied(false);
     setAppliedPromoData(null);
     setCouponInput("");
+    onPromoChange?.("");
     toast.info("Promo code removed");
   };
 
@@ -196,6 +176,12 @@ export default function OrderOverview({
           <Separator className="col-span-2 my-3" />
 
           {/* Rows */}
+          {items.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-gray-600">
+              Your basket is empty. Add a product from the booking catalogue to
+              continue.
+            </p>
+          ) : null}
           {items.map((it, idx) => (
             <div
               key={`${it.id}-${idx}`}

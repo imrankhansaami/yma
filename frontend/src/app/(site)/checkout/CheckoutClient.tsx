@@ -23,6 +23,9 @@ export default function CheckoutClient() {
     useState<PaymentMethod>("cash_on_delivery");
   const [purchaseType, setPurchaseType] = useState("Personal Use");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Applied in the order summary; sent with the order so the price the
+  // customer sees is the price the server charges.
+  const [appliedPromoCode, setAppliedPromoCode] = useState("");
 
   const handleConfirm = () => {
     if (isSubmitting) return;
@@ -67,6 +70,7 @@ export default function CheckoutClient() {
             onPaymentMethodChange={setPaymentMethod}
             onPurchaseTypeChange={setPurchaseType}
             paymentMethod={paymentMethod}
+            promoCode={appliedPromoCode}
           />
         </section>
 
@@ -78,6 +82,7 @@ export default function CheckoutClient() {
             paymentMethod={paymentMethod}
             onPaymentMethodChange={setPaymentMethod}
             isBusinessOrder={purchaseType === BUSINESS_USE_LABEL}
+            onPromoChange={setAppliedPromoCode}
           />
         </aside>
       </div>

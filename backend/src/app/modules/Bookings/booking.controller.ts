@@ -71,7 +71,20 @@ export const getMyBookings = asyncHandler(
 
 export const getBookingById = asyncHandler(
   async (req: Request, res: Response) => {
+    const aReq = req as AuthenticatedRequest;
     const booking = await BookingService.getBookingById(req.params.id);
+
+    // A booking carries the customer's name, email and phone, so only its
+    // owner or an administrator may read it.
+    const isAdmin =
+      aReq.user?.role === "admin" || aReq.user?.role === "superadmin";
+    const owner: any = (booking as any).user;
+    const ownerId = owner && owner._id ? owner._id : owner;
+
+    if (!isAdmin && String(ownerId) !== String(aReq.user?._id)) {
+      throw new ApiError("You are not authorized to view this booking", 403);
+    }
+
     ApiResponse(res, 200, "Booking retrieved successfully", { booking });
   },
 );

@@ -5,6 +5,7 @@ import { isAdmin } from "../../middlewares/role.middleware";
 import { upload } from "../../utils/cloudinary.util";
 import { updateAdminSettings } from "./admin.controller";
 import { restrictTo } from "../../middlewares/authorization.middleware";
+import { canManageUser } from "../../middlewares/authorization.middleware";
 
 const router = express.Router();
 
@@ -22,13 +23,26 @@ router.use(isAdmin);
 router.get("/users", adminController.getAllUsers);
 router.get("/users/:id", adminController.getUserById);
 router.post("/users", upload.single("photo"), adminController.createUser);
-router.patch("/users/:id", upload.single("photo"), adminController.updateUser);
-router.delete("/users/:id", adminController.deleteUser);
-router.patch("/users/:id/activate", adminController.activateUser);
-router.patch("/users/:id/password", adminController.changeUserPassword);
+router.patch(
+  "/users/:id",
+  canManageUser,
+  upload.single("photo"),
+  adminController.updateUser,
+);
+router.delete("/users/:id", canManageUser, adminController.deleteUser);
+router.patch(
+  "/users/:id/activate",
+  canManageUser,
+  adminController.activateUser,
+);
+router.patch(
+  "/users/:id/password",
+  canManageUser,
+  adminController.changeUserPassword,
+);
 
 // ==================== ROLE MANAGEMENT ====================
-router.patch("/users/:id/role", adminController.changeUserRole);
+router.patch("/users/:id/role", canManageUser, adminController.changeUserRole);
 router.post("/users/bulk-roles", adminController.bulkChangeRoles);
 router.get("/users/role/:role", adminController.getUsersByRole);
 router.get("/stats/roles", adminController.getRoleStats);

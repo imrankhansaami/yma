@@ -288,7 +288,13 @@ export const generateCustomInvoice = asyncHandler(
 export const getInvoicesByUser = asyncHandler(
   async (req: Request, res: Response) => {
     const aReq = req as AuthenticatedRequest;
-    const userId = req.params.userId || aReq.user?._id;
+
+    // Only an administrator may look at another customer's invoices; everyone
+    // else is limited to their own, whatever the URL says.
+    const isAdmin =
+      aReq.user?.role === "admin" || aReq.user?.role === "superadmin";
+    const userId =
+      (isAdmin ? req.params.userId : undefined) || aReq.user?._id;
 
     if (!userId) {
       throw new ApiError("User ID is required", 400);

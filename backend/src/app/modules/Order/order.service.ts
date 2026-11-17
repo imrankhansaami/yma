@@ -24,6 +24,7 @@ import {
   notifyAdminNewOrder,
 } from "./email.service";
 import { renderInvoiceHtml, renderInvoicePdf } from "./invoice.renderer";
+import { PromoService } from "../promos/promos.service";
 import {
   PRODUCTS_TAG,
   productTag,
@@ -127,7 +128,6 @@ export const createOrder = async (
       bankDetails = "",
       termsAccepted = false,
       promoCode,
-      promoDiscount = 0,
       estimatedDeliveryDate,
     } = orderData;
 
@@ -203,14 +203,45 @@ export const createOrder = async (
       0,
     );
 
-    const discountAmount = promoDiscount || 0;
     const placementFee = PlacementFeeManager.getFee(shippingAddress?.floorType);
-    const totalAmount =
-      subtotalAmount +
-      totalDeliveryFee +
-      overnightFee +
-      placementFee -
-      discountAmount;
+
+    // The discount is never taken from the request body: recompute it from the
+    // database so a caller cannot choose their own price.
+    const amountBeforeDiscount =
+      subtotalAmount + totalDeliveryFee + overnightFee + placementFee;
+
+    const requestedPromo =
+      typeof promoCode === "string" ? promoCode.trim() : "";
+
+    let discountAmount = 0;
+    let appliedPromoId = "";
+    let appliedPromoName = "";
+
+    if (requestedPromo) {
+      const promoResult = await new PromoService().applyPromo(
+        requestedPromo,
+        amountBeforeDiscount,
+      );
+
+      if (!promoResult.success) {
+        throw new ApiError(
+          `Promo code error: ${promoResult.message || "invalid code"}`,
+          400,
+        );
+      }
+
+      discountAmount = Number(promoResult.discount) || 0;
+      appliedPromoId = promoResult.promoId || "";
+      appliedPromoName = promoResult.promoName || requestedPromo;
+    }
+
+    // A discount can never exceed the order value.
+    if (discountAmount < 0) discountAmount = 0;
+    if (discountAmount > amountBeforeDiscount) {
+      discountAmount = amountBeforeDiscount;
+    }
+
+    const totalAmount = amountBeforeDiscount - discountAmount;
 
     const finalShippingAddress: IShippingAddress = {
       firstName: shippingAddress?.firstName || "",
@@ -258,7 +289,7 @@ export const createOrder = async (
       termsAccepted: !!termsAccepted,
       invoiceType,
       bankDetails,
-      promoCode,
+      promoCode: appliedPromoName || undefined,
       promoDiscount: discountAmount,
       estimatedDeliveryDate: estimatedDeliveryDate
         ? new Date(estimatedDeliveryDate)
@@ -276,6 +307,19 @@ export const createOrder = async (
     );
 
     await session.commitTransaction();
+
+    // Count the promo redemption only now that the order really exists.
+    if (appliedPromoId) {
+      try {
+        await new PromoService().consumePromo(
+          appliedPromoId,
+          discountAmount,
+          amountBeforeDiscount,
+        );
+      } catch (promoUsageError) {
+        console.error("Promo usage update failed:", promoUsageError);
+      }
+    }
 
     Promise.allSettled([
       sendInvoiceEmail(order),
@@ -690,6 +734,7 @@ export const getAllOrders = async (
 export const updateOrder = async (
   orderId: string,
   updateData: UpdateOrderInput,
+  actor?: { userId?: string; isAdmin?: boolean },
 ): Promise<IOrderDocument> => {
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new ApiError("Invalid order ID", 400);
@@ -699,6 +744,13 @@ export const updateOrder = async (
   const order = await Order.findById(orderId);
   if (!order) {
     throw new ApiError("Order not found", 404);
+  }
+
+  // 2. Authorisation. Editing an order is an administrative action: the
+  // storefront never calls this for customers, and an owner must not be able
+  // to rewrite their own price, dates, status or discount.
+  if (actor?.isAdmin !== true) {
+    throw new ApiError("Only an administrator can update an order", 403);
   }
 
   const previousStatus = order.status;
@@ -851,7 +903,9 @@ export const updateOrder = async (
   }
 
   // 5. Update other top-level fields
-  // Exclude fields we already handled manually to prevent overwriting
+  // Exclude fields we already handled manually to prevent overwriting, plus
+  // identity/audit fields: an edit must never move an order to another
+  // customer, rewrite its number, or hand it a new creation date.
   const excludedFields = [
     "items",
     "shippingAddress",
@@ -861,6 +915,13 @@ export const updateOrder = async (
     "deliveryFee",
     "overnightFee",
     "placementFee",
+    "user",
+    "orderNumber",
+    "createdAt",
+    "updatedAt",
+    "_id",
+    "id",
+    "__v",
   ];
 
   Object.entries(updateData).forEach(([key, value]) => {
@@ -869,7 +930,18 @@ export const updateOrder = async (
     }
   });
 
-  // 6. Save the Order
+  // 6. Recompute the total last, so it always reflects the final discount
+  // (otherwise editing the coupon alone would leave a stale total).
+  order.totalAmount = Math.max(
+    0,
+    (order.subtotalAmount || 0) +
+      (order.deliveryFee || 0) +
+      (order.overnightFee || 0) +
+      (order.placementFee || 0) -
+      (order.discountAmount || 0),
+  );
+
+  // 7. Save the Order
   await order.save();
 
   // 7. Send Emails (Admin Logic) - Non-blocking

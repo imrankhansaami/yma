@@ -166,17 +166,14 @@ export const getOrder = asyncHandler(async (req: Request, res: Response) => {
 export const updateOrderHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    // const aReq = req as any;
-    // const userId = aReq.user.id;
-    // const isAdmin = aReq.user.role === "admin";
+    const aReq = req as AuthenticatedRequest;
     const updateData = req.body;
 
-    const order = await orderService.updateOrder(
-      id,
-      updateData,
-      // userId,
-      // isAdmin,
-    );
+    const order = await orderService.updateOrder(id, updateData, {
+      userId: aReq.user?._id?.toString(),
+      isAdmin:
+        aReq.user?.role === "admin" || aReq.user?.role === "superadmin",
+    });
 
     ApiResponse(res, 200, "Order updated successfully", { order });
   },

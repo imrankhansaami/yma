@@ -4,6 +4,7 @@ import { IUser } from "../modules/Auth/user.interface";
 import mongoose from "mongoose";
 import asyncHandler from "../utils/asyncHandler";
 import { protectRoute as protect } from "@app/middlewares/auth.middleware";
+import User from "@app/modules/Auth/user.model";
 type AuthenticatedRequest = Request & { user?: IUser };
 
 // ---------------------------------------------
@@ -26,38 +27,47 @@ export const restrictTo = (...allowedRoles: string[]) => {
 };
 
 // ---------------------------------------------
-// canManageUser → Ensure only superadmin manages
+// canManageUser -> Who may administer whom
+//   superadmin : anyone
+//   admin      : ordinary accounts only (never another admin/superadmin)
 // ---------------------------------------------
-export const canManageUser = (
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-) => {
-  const aReq = req as AuthenticatedRequest;
+export const canManageUser = asyncHandler(
+  async (req: Request, _res: Response, next: NextFunction) => {
+    const aReq = req as AuthenticatedRequest;
 
-  if (!aReq.user) {
-    return next(new ApiError("You are not logged in", 401));
-  }
+    if (!aReq.user) {
+      throw new ApiError("You are not logged in", 401);
+    }
 
-  const targetUserId = req.params.id;
+    const targetUserId = req.params.id;
 
-  // Not a user route (e.g., /change-role)
-  if (!targetUserId || targetUserId === "change-role") {
-    return next();
-  }
+    if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+      throw new ApiError("Invalid user ID", 400);
+    }
 
-  // Validate ObjectID
-  if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
-    return next(new ApiError("Invalid user ID", 400));
-  }
+    if (aReq.user.role === "superadmin") {
+      return next();
+    }
 
-  // Only superadmin can manage admins/superadmins
-  if (aReq.user.role !== "superadmin") {
-    return next(new ApiError("Only superadmin can manage users", 403));
-  }
+    if (aReq.user.role !== "admin") {
+      throw new ApiError("You do not have permission", 403);
+    }
 
-  next();
-};
+    const target = await User.findById(targetUserId).select("role");
+    if (!target) {
+      throw new ApiError("User not found", 404);
+    }
+
+    if (target.role === "admin" || target.role === "superadmin") {
+      throw new ApiError(
+        "Only a superadmin can manage an administrator account",
+        403,
+      );
+    }
+
+    next();
+  },
+);
 // export const protectRoute = asyncHandler(
 //   async (req: Request, _res: Response, next: NextFunction) => {
 //     const cookieToken = (req as any).cookies?.accessToken as string | undefined;

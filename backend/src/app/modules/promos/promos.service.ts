@@ -340,16 +340,37 @@ export class PromoService {
     return await Promo.findByIdAndDelete(id);
   }
 
+  /**
+   * Validate a code and compute its discount. Read-only on purpose: the
+   * storefront calls this while the customer is still filling in the form, and
+   * a stranger must not be able to burn a limited-use code.
+   */
   async applyPromo(
     identifier: string, // promoName or _id
     orderAmount: number,
-  ): Promise<{ success: boolean; discount: number; message?: string }> {
+  ): Promise<{
+    success: boolean;
+    discount: number;
+    message?: string;
+    promoId?: string;
+    promoName?: string;
+  }> {
     // 1️⃣ Find promo by _id or name
+    // Never hand raw request data to Mongo: an object such as {"$ne": null}
+    // would match the first promo in the collection.
+    const lookup =
+      typeof identifier === "string"
+        ? identifier.trim()
+        : String(identifier ?? "").trim();
+    if (!lookup) {
+      return { success: false, discount: 0, message: "Promo not found" };
+    }
+
     let promo: any;
-    if (mongoose.Types.ObjectId.isValid(identifier)) {
-      promo = await Promo.findById(identifier).lean();
+    if (mongoose.Types.ObjectId.isValid(lookup)) {
+      promo = await Promo.findById(lookup).lean();
     } else {
-      promo = await Promo.findOne({ promoName: identifier }).lean();
+      promo = await Promo.findOne({ promoName: lookup }).lean();
     }
 
     if (!promo)
@@ -376,41 +397,58 @@ export class PromoService {
     }
 
     // 4️⃣ Atomic update of stats
-    await Promo.findByIdAndUpdate(
-      promo._id,
-      {
-        $inc: {
-          usage: 1,
-          totalUsage: 1,
-          totalDiscount: discount,
-          totalRevenue: orderAmount,
-        },
-        $set: {
-          status:
-            promo.totalUsageLimit &&
-            promo.totalUsage + 1 >= promo.totalUsageLimit
-              ? PromoStatus.INACTIVE
-              : promo.status,
-          availability:
-            promo.totalUsageLimit &&
-            promo.totalUsage + 1 >= promo.totalUsageLimit
-              ? false
-              : promo.availability,
-          avgDiscountPerOrder:
-            (promo.totalDiscount + discount) / (promo.totalUsage + 1),
-        },
-      },
-      { new: true },
-    );
+    return {
+      success: true,
+      discount: Number(discount) || 0,
+      promoId: String(promo._id),
+      promoName: promo.promoName,
+    };
+  }
 
-    return { success: true, discount };
+  /**
+   * Count one real redemption. Only the server-side order paths call this, so a
+   * storefront "apply" - or an attacker - can never burn a limited-use code.
+   */
+  async consumePromo(
+    promoId: string,
+    discount: number,
+    orderAmount: number,
+  ): Promise<void> {
+    const id = String(promoId || "").trim();
+    if (!mongoose.Types.ObjectId.isValid(id)) return;
+
+    const promo: any = await Promo.findById(id).lean();
+    if (!promo) return;
+
+    const usage = Number(promo.totalUsage) || 0;
+    const limitReached =
+      !!promo.totalUsageLimit && usage + 1 >= promo.totalUsageLimit;
+
+    await Promo.findByIdAndUpdate(id, {
+      $inc: {
+        usage: 1,
+        totalUsage: 1,
+        totalDiscount: Number(discount) || 0,
+        totalRevenue: Number(orderAmount) || 0,
+      },
+      $set: {
+        status: limitReached ? PromoStatus.INACTIVE : promo.status,
+        availability: limitReached ? false : promo.availability,
+        avgDiscountPerOrder:
+          ((Number(promo.totalDiscount) || 0) + (Number(discount) || 0)) /
+          (usage + 1),
+      },
+    });
   }
 
   async validatePromo(
     promoName: string,
     orderAmount: number,
   ): Promise<{ valid: boolean; discount?: number; message?: string }> {
-    const promo = await Promo.findOne({ promoName }).lean();
+    const name = typeof promoName === "string" ? promoName.trim() : "";
+    if (!name) return { valid: false, message: "Promo not found" };
+
+    const promo = await Promo.findOne({ promoName: name }).lean();
     if (!promo) return { valid: false, message: "Promo not found" };
 
     const now = new Date();
