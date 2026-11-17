@@ -4,7 +4,7 @@ import { IUser } from "../modules/Auth/user.interface";
 import mongoose from "mongoose";
 import asyncHandler from "../utils/asyncHandler";
 import { protectRoute as protect } from "@app/middlewares/auth.middleware";
-import User from "@app/modules/Auth/user.model";
+import User from "../modules/Auth/user.model";
 type AuthenticatedRequest = Request & { user?: IUser };
 
 // ---------------------------------------------
