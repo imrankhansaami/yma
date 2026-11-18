@@ -76,7 +76,7 @@ export default function HighestDemandProduct() {
               </div>
 
               <span className="ml-4 whitespace-nowrap text-[13px] font-medium text-slate-900">
-                ${item.price.toFixed(2)}
+                £{item.price.toFixed(2)}
               </span>
             </div>
           ))}

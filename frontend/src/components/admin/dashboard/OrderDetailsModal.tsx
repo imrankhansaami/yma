@@ -389,9 +389,9 @@ const transformOrderToState = (order: TOrder): InternalOrderState => {
     items: (order.items || []).map((p) => ({
       id: p.product?._id || p.productId || "",
       name: p.product?.name || p.name || "Unknown Product",
-      price: `$${(p.price || 0).toFixed(2)}`,
+      price: `£${(p.price || 0).toFixed(2)}`,
       quantity: p.quantity || 0,
-      total: `$${((p.price || 0) * (p.quantity || 0)).toFixed(2)}`,
+      total: `£${((p.price || 0) * (p.quantity || 0)).toFixed(2)}`,
       badges: ["For 1 Day"],
       secondaryBadge: "",
       days: 1,
@@ -405,12 +405,12 @@ const transformOrderToState = (order: TOrder): InternalOrderState => {
       endDate: p.endDate ? new Date(p.endDate).toISOString() : undefined,
     })),
     summary: {
-      shippingCharge: `$${(order.deliveryFee || 0).toFixed(2)}`,
-      overnightCharge: `$${(order.overnightFee || 0).toFixed(2)}`,
-      placementCharge: `$${(order.placementFee || 0).toFixed(2)}`,
+      shippingCharge: `£${(order.deliveryFee || 0).toFixed(2)}`,
+      overnightCharge: `£${(order.overnightFee || 0).toFixed(2)}`,
+      placementCharge: `£${(order.placementFee || 0).toFixed(2)}`,
       couponCode: order.promoCode || "",
-      couponAmount: `-$${(order.discountAmount || 0).toFixed(2)}`,
-      totalAmount: `$${(order.totalAmount || 0).toFixed(2)}`,
+      couponAmount: `-£${(order.discountAmount || 0).toFixed(2)}`,
+      totalAmount: `£${(order.totalAmount || 0).toFixed(2)}`,
       paymentMethod:
         PAYMENT_METHOD_LABELS[String(order.paymentMethod || "")] ||
         String(order.paymentMethod || "").replaceAll("_", " "),
@@ -827,7 +827,7 @@ export function OrderDetailsModal({
         summary: {
           ...prev.summary,
           overnightCharge: newOvernightCharge,
-          totalAmount: `$${newTotal.toFixed(2)}`,
+          totalAmount: `£${newTotal.toFixed(2)}`,
         },
       };
     });
@@ -853,7 +853,7 @@ export function OrderDetailsModal({
           const newDays = Math.max(1, item.days + change);
           const priceNum =
             parseFloat(item.price.replace(/[^0-9.-]+/g, "")) || 0;
-          const newTotal = `$${(priceNum * item.quantity * newDays).toFixed(2)}`;
+          const newTotal = `£${(priceNum * item.quantity * newDays).toFixed(2)}`;
           const newBadge = `For ${newDays} Day${newDays > 1 ? "s" : ""}`;
 
           return {
@@ -879,7 +879,7 @@ export function OrderDetailsModal({
         items: newItems,
         summary: {
           ...prev.summary,
-          totalAmount: `$${newTotal.toFixed(2)}`,
+          totalAmount: `£${newTotal.toFixed(2)}`,
         },
       };
     });
@@ -903,7 +903,7 @@ export function OrderDetailsModal({
           items: newItems,
           summary: {
             ...prev.summary,
-            totalAmount: `$${newTotal.toFixed(2)}`,
+            totalAmount: `£${newTotal.toFixed(2)}`,
           },
         };
       });
@@ -941,7 +941,7 @@ export function OrderDetailsModal({
         if (existingIndex >= 0) {
           const existing = nextItems[existingIndex];
           const newQty = existing.quantity + quantity;
-          const total = `$${(priceNum * newQty * existing.days).toFixed(2)}`;
+          const total = `£${(priceNum * newQty * existing.days).toFixed(2)}`;
           nextItems[existingIndex] = {
             ...existing,
             quantity: newQty,
@@ -951,9 +951,9 @@ export function OrderDetailsModal({
           nextItems.push({
             id: productId,
             name: product.name || "Unknown Product",
-            price: `$${priceNum.toFixed(2)}`,
+            price: `£${priceNum.toFixed(2)}`,
             quantity,
-            total: `$${(priceNum * quantity).toFixed(2)}`,
+            total: `£${(priceNum * quantity).toFixed(2)}`,
             badges: ["For 1 Day"],
             secondaryBadge: "",
             days: 1,
@@ -977,7 +977,7 @@ export function OrderDetailsModal({
         items: nextItems,
         summary: {
           ...prev.summary,
-          totalAmount: `$${newTotal.toFixed(2)}`,
+          totalAmount: `£${newTotal.toFixed(2)}`,
         },
       };
     });
@@ -1028,7 +1028,7 @@ export function OrderDetailsModal({
         });
         setCouponApplied(true);
 
-        const newCouponAmount = `-$${response.discount.toFixed(2)}`;
+        const newCouponAmount = `-£${response.discount.toFixed(2)}`;
         const newTotal = calculateTotal(
           internalOrder.items,
           newCouponAmount,
@@ -1045,7 +1045,7 @@ export function OrderDetailsModal({
                   ...prev.summary,
                   couponCode: couponInput.trim(),
                   couponAmount: newCouponAmount,
-                  totalAmount: `$${newTotal.toFixed(2)}`,
+                  totalAmount: `£${newTotal.toFixed(2)}`,
                 },
               }
             : prev,
@@ -1090,7 +1090,7 @@ export function OrderDetailsModal({
           ...prev.summary,
           couponCode: "",
           couponAmount: "$0",
-          totalAmount: `$${newTotal.toFixed(2)}`,
+          totalAmount: `£${newTotal.toFixed(2)}`,
         },
       };
     });

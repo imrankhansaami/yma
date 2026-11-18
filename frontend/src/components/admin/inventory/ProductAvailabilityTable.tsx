@@ -89,7 +89,7 @@ export function ProductAvailabilityTable({
         id: product._id || product.id,
         productName: product.name,
         category: categoryName,
-        rentalFee: `$${Number(price).toFixed(2)}`,
+        rentalFee: `£${Number(price).toFixed(2)}`,
         warehouse: String(warehouse),
         vendor: String(vendor),
         image,

@@ -151,8 +151,8 @@ export function AddProductsModal({
                 (Array.isArray(p.images) ? p.images[0] : undefined);
               const price =
                 typeof p.price === "number"
-                  ? `$${p.price.toFixed(2)}`
-                  : "$0.00";
+                  ? `£${p.price.toFixed(2)}`
+                  : "£0.00";
 
               return (
                 <div

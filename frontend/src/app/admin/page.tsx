@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { fetchDashboardStats } from "@/services/order.service";
 import { useQuery } from "@tanstack/react-query";
-import { DollarSign, PackageCheck, PackagePlus, Truck } from "lucide-react";
+import { PoundSterling, PackageCheck, PackagePlus, Truck } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const RevenueOverview = dynamic(
@@ -42,8 +42,8 @@ export default function AdminDashboardPage() {
   const kpiCards = [
     {
       label: "Revenue Generated Today",
-      value: `$${stats?.todayRevenue?.toFixed(2) ?? "0.00"}`,
-      icon: DollarSign,
+      value: `£${stats?.todayRevenue?.toFixed(2) ?? "0.00"}`,
+      icon: PoundSterling,
     },
     {
       label: "Pending Confirmations",
@@ -109,7 +109,7 @@ export default function AdminDashboardPage() {
           Failed to load dashboard data. Please try again later.
         </div>
       )}
-      <div className="mt-10 flex gap-10">
+      <div className="mt-8 flex flex-col gap-6 lg:mt-10 lg:flex-row lg:gap-10">
         <RevenueOverview />
         <HighestDemandProduct />
       </div>

@@ -221,7 +221,7 @@ export default function ProductDetailsModal({
   // Helper to format currency
   const formatPrice = (price?: number | null) => {
     if (price === undefined || price === null) return "$0.00";
-    return `$${Number(price).toFixed(2)}`;
+    return `£${Number(price).toFixed(2)}`;
   };
 
   // Image helpers

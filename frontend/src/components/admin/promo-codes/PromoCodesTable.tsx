@@ -94,8 +94,8 @@ export function PromoCodesTable({ refreshKey = 0 }: PromoCodesTableProps) {
           id: String(promo._id ?? promo.id ?? promo.promoName),
           code: String(promo.promoName ?? ""),
           discount: `${promo.discountPercentage ?? 0}% off`,
-          minOrder: `$${promo.minimumOrderValue ?? 0}`,
-          maxDiscount: `$${promo.maxDiscountValue ?? 0}`,
+          minOrder: `£${promo.minimumOrderValue ?? 0}`,
+          maxDiscount: `£${promo.maxDiscountValue ?? 0}`,
           usage: `${promo.usage ?? 0}/${promo.totalUsageLimit ?? 0}`,
           validity: formatDateRange(
             promo?.validityPeriod?.from,
