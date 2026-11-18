@@ -1175,7 +1175,7 @@ export function OrderDetailsModal({
             </div>
 
             {/* Meta row */}
-            <div className="mt-4 flex items-center gap-10 text-slate-900 px-6">
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 text-slate-900 px-4 sm:gap-x-10 sm:px-6">
               {/* Created at */}
               <div className="space-y-[2px]">
                 <div className="text-sm text-slate-500">Created at</div>
@@ -1964,7 +1964,7 @@ export function OrderDetailsModal({
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-4 py-3 sm:px-6">
             {isEditing ? (
               <>
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="flex flex-wrap items-center gap-2 ml-auto">
                   <Button
                     variant="outline"
                     className="h-9 rounded-[6px] border-slate-300 px-3 text-[13px] font-medium text-slate-800 bg-white font-inter"
@@ -2006,7 +2006,7 @@ export function OrderDetailsModal({
                   </Button>
                 )}
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     variant="outline"
                     className="h-9 rounded-[6px] border-slate-300 px-3 text-[13px] font-medium text-slate-800 bg-white font-inter"

@@ -216,7 +216,7 @@ export function BlogDetailsModal({
             Delete Blog
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               className="h-9 rounded-lg border-slate-200 bg-white px-3 text-[12px] font-medium text-black shadow-none text-sm"
