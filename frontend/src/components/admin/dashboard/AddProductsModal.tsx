@@ -230,7 +230,7 @@ export function AddProductsModal({
         </div>
 
         {/* FOOTER BUTTONS */}
-        <div className="flex items-center justify-end gap-2 rounded-b-lg border-t border-slate-200 bg-white px-6 py-4">
+        <div className="flex flex-wrap items-center justify-end gap-2 rounded-b-lg border-t border-slate-200 bg-white px-4 py-4 sm:px-6">
           <Button
             variant="outline"
             className="h-10 rounded-lg border-slate-300 bg-white px-4 text-sm font-medium text-slate-800"

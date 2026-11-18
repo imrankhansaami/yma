@@ -17,7 +17,7 @@ export default function HighestDemandProduct() {
   });
 
   return (
-    <section className="w-full max-w-[40%]">
+    <section className="w-full max-w-full lg:max-w-[40%]">
       {/* Title + subtitle */}
       <div className="mb-4">
         <h2 className="font-semibold text-slate-900">Highest Demand Product</h2>

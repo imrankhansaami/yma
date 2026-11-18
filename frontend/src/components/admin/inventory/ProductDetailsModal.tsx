@@ -238,7 +238,7 @@ export default function ProductDetailsModal({
       }}
       style={{ fontFamily: "Inter, sans-serif" }}
     >
-      <div className="relative w-[70vw] max-w-[70vw] max-h-[90vh] bg-white rounded-2xl overflow-y-auto border border-slate-200 flex flex-col [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <div className="relative w-[94vw] max-w-[94vw] sm:w-[70vw] sm:max-w-[70vw] max-h-[90vh] bg-white rounded-2xl overflow-y-auto border border-slate-200 flex flex-col [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {/* Header + Info (sticky) */}
         <div className="sticky top-0 z-20 bg-white border-b border-brand-gray-150">
           <div className="flex items-center justify-between px-6 pt-5 pb-4 relative">
@@ -269,7 +269,7 @@ export default function ProductDetailsModal({
             </div>
             <div className="flex flex-col gap-1 min-w-[120px]">
               <span className="text-[14px] text-brand-gray-500">Category</span>
-              <span className="inline-block bg-brand-gray-110 text-[12px] font-medium text-brand-black-950 rounded px-2 py-0.5">
+              <span className="inline-block max-w-full break-all bg-brand-gray-110 text-[12px] font-medium text-brand-black-950 rounded px-2 py-0.5">
                  {Array.isArray(product.categories) && product.categories.length > 0
                     ? product.categories
                         .map((c: any) => (typeof c === "string" ? c : c?.name))
@@ -331,7 +331,7 @@ export default function ProductDetailsModal({
           <div key="view">
 
             {/* Main Content */}
-            <div className="flex gap-8 px-6 py-6">
+            <div className="flex flex-col gap-5 px-4 py-6 sm:flex-row sm:gap-8 sm:px-6">
               {/* Images */}
               <div className="flex flex-col gap-4">
                 <div className="w-[10rem] h-[10rem] rounded bg-brand-gray-250 overflow-hidden flex items-center justify-center relative">

@@ -1146,7 +1146,7 @@ export function OrderDetailsModal({
         <DialogContent
           showCloseButton={false}
           className={cn(
-            "w-[70vw] max-w-[70vw] sm:w-[70vw] sm:max-w-[70vw] max-h-[90vh] font-inter p-0 gap-0",
+            "w-[94vw] max-w-[94vw] sm:w-[70vw] sm:max-w-[70vw] max-h-[90vh] font-inter p-0 gap-0",
             "overflow-hidden rounded-2xl border border-slate-200 flex flex-col",
           )}
         >
@@ -1335,7 +1335,7 @@ export function OrderDetailsModal({
           <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <div className="px-6 py-5 text-[12px] text-slate-900 space-y-6">
               {/* CUSTOMER & BOOKING DETAILS */}
-              <div className="grid grid-cols-2 gap-x-16 gap-y-3 text-sm">
+              <div className="grid grid-cols-1 gap-x-8 gap-y-3 text-sm sm:grid-cols-2 sm:gap-x-16">
                 <div className="space-y-5">
                   <EditableDetailRow
                     label="First name"
@@ -1398,8 +1398,8 @@ export function OrderDetailsModal({
                   />
 
                   {/* Delivery Time Dropdown */}
-                  <div className="flex gap-16">
-                    <div className="w-40 text-[12px] text-slate-500">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+                    <div className="text-[12px] text-slate-500 sm:w-40">
                       Delivery time
                     </div>
                     {isEditing ? (
@@ -1432,8 +1432,8 @@ export function OrderDetailsModal({
                   </div>
 
                   {/* Collection Time Dropdown */}
-                  <div className="flex gap-16">
-                    <div className="w-40 text-[12px] text-slate-500">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+                    <div className="text-[12px] text-slate-500 sm:w-40">
                       Collection time
                     </div>
                     {isEditing ? (
@@ -1477,8 +1477,8 @@ export function OrderDetailsModal({
                   />
 
                   {/* Location Accessibility Dropdown */}
-                  <div className="flex gap-16">
-                    <div className="w-40 text-[12px] text-slate-500">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+                    <div className="text-[12px] text-slate-500 sm:w-40">
                       Location accessibility
                     </div>
                     {isEditing ? (
@@ -1511,8 +1511,8 @@ export function OrderDetailsModal({
                   </div>
 
                   {/* Product Placement Dropdown */}
-                  <div className="flex gap-16">
-                    <div className="w-40 text-[12px] text-slate-500">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+                    <div className="text-[12px] text-slate-500 sm:w-40">
                       Product will be placed in
                     </div>
                     {isEditing ? (
@@ -1545,8 +1545,8 @@ export function OrderDetailsModal({
                   </div>
 
                   {/* Used By Dropdown */}
-                  <div className="flex gap-16">
-                    <div className="w-40 text-[12px] text-slate-500">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+                    <div className="text-[12px] text-slate-500 sm:w-40">
                       Product will be used by
                     </div>
                     {isEditing ? (
@@ -1579,8 +1579,8 @@ export function OrderDetailsModal({
                   </div>
 
                   {/* Purchase Type Dropdown */}
-                  <div className="flex gap-16">
-                    <div className="w-40 text-[12px] text-slate-500">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+                    <div className="text-[12px] text-slate-500 sm:w-40">
                       Purchase type
                     </div>
                     {isEditing ? (
@@ -1613,8 +1613,8 @@ export function OrderDetailsModal({
                   </div>
 
                   {/* Occasion Dropdown */}
-                  <div className="flex gap-16">
-                    <div className="w-40 text-[12px] text-slate-500">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+                    <div className="text-[12px] text-slate-500 sm:w-40">
                       Hire occasion
                     </div>
                     {isEditing ? (
@@ -1647,8 +1647,8 @@ export function OrderDetailsModal({
                   </div>
 
                   {/* Notes Textarea */}
-                  <div className="flex gap-16">
-                    <div className="w-40 text-[12px] text-slate-500">Notes</div>
+                  <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+                    <div className="text-[12px] text-slate-500 sm:w-40">Notes</div>
                     {isEditing ? (
                       <Textarea
                         value={internalOrder.customer.notes}
@@ -1961,7 +1961,7 @@ export function OrderDetailsModal({
           </div>
 
           {/* FOOTER BUTTONS */}
-          <div className="flex items-center justify-between border-t border-slate-200 px-6 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-4 py-3 sm:px-6">
             {isEditing ? (
               <>
                 <div className="flex items-center gap-2 ml-auto">
@@ -2065,8 +2065,8 @@ function DetailRow({
   multiline?: boolean;
 }) {
   return (
-    <div className="flex gap-16">
-      <div className="w-40 text-[12px] text-slate-500">{label}</div>
+    <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+      <div className="text-[12px] text-slate-500 sm:w-40">{label}</div>
       <div
         className={cn(
           "flex-1 text-[13px] text-slate-900",
@@ -2097,8 +2097,8 @@ function EditableDetailRow({
   }
 
   return (
-    <div className="flex gap-16">
-      <div className="w-40 text-[12px] text-slate-500">{label}</div>
+    <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+      <div className="text-[12px] text-slate-500 sm:w-40">{label}</div>
       {multiline ? (
         <textarea
           value={value}

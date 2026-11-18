@@ -629,8 +629,8 @@ export function CustomerHistoryModal({
     value: string,
     multiline?: boolean
   ) => (
-    <div className="flex gap-16">
-      <div className="w-40 text-[12px] text-slate-500">{label}</div>
+    <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+      <div className="text-[12px] text-slate-500 sm:w-40">{label}</div>
       <div
         className={cn(
           "flex-1 text-[13px] text-slate-900",
@@ -648,8 +648,8 @@ export function CustomerHistoryModal({
     onChange: (next: string) => void,
     multiline?: boolean
   ) => (
-    <div className="flex gap-16">
-      <div className="w-40 text-[12px] text-slate-500">{label}</div>
+    <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+      <div className="text-[12px] text-slate-500 sm:w-40">{label}</div>
       {multiline ? (
         <textarea
           value={value}
@@ -678,8 +678,8 @@ export function CustomerHistoryModal({
       : options;
 
     return (
-      <div className="flex gap-16">
-        <div className="w-40 text-[12px] text-slate-500">{label}</div>
+      <div className="flex flex-col gap-1 sm:flex-row sm:gap-16">
+        <div className="text-[12px] text-slate-500 sm:w-40">{label}</div>
         <Select value={value} onValueChange={onChange}>
           <SelectTrigger className="flex-1 h-8 max-w-[280px] font-inter">
             <SelectValue />
@@ -702,7 +702,7 @@ export function CustomerHistoryModal({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          "w-[70vw] max-w-[70vw] sm:w-[70vw] sm:max-w-[70vw] max-h-[90vh] font-inter p-0 gap-0",
+          "w-[94vw] max-w-[94vw] sm:w-[70vw] sm:max-w-[70vw] max-h-[90vh] font-inter p-0 gap-0",
           "overflow-hidden rounded-2xl border border-slate-200 flex flex-col"
         )}
       >
@@ -849,7 +849,7 @@ export function CustomerHistoryModal({
           <div className="space-y-6 px-6 py-5 text-[12px] text-slate-900">
             {isOrderLoading ? (
               <div className="space-y-6 animate-pulse">
-                <div className="grid grid-cols-2 gap-x-16 gap-y-3 text-sm">
+                <div className="grid grid-cols-1 gap-x-8 gap-y-3 text-sm sm:grid-cols-2 sm:gap-x-16">
                   <div className="space-y-5">
                     {Array.from({ length: 7 }).map((_, i) => (
                       <div key={`sk-left-${i}`} className="h-4 w-48 bg-slate-100 rounded" />
@@ -879,7 +879,7 @@ export function CustomerHistoryModal({
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-x-16 gap-y-3 text-sm">
+                <div className="grid grid-cols-1 gap-x-8 gap-y-3 text-sm sm:grid-cols-2 sm:gap-x-16">
                   <div className="space-y-5">
                     {isEditing ? (
                       <>
@@ -1330,7 +1330,7 @@ export function CustomerHistoryModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4">
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-white px-4 py-4 sm:gap-3 sm:px-6">
           {isEditing ? (
             <>
               <Button

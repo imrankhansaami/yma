@@ -93,7 +93,7 @@ export default function RevenueOverview() {
       : [];
 
   return (
-    <section className="w-full max-w-[70%]">
+    <section className="w-full max-w-full lg:max-w-[70%]">
       {/* Top heading */}
       <div className="mb-4">
         <h2 className="font-semibold text-slate-900">Revenue Overview</h2>

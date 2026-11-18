@@ -74,7 +74,7 @@ export function BlogDetailsModal({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          "w-[70vw] max-w-[70vw] sm:w-[70vw] sm:max-w-[70vw] max-h-[90vh] font-inter p-0 gap-0",
+          "w-[94vw] max-w-[94vw] sm:w-[70vw] sm:max-w-[70vw] max-h-[90vh] font-inter p-0 gap-0",
           "overflow-hidden rounded-2xl border border-slate-200 flex flex-col"
         )}
       >
@@ -206,7 +206,7 @@ export function BlogDetailsModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 bg-white px-6 py-4 flex items-center justify-between">
+        <div className="border-t border-slate-200 bg-white px-4 py-4 flex flex-wrap items-center justify-between gap-2 sm:px-6">
           <Button
             variant="outline"
             className="h-9 rounded-lg border-slate-200 bg-white px-3 text-[12px] font-medium text-black shadow-none text-sm"
