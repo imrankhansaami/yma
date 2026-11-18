@@ -295,7 +295,7 @@ export function PromoCodeDetailsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="w-[70vw] max-w-[70vw] sm:w-[70vw] sm:max-w-[70vw] max-h-[90vh] font-inter p-0 gap-0 border border-slate-200 rounded-2xl flex flex-col"
+        className="w-[92vw] max-w-[92vw] sm:w-[70vw] sm:max-w-[70vw] max-h-[90vh] font-inter p-0 gap-0 border border-slate-200 rounded-2xl flex flex-col"
       >
         <div className="sticky top-0 z-10 border-b border-slate-200 bg-brand-gray-80 px-5 py-4 rounded-t-2xl">
           <div className="flex items-start justify-between gap-4">

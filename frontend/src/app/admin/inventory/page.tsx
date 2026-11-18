@@ -99,8 +99,9 @@ const InventoryPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/30">
-      {/* Tabs */}
-      <div className="border-b border-gray-200 bg-white fixed left-0 w-full md:left-[19.5rem] md:w-[calc(100%-19.5rem)] z-10">
+      {/* Tabs — sticky under the fixed top bar (was `fixed`, which overlapped the
+          header on phones). */}
+      <div className="sticky top-16 z-20 -mx-3 border-b border-gray-200 bg-white sm:-mx-4 lg:-mx-4">
         <div className="flex gap-0 overflow-x-auto px-2 sm:px-4">
           {TABS.map((tab) => (
             <button
@@ -121,7 +122,7 @@ const InventoryPage = () => {
       </div>
 
       {/* Content */}
-      <div className="mx-auto py-8 pt-18">
+      <div className="mx-auto py-6 sm:py-8">
         {activeTab === "categories" ? (
           <>
             <div className="mb-6">

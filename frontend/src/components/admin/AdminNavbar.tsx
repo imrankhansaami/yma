@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
 import { useMemo } from "react";
 
 import { selectUser, useAuthStore } from "@/store/useAuthStore";
@@ -19,7 +20,11 @@ function getPageTitle(pathname: string): string {
   return "Dashboard";
 }
 
-export default function AdminNavbar() {
+export default function AdminNavbar({
+  onMenuClick,
+}: {
+  onMenuClick?: () => void;
+}) {
   const pathname = usePathname();
   const title = getPageTitle(pathname ?? "/admin");
   const user = useAuthStore(selectUser);
@@ -39,25 +44,36 @@ export default function AdminNavbar() {
   const avatarUrl = user?.photo || "";
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-30 flex h-[4rem] items-center justify-between border-b border-slate-200 bg-white px-6 ml-[19.5rem]">
-      <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
+    <header className="fixed top-0 right-0 left-0 z-30 flex h-[4rem] items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-6 lg:ml-[19.5rem]">
+      <button
+        type="button"
+        onClick={onMenuClick}
+        aria-label="Open navigation"
+        className="-ml-1 shrink-0 rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
+      <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-slate-900 sm:text-xl lg:text-2xl">
+        {title}
+      </h1>
 
       {/* User profile */}
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         {avatarUrl ? (
           <Image
             src={avatarUrl}
             alt={displayName}
             width={40}
             height={40}
-            className="h-10 w-10 rounded-full object-cover"
+            className="h-9 w-9 rounded-full object-cover sm:h-10 sm:w-10"
           />
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-semibold text-white">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-semibold text-white sm:h-10 sm:w-10">
             {initials || "AD"}
           </div>
         )}
-        <div className="flex flex-col leading-tight">
+        <div className="hidden flex-col leading-tight sm:flex">
           <span className="text-sm font-medium text-slate-900">
             {displayName}
           </span>

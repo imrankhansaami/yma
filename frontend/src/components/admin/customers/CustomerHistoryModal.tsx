@@ -1264,7 +1264,7 @@ export function CustomerHistoryModal({
                       <Button
                         variant="outline"
                         className={cn(
-                          "h-10 w-[490px] justify-start rounded-lg border bg-white px-3 text-sm font-medium text-slate-800 shadow-sm",
+                          "h-10 w-full justify-start rounded-lg border bg-white px-3 text-sm font-medium text-slate-800 shadow-sm sm:w-[490px]",
                           dateError
                             ? "border-brand-orange-500 text-brand-orange-500"
                             : "border-slate-300"

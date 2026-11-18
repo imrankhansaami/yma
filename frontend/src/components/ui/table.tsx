@@ -12,7 +12,16 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn(
+          "w-full caption-bottom text-sm",
+          // Below md the admin tables (6-9 columns) cannot fit a phone, and with
+          // `whitespace-nowrap` cells the columns used to overlap. Give the table
+          // a floor width so the container scrolls sideways instead of squashing.
+          // The admin is the only consumer of this component, so the floor is
+          // safe; a caller can override it with its own min-w-* class.
+          "min-w-[44rem] md:min-w-0",
+          className
+        )}
         {...props}
       />
     </div>

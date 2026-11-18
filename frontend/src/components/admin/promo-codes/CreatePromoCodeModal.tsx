@@ -117,7 +117,7 @@ export function CreatePromoCodeModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="w-[65vw] max-w-[900px] sm:w-[65vw] sm:max-w-[900px] max-h-[90vh] font-inter p-0 gap-0 border border-slate-200 rounded-2xl flex flex-col"
+        className="w-[92vw] max-w-[92vw] sm:w-[65vw] sm:max-w-[900px] max-h-[90vh] font-inter p-0 gap-0 border border-slate-200 rounded-2xl flex flex-col"
       >
         <DialogTitle className="sr-only">Create New Promo Code</DialogTitle>
         <DialogClose asChild>

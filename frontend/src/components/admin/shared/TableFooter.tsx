@@ -83,7 +83,7 @@ export function TableFooter({
   return (
     <div
       className={cn(
-        "flex items-center justify-between",
+        "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
         styles.wrapper,
         className
       )}
@@ -92,7 +92,7 @@ export function TableFooter({
         Showing {showingCount} of {totalResults} results.
       </div>
 
-      <div className="flex items-center gap-5">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         <div className={cn("flex items-center gap-2", styles.controlText)}>
           <span>Rows per page</span>
           <Select

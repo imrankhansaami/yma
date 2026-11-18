@@ -57,7 +57,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     if (index >= maxImages) return null;
 
     const hasImage = index < images.length;
-    const sizeClasses = isLarge ? "w-[380px] h-[384px]" : "w-full h-[188px]";
+    const sizeClasses = isLarge
+      ? "w-full max-w-[380px] h-[384px]"
+      : "w-full h-[188px]";
     
     return (
       <div

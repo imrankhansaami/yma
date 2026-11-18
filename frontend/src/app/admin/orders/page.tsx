@@ -96,15 +96,17 @@ const OrdersPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/30">
-      {/* Tabs */}
-      <div className="border-b border-gray-200 bg-white fixed left-0 w-full md:left-[19.5rem] md:w-[calc(100%-19.5rem)] z-10">
+      {/* Tabs — sticky under the fixed top bar so they stay reachable on a phone
+          without covering the page title (they were `fixed` before, which
+          overlapped the header on small screens). */}
+      <div className="sticky top-16 z-20 -mx-3 border-b border-gray-200 bg-white sm:-mx-4 lg:-mx-4">
         <div className="flex gap-0 overflow-x-auto px-2 sm:px-4">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "relative px-4 sm:px-6 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+                "relative whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors sm:px-6",
                 "hover:text-gray-900",
                 activeTab === tab.id
                   ? "bg-brand-gray-105 m-2 rounded-md font-semibold"
@@ -118,24 +120,26 @@ const OrdersPage = () => {
       </div>
 
       {/* Content */}
-      <div className="mx-auto py-8 pt-18">
+      <div className="mx-auto py-6 sm:py-8">
         {/* Header Section */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">{title}</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="mb-2 text-xl font-semibold text-gray-900 sm:text-2xl">
+            {title}
+          </h1>
           <p className="text-sm text-gray-600">{description}</p>
         </div>
 
         {/* Search and Filter Bar */}
-        <div className="mb-6 flex items-center justify-between gap-4">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           {/* Search Input */}
-          <div className="relative flex-1 max-w-md z-0">
+          <div className="relative z-0 w-full flex-1 sm:max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
               type="text"
               placeholder="Search by customer name & order ID"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 bg-white border-gray-300 focus-visible:ring-gray-900"
+              className="h-10 bg-white pl-10 border-gray-300 focus-visible:ring-gray-900"
             />
           </div>
 
@@ -145,7 +149,7 @@ const OrdersPage = () => {
               <Button
                 variant="outline"
                 className={cn(
-                  "h-10 justify-start text-left font-normal bg-white border-gray-300 hover:bg-gray-50",
+                  "h-10 w-full justify-start text-left font-normal bg-white border-gray-300 hover:bg-gray-50 sm:w-auto",
                   !date && "text-gray-400"
                 )}
               >

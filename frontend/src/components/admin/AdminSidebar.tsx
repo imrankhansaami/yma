@@ -14,6 +14,7 @@ import {
   Store,
   TicketPercent,
   User,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -80,7 +81,13 @@ const bottomLinks = [
   },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({
+  open = false,
+  onClose,
+}: {
+  open?: boolean;
+  onClose?: () => void;
+}) {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
@@ -89,16 +96,31 @@ export default function AdminSidebar() {
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 flex w-[19.5rem] flex-col border-r border-slate-200 bg-white pt-3 pb-4">
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-50 flex w-[19.5rem] max-w-[85vw] flex-col overflow-y-auto border-r border-slate-200 bg-white pt-3 pb-4",
+        "transition-transform duration-200 ease-out",
+        // Pinned from lg up; an off-canvas drawer below it.
+        open ? "translate-x-0" : "-translate-x-full",
+        "lg:translate-x-0",
+      )}
+    >
       {/* Logo */}
-      <Link
-        href="/"
-        className="mb-4 flex items-center gap-2 border-b border-slate-200 pb-[5px]"
-      >
-        <div className="px-3">
-          <Image src={Logo} alt="logo" />
-        </div>
-      </Link>
+      <div className="mb-4 flex items-center gap-2 border-b border-slate-200 pb-[5px]">
+        <Link href="/" className="flex-1">
+          <div className="px-3">
+            <Image src={Logo} alt="logo" />
+          </div>
+        </Link>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close navigation"
+          className="mr-3 rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
 
       {/* Main navigation */}
       <nav className="flex-1 space-y-1 px-3">
