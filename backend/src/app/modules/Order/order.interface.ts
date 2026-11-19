@@ -175,6 +175,10 @@ export interface IOrder {
   orderNumber?: string;
   estimatedDeliveryDate?: Date;
   deliveryDate?: Date;
+  /** When the automatic customer emails were sent, so they never repeat. */
+  deliveryReminderDayBeforeSentAt?: Date;
+  deliveryReminderMorningSentAt?: Date;
+  thankYouSentAt?: Date;
   adminNotes?: string;
   cancellationReason?: string;
 

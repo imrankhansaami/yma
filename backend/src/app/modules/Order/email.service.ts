@@ -1088,6 +1088,74 @@ const emailTemplates = {
       </html>
     `;
   },
+
+  /**
+   * Sent the day after the hire: a thank-you and a request for a Google review.
+   * Set GOOGLE_REVIEW_URL once the Business Profile is live; until then the
+   * button points at the contact page so the email is never broken.
+   */
+  thankYou: (order: IOrderDocument): string => {
+    const firstName = order.shippingAddress?.firstName || "there";
+    const reviewUrl =
+      process.env.GOOGLE_REVIEW_URL ||
+      `${process.env.FRONTEND_URL || "https://ymabouncycastles.uk"}/contact`;
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+          .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; }
+          .header { text-align: center; padding-bottom: 20px; border-bottom: 3px solid #4CAF50; margin-bottom: 25px; }
+          .header h1 { color: #4CAF50; margin: 0; font-size: 22px; }
+          .review-box { background: #e8f5e9; border-radius: 12px; padding: 24px; text-align: center; margin: 26px 0; }
+          .review-button { display: inline-block; background: #4CAF50; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; margin-top: 14px; }
+          .footer { text-align: center; color: #777; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🏰 YMA Bouncy Castles</h1>
+          </div>
+
+          <p>Hi ${firstName},</p>
+
+          <p>
+            Thank you for choosing us for your celebration — we hope everyone had a
+            brilliant time. The invoice for order #${order.orderNumber} is attached
+            for your records.
+          </p>
+
+          <p>
+            If you have a moment, a short Google review helps other families find us
+            and genuinely makes a difference to a small local business.
+          </p>
+
+          <div class="review-box">
+            <strong style="color: #388E3C; font-size: 16px;">How did we do?</strong>
+            <p style="color: #555; margin: 10px 0 0 0;">
+              A sentence or two is plenty — it takes less than a minute.
+            </p>
+            <a class="review-button" href="${reviewUrl}">Leave a review</a>
+          </div>
+
+          <p>
+            Planning another event? You can book again any time at
+            <a href="${process.env.FRONTEND_URL || "https://ymabouncycastles.uk"}/booking-catalog">our catalogue</a>,
+            or call us on <strong>07951 431111</strong>.
+          </p>
+
+          <div class="footer">
+            <p>YMA Bouncy Castle Team</p>
+            <p style="opacity: 0.8; margin-top: 10px;">Thank you for choosing us for your celebration! 🎈</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  },
 };
 
 // Email sending functions
@@ -1113,6 +1181,29 @@ export const sendOrderReceivedEmail = async (
   }
 };
 
+/** The invoice PDF, ready to attach to any customer email. */
+const invoiceAttachment = async (
+  order: IOrderDocument,
+): Promise<{ filename: string; content: string }[] | undefined> => {
+  try {
+    const pdf = await renderInvoicePdf(order);
+    return [
+      {
+        filename: `invoice-${order.orderNumber || "order"}.pdf`,
+        content: pdf.toString("base64"),
+      },
+    ];
+  } catch (error) {
+    console.error("[Invoice] PDF generation failed:", error);
+    return undefined;
+  }
+};
+
+/**
+ * The order confirmation, sent as soon as the order is placed (the invoice goes
+ * out alongside it). It replaces the old "Booking Confirmed" email, which said
+ * the same thing but only after an admin accepted the order.
+ */
 export const sendOrderConfirmedEmail = async (
   order: IOrderDocument
 ): Promise<void> => {
@@ -1122,16 +1213,39 @@ export const sendOrderConfirmedEmail = async (
     await sendEmail({
       to: order.shippingAddress.email,
       bcc: emailConfig.adminEmail,
-      subject: `✅ Booking Confirmed #${order.orderNumber} - YMA Bouncy Castle`,
+      subject: `✅ Order Confirmation #${order.orderNumber} - YMA Bouncy Castle`,
       html,
-      text: `Your order ${order.orderNumber} has been confirmed. Delivery on schedule. Contact: 07951 431111`,
+      text: `Your order ${order.orderNumber} has been received. Delivery on schedule. Contact: 07951 431111`,
+      attachments: await invoiceAttachment(order),
     });
 
     console.log(
-      `✅ Order confirmed email sent to ${order.shippingAddress.email}`
+      `✅ Order confirmation email sent to ${order.shippingAddress.email}`
     );
   } catch (error) {
-    console.error("❌ Failed to send order confirmed email:", error);
+    console.error("❌ Failed to send order confirmation email:", error);
+  }
+};
+
+/** Sent the day after the hire (see the customer-email job). */
+export const sendThankYouEmail = async (
+  order: IOrderDocument,
+): Promise<void> => {
+  try {
+    const html = emailTemplates.thankYou(order);
+
+    await sendEmail({
+      to: order.shippingAddress.email,
+      bcc: emailConfig.adminEmail,
+      subject: `🙏 Thank you from YMA Bouncy Castle - order #${order.orderNumber}`,
+      html,
+      text: `Thank you for choosing us. If you have a moment, a short Google review really helps a small local business. The invoice for order ${order.orderNumber} is attached.`,
+      attachments: await invoiceAttachment(order),
+    });
+
+    console.log(`✅ Thank-you email sent to ${order.shippingAddress.email}`);
+  } catch (error) {
+    console.error("❌ Failed to send thank-you email:", error);
   }
 };
 
@@ -1147,6 +1261,7 @@ export const sendDeliveryReminderEmail = async (
       subject: `📦 Ready to be Delivered #${order.orderNumber} - YMA Bouncy Castle`,
       html,
       text: `Ready to be delivered tomorrow: your order ${order.orderNumber} is scheduled for ${order.shippingAddress.deliveryTime}. Contact: 07951 431111`,
+      attachments: await invoiceAttachment(order),
     });
 
     console.log(

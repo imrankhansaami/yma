@@ -179,6 +179,11 @@ const orderSchema = new Schema<IOrderDocument>(
     orderNumber: { type: String, unique: true },
     estimatedDeliveryDate: { type: Date },
     deliveryDate: { type: Date },
+    // Stamps for the automatic customer emails, so a daily job can never send
+    // the same reminder or thank-you twice for one order.
+    deliveryReminderDayBeforeSentAt: { type: Date },
+    deliveryReminderMorningSentAt: { type: Date },
+    thankYouSentAt: { type: Date },
     adminNotes: { type: String, default: "" },
     cancellationReason: { type: String, default: "" },
   },
@@ -208,33 +213,62 @@ const orderSchema = new Schema<IOrderDocument>(
 );
 
 // ==================== PRE-SAVE MIDDLEWARE ====================
-const generateSixDigitOrderNumber = (): string =>
-  Math.floor(100000 + Math.random() * 900000).toString();
+// Sequential four-digit order numbers (1000, 1001, 1002 …) so the office can
+// refer to "order 1042" and the numbers run in the order they were placed.
+// A counter document makes the increment atomic, so two checkouts at the same
+// moment can never take the same number.
+const ORDER_NUMBER_START = 1000;
+
+const nextOrderNumber = async (
+  OrderModel: mongoose.Model<IOrderDocument>,
+): Promise<string> => {
+  const counters = mongoose.connection.db.collection("counters");
+
+  // First run (or a wiped counter): start above the highest number already used.
+  const existingCounter = await counters.findOne({ _id: "orderNumber" as any });
+  if (!existingCounter) {
+    const rows = await OrderModel.find({ orderNumber: /^\d{4}$/ })
+      .sort({ orderNumber: -1 })
+      .limit(1)
+      .lean();
+    const highest = rows.length ? Number(rows[0].orderNumber) : 0;
+    await counters.updateOne(
+      { _id: "orderNumber" as any },
+      { $max: { seq: Math.max(highest, ORDER_NUMBER_START - 1) } },
+      { upsert: true },
+    );
+  }
+
+  const updated = await counters.findOneAndUpdate(
+    { _id: "orderNumber" as any },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: "after" },
+  );
+
+  const seq = Number((updated as any)?.seq ?? ORDER_NUMBER_START);
+  // Four digits, zero-padded; past 9999 it simply grows to five (no wrap, so a
+  // number can never be reused).
+  return String(seq).padStart(4, "0");
+};
 
 orderSchema.pre("save", async function (next) {
   try {
-    // Generate unique 6-digit order number if not set
+    // Assign the next sequential number if the order does not have one yet.
     if (!this.orderNumber) {
       const OrderModel = this.constructor as mongoose.Model<IOrderDocument>;
-      let attempts = 0;
-      let candidate = "";
-      let isUnique = false;
-
-      while (attempts < 25) {
-        candidate = generateSixDigitOrderNumber();
+      for (let attempt = 0; attempt < 5 && !this.orderNumber; attempt += 1) {
+        const candidate = await nextOrderNumber(OrderModel);
+        // Guard against a collision with a number issued before the counter
+        // existed; the counter keeps moving forward so this is a one-off.
         const exists = await OrderModel.exists({ orderNumber: candidate });
         if (!exists) {
-          isUnique = true;
-          break;
+          this.orderNumber = candidate;
         }
-        attempts += 1;
       }
 
-      if (!isUnique) {
-        throw new Error("Unable to generate a unique 6-digit order number");
+      if (!this.orderNumber) {
+        throw new Error("Unable to generate an order number");
       }
-
-      this.orderNumber = candidate;
     }
 
     // ─── Calculate delivery + collection fee ─────────────────────────────

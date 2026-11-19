@@ -954,16 +954,15 @@ export const updateOrder = async (
       try {
         switch (updateData.status) {
           case ORDER_STATUS.CONFIRMED:
-            await sendOrderConfirmedEmail(populatedOrder);
+            // The customer already received the order confirmation and the
+            // invoice at checkout; accepting the order sends the invoice again
+            // so they have the accepted copy.
+            await sendInvoiceEmail(populatedOrder);
             break;
           case ORDER_STATUS.SHIPPED:
-            if (isTomorrowByLocalDate(populatedOrder.estimatedDeliveryDate)) {
-              await sendDeliveryReminderEmail(populatedOrder);
-            } else {
-              console.log(
-                `[SKIP] Delivery reminder not sent for order ${populatedOrder.orderNumber} because estimatedDeliveryDate is not tomorrow.`,
-              );
-            }
+            // Delivery reminders are sent automatically by the daily customer
+            // email job (the day before, and again on the morning of delivery),
+            // so nothing is sent here.
             break;
           case ORDER_STATUS.CANCELLED:
             await sendOrderCancelledEmail(populatedOrder);
@@ -1040,16 +1039,12 @@ export const updateOrderStatus = async (
       try {
         switch (status) {
           case ORDER_STATUS.CONFIRMED:
-            await sendOrderConfirmedEmail(populated);
+            // See above: the confirmation goes out at checkout, so accepting the
+            // order sends the invoice again rather than a second confirmation.
+            await sendInvoiceEmail(populated);
             break;
           case ORDER_STATUS.SHIPPED:
-            if (isTomorrowByLocalDate(populated.estimatedDeliveryDate)) {
-              await sendDeliveryReminderEmail(populated);
-            } else {
-              console.log(
-                `[SKIP] Delivery reminder not sent for order ${populated.orderNumber} because estimatedDeliveryDate is not tomorrow.`,
-              );
-            }
+            // Handled by the automatic customer email job.
             break;
           case ORDER_STATUS.CANCELLED:
             await sendOrderCancelledEmail(populated);

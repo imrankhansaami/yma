@@ -19,6 +19,9 @@ import {
   sendOrderCancellationEmail,
   sendDeliveryReminderEmail,
 } from "./email.service";
+// The order confirmation is the rich template in the Order module: the customer
+// receives it as soon as the order is placed, together with the invoice.
+import { sendOrderConfirmedEmail as sendOrderConfirmationEmail } from "../Order/email.service";
 
 // Import cart store
 import { cartStore } from "../Cart/cart.store";
@@ -422,6 +425,7 @@ export const checkoutFromCart = asyncHandler(
 
       // Send emails (non-critical, won't fail the response)
       try {
+        await sendOrderConfirmationEmail(createdOrder);
         await sendInvoiceEmail(createdOrder);
         await sendOrderNotificationToAdmin(createdOrder);
 
@@ -665,7 +669,9 @@ export const updateOrderStatus = asyncHandler(
     // Send email on status change
     try {
       if (status === "confirmed" && oldStatus !== "confirmed") {
-        await sendOrderConfirmedEmail(order);
+        // The order confirmation goes out at checkout, so accepting the order
+        // re-sends the invoice (the customer's accepted copy).
+        await sendInvoiceEmail(order);
       } else if (status === "cancelled" && oldStatus !== "cancelled") {
         await sendOrderCancellationEmail(order, notes || "Cancelled");
       }
@@ -1142,6 +1148,9 @@ export const quickCheckout = asyncHandler(
         invoiceType,
         promoCode: appliedPromoName || undefined,
         promoDiscount: discountAmount,
+        // The live checkout never set this, so the admin's "Reservation date"
+        // showed empty and nothing could key off it. Take it from the booking.
+        estimatedDeliveryDate: orderItems[0]?.startDate || new Date(),
         bankDetails:
           invoiceType === "corporate" ? String(bankDetails || "") : "",
       });
@@ -1192,6 +1201,12 @@ export const quickCheckout = asyncHandler(
           tempPassword,
         ).catch((err) => console.error("Credentials Email Failed", err));
       }
+
+      // The order confirmation and the invoice both go out now (invoice PDF
+      // attached to each).
+      sendOrderConfirmationEmail(order).catch((err) =>
+        console.error("Order Confirmation Email Failed", err),
+      );
 
       sendInvoiceEmail(order).catch((err) =>
         console.error("Invoice Email Failed", err),
