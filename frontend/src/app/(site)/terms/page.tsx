@@ -127,7 +127,7 @@ export default async function TermsPage() {
                 Prices are quoted in GBP and include VAT where applicable.
               </li>
               <li>
-                We accept payment by card, bank transfer, or cash on delivery.
+                We accept payment by bank transfer or cash on delivery.
               </li>
             </ul>
           </section>
