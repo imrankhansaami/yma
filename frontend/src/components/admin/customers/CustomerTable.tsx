@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -15,6 +16,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 
 import { CustomerHistoryModal } from "@/components/admin/customers/CustomerHistoryModal";
+import { BulkOrderActions } from "@/components/admin/shared/BulkOrderActions";
 import { TableFooter } from "@/components/admin/shared/TableFooter";
 import { fetchCustomers, type CustomerRow } from "@/services/customer.service";
 import type { DateRange } from "react-day-picker";
@@ -75,7 +77,7 @@ export default function CustomerTable({
     setCurrentPage(1);
   }, [searchQuery, fromDate, toDate, rowsPerPage]);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: [
       "admin-customers",
       currentPage,
@@ -124,15 +126,47 @@ export default function CustomerTable({
   const totalResults = data?.pagination?.total ?? 0;
   const totalPages = data?.pagination?.totalPages ?? 1;
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const selectableOrderIds = useMemo(
+    () =>
+      customers
+        .map((row) => String(row.orderDbId || ""))
+        .filter(Boolean),
+    [customers],
+  );
+
+  const allSelected =
+    selectableOrderIds.length > 0 &&
+    selectableOrderIds.every((id) => selectedIds.includes(id));
+
   const skeletonRows = Array.from({ length: rowsPerPage });
 
   return (
-    <section className="w-full">
+    <>
+      <BulkOrderActions
+        selectedIds={selectedIds}
+        onClear={() => setSelectedIds([])}
+        onDone={() => {
+          setSelectedIds([]);
+          void refetch();
+        }}
+      />
+      <section className="w-full">
       <Card className="rounded-2xl border border-slate-200 shadow-sm">
         <div className="overflow-hidden rounded-2xl -mt-4">
           <Table className="w-full">
             <TableHeader>
               <TableRow className="border-b border-slate-200">
+                <TableHead className="w-[3%] px-4 py-2">
+                  <Checkbox
+                    aria-label="Select every customer on this page"
+                    checked={allSelected}
+                    onCheckedChange={(checked) =>
+                      setSelectedIds(checked ? selectableOrderIds : [])
+                    }
+                  />
+                </TableHead>
                 <TableHead className="w-[15%] px-5 py-2 text-[12px] font-medium text-brand-gray-500">
                   Customer Name
                 </TableHead>
@@ -160,6 +194,9 @@ export default function CustomerTable({
               {isLoading
                 ? skeletonRows.map((_, index) => (
                     <TableRow key={`skeleton-${index}`} className="border-slate-200">
+                      <TableCell className="px-4 py-3">
+                        <div className="h-4 w-4 rounded bg-slate-100 animate-pulse" />
+                      </TableCell>
                       <TableCell className="px-5 py-3">
                         <div className="h-4 w-24 rounded bg-slate-100 animate-pulse" />
                       </TableCell>
@@ -191,6 +228,22 @@ export default function CustomerTable({
                       key={row.id || row.orderId || `${row.name}-${row.phone}-${index}`}
                       className="border-slate-200"
                     >
+                      <TableCell className="px-4 py-3">
+                        <Checkbox
+                          aria-label={`Select the order for ${row.name}`}
+                          disabled={!row.orderDbId}
+                          checked={
+                            !!row.orderDbId && selectedIds.includes(String(row.orderDbId))
+                          }
+                          onCheckedChange={(checked) =>
+                            setSelectedIds((current) =>
+                              checked
+                                ? [...new Set([...current, String(row.orderDbId)])]
+                                : current.filter((id) => id !== String(row.orderDbId)),
+                            )
+                          }
+                        />
+                      </TableCell>
                       <TableCell className="px-5 py-3 text-[13px] text-slate-900">
                         {row.name}
                       </TableCell>
@@ -276,6 +329,7 @@ export default function CustomerTable({
           }
         }}
       />
-    </section>
+      </section>
+    </>
   );
 }

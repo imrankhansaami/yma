@@ -17,6 +17,7 @@ import {
   generateInvoiceHandler,
   downloadInvoiceHandler,
   previewInvoiceHandler,
+  printInvoicesHandler,
 } from "./order.controller";
 import { protectRoute } from "../../middlewares/auth.middleware";
 import { isAdmin } from "../../middlewares/role.middleware";
@@ -43,6 +44,7 @@ router.get("/:orderId/invoice/preview", previewInvoiceHandler);
 
 // ==================== ADMIN ROUTES ====================
 router.get("/admin/all", isAdmin, getAllOrdersHandler); // Get all orders with filters
+router.get("/admin/invoices/print", isAdmin, printInvoicesHandler); // One document, many invoices
 router.get("/admin/stats", isAdmin, getOrderStatsHandler); // Get order statistics
 router.get("/admin/dashboard-stats", isAdmin, getDashboardStatsHandler); // Get dashboard stats
 router.get("/admin/revenue/over-time", isAdmin, getRevenueOverTimeHandler); // Revenue over time for charts

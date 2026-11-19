@@ -338,11 +338,27 @@ export const previewInvoiceHandler = asyncHandler(
     const { orderId } = req.params;
     const aReq = req as any;
     const userId = aReq.user.id;
-    const isAdmin = aReq.user.role === "admin";
+    const isAdmin = aReq.user.role === "admin" || aReq.user.role === "superadmin";
 
     const html = await orderService.previewInvoice(orderId, userId, isAdmin);
 
     res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  },
+);
+
+/** GET /orders/admin/invoices/print?ids=a,b,c — one document, many invoices. */
+export const printInvoicesHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const ids = String(req.query.ids || "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+
+    const { html, count } = await orderService.printInvoices(ids);
+
+    console.log(`[Invoice] printing ${count} invoice(s)`);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.send(html);
   },
 );

@@ -9,8 +9,10 @@ import { useCallback, useMemo, useState } from "react";
 import EmptyIcon from "@/assets/icons/empty_icon.svg";
 import { OrderDetailsModal } from "@/components/admin/dashboard/OrderDetailsModal";
 import { TableFooter } from "@/components/admin/shared/TableFooter";
+import { BulkOrderActions } from "@/components/admin/shared/BulkOrderActions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -158,6 +160,8 @@ export function OrdersTable({
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<TOrder | null>(null);
+  // Orders ticked for the bulk actions (print invoices / change status).
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -187,6 +191,7 @@ export function OrdersTable({
     isLoading,
     isFetching,
     isError,
+    refetch,
   } = useQuery({
     queryKey: [
       "orders",
@@ -241,6 +246,15 @@ export function OrdersTable({
     });
   }, [orders, hasDateFilter, startDate, endDate]);
 
+  /** Orders on this page, ticked for the bulk actions. */
+  const selectableOrderIds = useMemo(
+    () =>
+      (Array.isArray(filteredOrders) ? filteredOrders : [])
+        .map((order) => String(order?._id || order?.id || ""))
+        .filter(Boolean),
+    [filteredOrders],
+  );
+
   const totalForDisplay = hasDateFilter ? filteredOrders.length : total;
   const totalPages = Math.max(1, Math.ceil(totalForDisplay / rowsPerPage));
 
@@ -251,12 +265,34 @@ export function OrdersTable({
 
   return (
     <>
+      <BulkOrderActions
+        selectedIds={selectedIds}
+        onClear={() => setSelectedIds([])}
+        onDone={() => {
+          setSelectedIds([]);
+          void refetch();
+        }}
+      />
       <section className="w-full">
         <Card className="rounded-2xl border border-slate-200 shadow-sm">
           <div className="overflow-hidden rounded-2xl -mt-4">
             <Table className="w-full">
               <TableHeader>
                 <TableRow className="border-b border-slate-200">
+                  <TableHead className="w-[3%] px-4 py-2">
+                    <Checkbox
+                      aria-label="Select every order on this page"
+                      checked={
+                        selectableOrderIds.length > 0 &&
+                        selectableOrderIds.every((id) =>
+                          selectedIds.includes(id),
+                        )
+                      }
+                      onCheckedChange={(checked) =>
+                        setSelectedIds(checked ? selectableOrderIds : [])
+                      }
+                    />
+                  </TableHead>
                   <TableHead className="w-[9%] px-5 py-2 text-[12px] font-medium text-brand-gray-500">
                     Order ID
                   </TableHead>
@@ -292,7 +328,7 @@ export function OrdersTable({
                 ) : isError ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="py-10 text-center text-slate-500"
                     >
                       Could not fetch orders. Please try again later.
@@ -301,7 +337,7 @@ export function OrdersTable({
                 ) : !Array.isArray(filteredOrders) || filteredOrders.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="py-10 text-center text-slate-500"
                     >
                       <div className="flex flex-col items-center justify-center gap-4">
@@ -354,6 +390,21 @@ export function OrdersTable({
 
                     return (
                       <TableRow key={orderId || order.orderNumber} className="border-slate-200">
+                        {/* Select */}
+                        <TableCell className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                          <Checkbox
+                            aria-label={`Select order ${order?.orderNumber ?? ""}`}
+                            checked={selectedIds.includes(String(orderId))}
+                            onCheckedChange={(checked) =>
+                              setSelectedIds((current) =>
+                                checked
+                                  ? [...new Set([...current, String(orderId)])]
+                                  : current.filter((id) => id !== String(orderId)),
+                              )
+                            }
+                          />
+                        </TableCell>
+
                         {/* Order ID */}
                         <TableCell className="px-5 py-3 text-[13px] text-slate-900">
                           {order?.orderNumber}

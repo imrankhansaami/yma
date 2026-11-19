@@ -23,7 +23,7 @@ import {
   sendInvoiceEmail,
   notifyAdminNewOrder,
 } from "./email.service";
-import { renderInvoiceHtml, renderInvoicePdf } from "./invoice.renderer";
+import { renderInvoiceHtml, renderInvoicePdf, renderInvoiceBatchHtml } from "./invoice.renderer";
 import { PromoService } from "../promos/promos.service";
 import {
   PRODUCTS_TAG,
@@ -1311,6 +1311,37 @@ export const previewInvoice = async (
   }
 
   return renderInvoiceHtml(order);
+};
+
+/**
+ * One printable document holding the invoices for the given orders, oldest
+ * first. Used by the admin's bulk "print invoices" action.
+ */
+export const printInvoices = async (
+  orderIds: string[],
+): Promise<{ html: string; count: number }> => {
+  const ids = (orderIds || [])
+    .map((id) => String(id || "").trim())
+    .filter((id) => mongoose.Types.ObjectId.isValid(id))
+    // A generous ceiling: a print run past this is almost certainly a mistake.
+    .slice(0, 200);
+
+  if (!ids.length) {
+    throw new ApiError("Select at least one order to print", 400);
+  }
+
+  const orders = await Order.find({ _id: { $in: ids } })
+    .populate("user", "name email phone")
+    .sort({ createdAt: 1 });
+
+  if (!orders.length) {
+    throw new ApiError("No invoices found for those orders", 404);
+  }
+
+  return {
+    html: renderInvoiceBatchHtml(orders as unknown as IOrderDocument[]),
+    count: orders.length,
+  };
 };
 
 const generateInvoiceHtml = (order: IOrderDocument): string => {

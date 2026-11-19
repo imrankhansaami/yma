@@ -274,10 +274,10 @@ const INVOICE_STYLES = `
 `;
 
 /**
- * The invoice as a complete, email-ready HTML document. Also used for the
- * invoice preview page.
+ * The invoice markup on its own — no <html>/<head> wrapper. Used to stack
+ * several invoices into one printable document (the admin's bulk print).
  */
-export const renderInvoiceHtml = (order: IOrderDocument): string => {
+export const renderInvoiceBodyHtml = (order: IOrderDocument): string => {
   const m = buildInvoiceModel(order);
 
   const metaBlock = (heading: string, lines: string[]) => `
@@ -335,16 +335,7 @@ export const renderInvoiceHtml = (order: IOrderDocument): string => {
       <td class="total-value" style="${options.strong ? `color:${INK};font-weight:700;font-size:15px;` : ""}${options.tone ? `color:${options.tone};` : ""}">${esc(value)}</td>
     </tr>`;
 
-  return `<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Invoice ${esc(m.invoiceNumber)} · ${esc(COMPANY_NAME)}</title>
-<style>${INVOICE_STYLES}</style>
-</head>
-<body>
-<div class="wrap">
+  return `<div class="wrap">
   <div class="card">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
@@ -444,7 +435,74 @@ export const renderInvoiceHtml = (order: IOrderDocument): string => {
   <div style="text-align:center;color:#94A3B8;font-size:11px;padding:14px 8px;">
     ${esc(COMPANY_NAME)} · <a href="${COMPANY_SITE}" style="color:#94A3B8;text-decoration:underline;">${esc(COMPANY_SITE.replace("https://", ""))}</a>
   </div>
+</div>`;
+};
+
+/** The invoice as a complete, email-ready HTML document. */
+export const renderInvoiceHtml = (order: IOrderDocument): string => {
+  const invoiceNumber = esc(invoiceNumberFor(order));
+  return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice ${invoiceNumber} · ${esc(COMPANY_NAME)}</title>
+<style>${INVOICE_STYLES}</style>
+</head>
+<body>
+${renderInvoiceBodyHtml(order)}
+</body>
+</html>`;
+};
+
+/**
+ * Several invoices as one printable document: each on its own page, with a
+ * Print button (and an automatic print prompt) at the top. Used by the admin's
+ * bulk "print invoices" action.
+ */
+export const renderInvoiceBatchHtml = (
+  orders: IOrderDocument[],
+  options: { autoPrint?: boolean } = {},
+): string => {
+  const pages = orders
+    .map(
+      (order) => `
+  <section class="invoice-page">
+    ${renderInvoiceBodyHtml(order)}
+  </section>`,
+    )
+    .join("");
+
+  return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${orders.length} invoice${orders.length === 1 ? "" : "s"} · ${esc(COMPANY_NAME)}</title>
+<style>
+${INVOICE_STYLES}
+  .print-bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: ${INK}; color: #ffffff; font-size: 13px; }
+  .print-bar button { border: 0; border-radius: 8px; background: ${ORANGE}; color: #ffffff; font-size: 13px; font-weight: 700; padding: 10px 18px; cursor: pointer; }
+  .invoice-page { break-after: page; page-break-after: always; }
+  .invoice-page:last-child { break-after: auto; page-break-after: auto; }
+  @media print {
+    body { background: #ffffff; }
+    .print-bar { display: none; }
+    .wrap { max-width: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span>${orders.length} invoice${orders.length === 1 ? "" : "s"} ready — use Print, then choose “Save as PDF” to keep a copy.</span>
+  <button type="button" onclick="window.print()">Print</button>
 </div>
+${pages}
+${
+  options.autoPrint
+    ? `<script>window.addEventListener("load", function () { setTimeout(function () { window.print(); }, 400); });</script>`
+    : ""
+}
 </body>
 </html>`;
 };
