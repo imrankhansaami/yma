@@ -482,10 +482,24 @@ const emailTemplates = {
             ${generateProductTable(order)}
             
             <div class="payment-reminder">
-              <h3 style="margin-bottom: 15px;">💷 Payment Due Upon Delivery</h3>
+              <h3 style="margin-bottom: 15px;">💷 ${
+                // The order interface's paymentMethod union predates
+                // bank_transfer (the model itself allows it), so compare loosely.
+                String(order.paymentMethod) === "bank_transfer"
+                  ? "Payment by Bank Transfer"
+                  : "Payment Due Upon Delivery"
+              }</h3>
               <div class="payment-amount">£${order.totalAmount.toFixed(2)}</div>
-              <p>Accepted: Cash or Card Payments</p>
-              <p style="font-size: 14px; margin-top: 10px;">Please have payment ready when our driver arrives</p>
+              <p>${
+                String(order.paymentMethod) === "bank_transfer"
+                  ? "Our team will email the bank details separately"
+                  : "Accepted: Cash Only"
+              }</p>
+              <p style="font-size: 14px; margin-top: 10px;">${
+                String(order.paymentMethod) === "bank_transfer"
+                  ? "Payment is due before delivery"
+                  : "Please have payment ready when our driver arrives"
+              }</p>
             </div>
             
             <div style="background: #e8f5e9; padding: 20px; border-radius: 12px; margin-top: 30px;">
