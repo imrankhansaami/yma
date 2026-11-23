@@ -599,13 +599,18 @@ const emailTemplates = {
                 <p style="color: #666;">Total Amount Due</p>
               </div>
               <p><strong>Payment Method:</strong> ${
-                order.paymentMethod === "cash_on_delivery"
-                  ? "Cash on Delivery"
-                  : "Credit Card"
+                // The order interface's paymentMethod union predates
+                // bank_transfer (the model itself allows it), so compare loosely.
+                String(order.paymentMethod) === "bank_transfer"
+                  ? "Bank Transfer"
+                  : "Cash on Delivery"
               }</p>
-              <p><strong>Accepted Payment:</strong> Cash, Credit/Debit Cards</p>
               <p style="color: #666; font-size: 14px; margin-top: 10px;">
-                <em>Please have the payment ready when our driver arrives.</em>
+                <em>${
+                  String(order.paymentMethod) === "bank_transfer"
+                    ? "Payment is due before delivery."
+                    : "Please have the payment ready when our driver arrives."
+                }</em>
               </p>
             </div>
             
