@@ -1,6 +1,6 @@
 // src/modules/order/email.service.ts
 import { sendEmail } from "../../utils/resendEmail.service";
-import { IOrderDocument } from "./order.interface";
+import { hireOccasionLabel, IOrderDocument } from "./order.interface";
 import {
   invoiceNumberFor,
   renderInvoiceHtml,
@@ -42,8 +42,8 @@ const generateProductTable = (order: IOrderDocument): string => {
               <td style="padding: 15px; border: none; border-bottom: 1px solid #e0e0e0;">
                 <div style="font-weight: 600; color: #333;">${item.name}</div>
                 ${
-                  item.hireOccasion
-                    ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">Occasion: ${item.hireOccasion}</div>`
+                  hireOccasionLabel(item.hireOccasion)
+                    ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">Occasion: ${hireOccasionLabel(item.hireOccasion)}</div>`
                     : ""
                 }
                 ${
@@ -204,12 +204,12 @@ const generateDeliveryAddress = (order: IOrderDocument): string => {
         </div>
       </div>
       ${
-        addr.hireOccasion
+        hireOccasionLabel(addr.hireOccasion)
           ? `
         <div style="margin-top: 15px;">
           <div style="font-weight: 600; color: #555; font-size: 13px;">Occasion</div>
           <div style="color: #333; margin-top: 4px; padding: 5px 10px; background: #f3e5f5; border-radius: 4px; display: inline-block;">
-            ${addr.hireOccasion}
+            ${hireOccasionLabel(addr.hireOccasion)}
           </div>
         </div>
       `

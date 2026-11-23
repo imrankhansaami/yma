@@ -581,3 +581,27 @@ export const HIRE_OCCASION_OPTIONS = [
   "christening",
   "corporateFunday",
 ] as const;
+
+/**
+ * Human wording for each stored occasion value — the same labels the checkout
+ * offers. The store keeps the machine value ("birthdayPartyKid"), so anything
+ * shown to a customer or printed on an invoice goes through here.
+ */
+export const HIRE_OCCASION_LABELS: Record<string, string> = {
+  christmasEvent: "Christmas Event",
+  eid: "Eid",
+  birthdayPartyKid: "Birthday Party - Child",
+  birthdayPartyAdult: "Birthday Party - Adult",
+  community_event: "Community Event / Fayre",
+  school_event: "School Fete",
+  wedding: "Wedding",
+  christening: "Christening",
+  corporateFunday: "Corporate Funday",
+};
+
+/** The label for a stored occasion value; "" when none was chosen. */
+export const hireOccasionLabel = (value?: string): string => {
+  const key = String(value || "").trim();
+  if (!key) return "";
+  return HIRE_OCCASION_LABELS[key] || key;
+};

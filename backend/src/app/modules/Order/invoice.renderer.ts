@@ -10,6 +10,7 @@ import { jsPDF } from "jspdf";
 import {
   DeliveryTimeManager,
   IOrderDocument,
+  hireOccasionLabel,
 } from "./order.interface";
 
 const COMPANY_NAME = "YMA Bouncy Castle";
@@ -141,7 +142,9 @@ export const buildInvoiceModel = (order: IOrderDocument) => {
 
   const cityLine = [addr.state, addr.zipCode].filter(Boolean).join(" ");
 
+  // A business order bills the organisation first; the contact name follows.
   const billedLines = [
+    ...(addr.companyName ? [String(addr.companyName)] : []),
     customerName,
     addr.street,
     addr.apartment,
@@ -252,6 +255,12 @@ export const buildInvoiceModel = (order: IOrderDocument) => {
     purchaseType: addr.purchaseType || "",
     // "The product will be" line — where the inflatable gets set up.
     placement: stripFeeSuffix(addr.floorType) || "—",
+    // Every remaining choice the checkout collected, so the invoice matches
+    // the order the customer actually placed.
+    usedBy: addr.userType || "",
+    occasion: hireOccasionLabel(addr.hireOccasion),
+    notes: String(addr.notes || "").trim(),
+    promoCode: String((order as any).promoCode || "").trim(),
     deliveryTime: deliveryTimeLabel(addr.deliveryTime),
     collectionTime: collectionTimeLabel(addr.collectionTime),
     deliverySlot,
@@ -401,7 +410,10 @@ export const renderInvoiceBodyHtml = (order: IOrderDocument): string => {
             ${detailRow("Order Number", m.orderNumber)}
             ${detailRow("Order Date", m.orderDate)}
             ${detailRow("Payment Method", m.payment)}
+            ${m.purchaseType ? detailRow("Purchase type", m.purchaseType) : ""}
             ${detailRow("The product will be", m.placement)}
+            ${m.usedBy ? detailRow("Used by", m.usedBy) : ""}
+            ${m.occasion ? detailRow("Hire occasion", m.occasion) : ""}
             ${detailRow("Delivery", m.deliveryTime)}
             ${detailRow("Collection", m.collectionTime)}
           </table>
@@ -422,6 +434,16 @@ export const renderInvoiceBodyHtml = (order: IOrderDocument): string => {
       </table>
     </div>
 
+    ${
+      m.notes
+        ? `<div class="pad" style="padding-top:14px;padding-bottom:0;">
+      <div style="border-left:3px solid ${ORANGE};background:#FFF7ED;border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.6;color:${INK};">
+        <strong>Notes:</strong> ${esc(m.notes)}
+      </div>
+    </div>`
+        : ""
+    }
+
     <div class="pad" style="padding-top:18px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
@@ -432,7 +454,7 @@ export const renderInvoiceBodyHtml = (order: IOrderDocument): string => {
               ${m.feeRows.map((row) => totalRow(row.label, money(row.amount))).join("\n              ")}
               ${m.totals.placement > 0 ? totalRow("Outdoor placement", money(m.totals.placement)) : ""}
               ${m.totals.overnight > 0 ? totalRow("Overnight keeping", money(m.totals.overnight)) : ""}
-              ${m.totals.discount > 0 ? totalRow("Discount", `-${money(m.totals.discount)}`, { tone: "#DC2626" }) : ""}
+              ${m.totals.discount > 0 ? totalRow(m.promoCode ? `Discount (${m.promoCode})` : "Discount", `-${money(m.totals.discount)}`, { tone: "#DC2626" }) : ""}
               <tr><td colspan="2" style="border-top:2px solid ${BORDER};padding-top:8px;"></td></tr>
               ${totalRow("Total", money(m.totals.total), { strong: true })}
             </table>
@@ -638,7 +660,14 @@ export const renderInvoicePdf = async (
     ["Order Number:", m.orderNumber],
     ["Order Date:", m.orderDate],
     ["Payment Method:", m.payment],
+    ...(m.purchaseType
+      ? ([["Purchase type:", m.purchaseType]] as [string, string][])
+      : []),
     ["The product will be:", m.placement],
+    ...(m.usedBy ? ([["Used by:", m.usedBy]] as [string, string][]) : []),
+    ...(m.occasion
+      ? ([["Hire occasion:", m.occasion]] as [string, string][])
+      : []),
     ["Delivery:", m.deliveryTime],
     ["Collection:", m.collectionTime],
   ];
@@ -762,6 +791,35 @@ export const renderInvoicePdf = async (
 
   y = rowY + 8;
 
+  // ── Customer notes (the checkout's "Notes" box) ────────────────────────
+  if (m.notes) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    // jsPDF ignores a trailing space in text and its width, so add the gap
+    // between the label and the note by hand.
+    const noteLabel = "Notes:";
+    const noteLabelWidth = doc.getTextWidth(noteLabel) + 1.8;
+    const noteLines = doc.splitTextToSize(
+      m.notes,
+      right - left - noteLabelWidth,
+    ) as string[];
+    const noteHeight = noteLines.length * 4.6;
+
+    // Keep the notes and the totals together on one page.
+    if (y + noteHeight + 46 > pageHeight - footerReserve) {
+      doc.addPage();
+      y = 20;
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(INK);
+    doc.text(noteLabel, left, y);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(BODY);
+    doc.text(noteLines, left + noteLabelWidth, y);
+    y += noteHeight + 4;
+  }
+
   // ── Totals ─────────────────────────────────────────────────────────────
   const totalsLabelX = 114;
   const totalsValueX = right;
@@ -803,9 +861,11 @@ export const renderInvoicePdf = async (
     totalLine("Overnight keeping", money(m.totals.overnight));
   }
   if (m.totals.discount > 0) {
-    totalLine("Discount", `-${money(m.totals.discount)}`, {
-      color: [220, 38, 38],
-    });
+    totalLine(
+      m.promoCode ? `Discount (${m.promoCode})` : "Discount",
+      `-${money(m.totals.discount)}`,
+      { color: [220, 38, 38] },
+    );
   }
 
   doc.setDrawColor(15, 23, 42);

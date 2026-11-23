@@ -1,6 +1,6 @@
 ﻿// src/services/checkout/email.service.ts
 import dotenv from "dotenv";
-import { IOrderDocument } from "../../modules/Order/order.interface";
+import { hireOccasionLabel, IOrderDocument } from "../../modules/Order/order.interface";
 import { sendEmail } from "../../utils/resendEmail.service";
 import {
   invoiceNumberFor,
@@ -112,10 +112,10 @@ const generateProductTable = (
           item.name
         }</div>
         ${
-          item.hireOccasion
-            ? `<div style="color: #6b7280; font-size: 14px; margin-top: 4px;">🎉 ${item.hireOccasion
-                .replace(/_/g, " ")
-                .toUpperCase()}</div>`
+          hireOccasionLabel(item.hireOccasion)
+            ? `<div style="color: #6b7280; font-size: 14px; margin-top: 4px;">🎉 ${hireOccasionLabel(
+                item.hireOccasion,
+              )}</div>`
             : ""
         }
         ${
