@@ -896,9 +896,13 @@ export const renderInvoicePdf = async (
     }),
   );
 
+  // A little breathing room around the Total: a gap under the last row, the
+  // thick rule, then a clear gap before "Total".
+  y += 2;
   doc.setDrawColor(15, 23, 42);
   doc.setLineWidth(0.5);
-  doc.line(totalsLabelX, y - 3, totalsValueX, y - 3);
+  doc.line(totalsLabelX, y - 2.5, totalsValueX, y - 2.5);
+  y += 2;
   totalLine("Total", money(m.totals.total), { strong: true });
   doc.line(totalsLabelX, y - 3.2, totalsValueX, y - 3.2);
 
