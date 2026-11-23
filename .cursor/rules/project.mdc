@@ -1,0 +1,13 @@
+---
+description: YMA project rules — read AGENTS.md before working
+alwaysApply: true
+---
+
+This repository is the YMA Bouncy Castles website (Next.js frontend +
+Express/MongoDB API).
+
+Before changing anything, read **`AGENTS.md`** at the repo root — it holds the
+business rules for invoices, the email flow, cash-only wording, the Hostinger
+build/deploy setup, order numbering, and known traps.
+
+Keep `AGENTS.md` updated whenever a rule changes.
