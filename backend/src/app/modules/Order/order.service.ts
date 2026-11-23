@@ -865,14 +865,20 @@ export const updateOrder = async (
     order.subtotalAmount = newSubtotal;
     order.overnightFee = newOvernightFee;
 
-    // Recalculate Delivery Fee based on address
+    // Recalculate Delivery Fee based on address (normalised first: the
+    // storefront label carries the fee, e.g. "1:00 PM (+£10)").
     const deliveryTime = order.shippingAddress?.deliveryTime || "09:00";
-    const deliveryFee = DeliveryTimeManager.getDeliveryFee(deliveryTime);
+    const deliveryFee = DeliveryTimeManager.getDeliveryFee(
+      DeliveryTimeManager.normalize(deliveryTime, "delivery"),
+    );
 
     let collectionFee = 0;
     if (order.shippingAddress?.collectionTime) {
       collectionFee = DeliveryTimeManager.getCollectionFee(
-        order.shippingAddress.collectionTime,
+        DeliveryTimeManager.normalize(
+          order.shippingAddress.collectionTime,
+          "collection",
+        ),
       );
     }
 

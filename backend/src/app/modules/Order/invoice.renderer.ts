@@ -209,14 +209,37 @@ export const buildInvoiceModel = (order: IOrderDocument) => {
   const collectionSlotFee =
     DeliveryTimeManager.getCollectionFee(collectionSlot);
 
-  const preferredFeeLabel =
-    deliverySlotFee > 0 && collectionSlotFee > 0
-      ? "Preferred Delivery & Collection Times"
-      : deliverySlotFee > 0
-        ? `Preferred Delivery Time (${deliverySlot})`
-        : collectionSlotFee > 0
-          ? `Preferred Collection Time (${collectionSlot})`
-          : "Preferred Delivery & Collection Times";
+  // One invoice line per window that carries a fee. The amounts are clamped to
+  // the figure actually charged, so the printed lines always add up to the
+  // total — an order placed before the fee fix can hold less than its windows
+  // imply (see the "Delivery & collection" fallback row).
+  const hyphen = (value: string) => String(value || "").replace(/:/g, "-");
+  const chargedDelivery = Number(order.deliveryFee || 0);
+  const feeRows: { label: string; amount: number }[] = [];
+  let feeRemaining = chargedDelivery;
+
+  if (deliverySlotFee > 0 && feeRemaining > 0) {
+    const amount = Math.min(deliverySlotFee, feeRemaining);
+    feeRows.push({
+      label: `Preferred Delivery Time (${hyphen(deliverySlot)})`,
+      amount,
+    });
+    feeRemaining -= amount;
+  }
+
+  if (collectionSlotFee > 0 && feeRemaining > 0) {
+    const amount = Math.min(collectionSlotFee, feeRemaining);
+    feeRows.push({
+      label: `Preferred Collection Time (${hyphen(collectionSlot)})`,
+      amount,
+    });
+    feeRemaining -= amount;
+  }
+
+  if (feeRemaining > 0.005) {
+    feeRows.push({ label: "Delivery & collection", amount: feeRemaining });
+    feeRemaining = 0;
+  }
 
   return {
     invoiceNumber: invoiceNumberFor(order),
@@ -233,7 +256,7 @@ export const buildInvoiceModel = (order: IOrderDocument) => {
     collectionTime: collectionTimeLabel(addr.collectionTime),
     deliverySlot,
     collectionSlot,
-    preferredFeeLabel,
+    feeRows,
     billedLines,
     deliverLines,
     items,
@@ -406,7 +429,7 @@ export const renderInvoiceBodyHtml = (order: IOrderDocument): string => {
           <td width="48%">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               ${totalRow("Shipping", "Free shipping")}
-              ${m.totals.delivery > 0 ? totalRow(m.preferredFeeLabel, money(m.totals.delivery)) : ""}
+              ${m.feeRows.map((row) => totalRow(row.label, money(row.amount))).join("\n              ")}
               ${m.totals.placement > 0 ? totalRow("Outdoor placement", money(m.totals.placement)) : ""}
               ${m.totals.overnight > 0 ? totalRow("Overnight keeping", money(m.totals.overnight)) : ""}
               ${m.totals.discount > 0 ? totalRow("Discount", `-${money(m.totals.discount)}`, { tone: "#DC2626" }) : ""}
@@ -616,6 +639,8 @@ export const renderInvoicePdf = async (
     ["Order Date:", m.orderDate],
     ["Payment Method:", m.payment],
     ["The product will be:", m.placement],
+    ["Delivery:", m.deliveryTime],
+    ["Collection:", m.collectionTime],
   ];
   let metaY = columnTop;
   metaRows.forEach(([label, value]) => {
@@ -768,9 +793,9 @@ export const renderInvoicePdf = async (
   // Standard-window delivery and collection are free; any charge for a
   // specific window rides on its own line below, so the two never double up.
   totalLine("Shipping", "Free shipping");
-  if (m.totals.delivery > 0) {
-    totalLine(m.preferredFeeLabel, money(m.totals.delivery));
-  }
+  m.feeRows.forEach((row) =>
+    totalLine(row.label, money(row.amount)),
+  );
   if (m.totals.placement > 0) {
     totalLine("Outdoor placement", money(m.totals.placement));
   }

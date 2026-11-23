@@ -272,12 +272,15 @@ orderSchema.pre("save", async function (next) {
     }
 
     // ─── Calculate delivery + collection fee ─────────────────────────────
+    // The storefront sends the raw option label for the delivery window
+    // ("1:00 PM (+£10)"), so the value must be normalised before the fee
+    // lookup — otherwise the lookup misses and the fee silently becomes £0.
     let deliveryFee = 0;
     let collectionFee = 0;
 
     if (this.shippingAddress?.deliveryTime) {
       deliveryFee = DeliveryTimeManager.getDeliveryFee(
-        this.shippingAddress.deliveryTime,
+        DeliveryTimeManager.normalize(this.shippingAddress.deliveryTime, "delivery"),
       );
     }
 
@@ -286,7 +289,10 @@ orderSchema.pre("save", async function (next) {
       this.shippingAddress.collectionTime.trim() !== ""
     ) {
       collectionFee = DeliveryTimeManager.getCollectionFee(
-        this.shippingAddress.collectionTime,
+        DeliveryTimeManager.normalize(
+          this.shippingAddress.collectionTime,
+          "collection",
+        ),
       );
     }
 
