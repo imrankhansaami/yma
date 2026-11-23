@@ -43,6 +43,7 @@ interface AddProductFormProps {
   initialData?: Partial<AddProductFormData> & {
     _id?: string;
     imageCover?: string;
+    dimensionsImage?: string;
     images?: string[];
     certificates?: string[];
     extraOptions?: ExtraOptionDraft[];
@@ -78,6 +79,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   
   // Image States (File | string)
   const [coverImage, setCoverImage] = useState<(File | string)[]>([]);
+  const [dimensionsImage, setDimensionsImage] = useState<(File | string)[]>([]);
   const [galleryImages, setGalleryImages] = useState<(File | string)[]>([]);
   const [certificates, setCertificates] = useState<(File | string)[]>([]);
   
@@ -91,6 +93,9 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   useEffect(() => {
     if (initialData?.imageCover) {
       setCoverImage([initialData.imageCover]);
+    }
+    if (initialData?.dimensionsImage) {
+      setDimensionsImage([initialData.dimensionsImage]);
     }
     if (initialData?.images && Array.isArray(initialData.images)) {
       setGalleryImages(initialData.images);
@@ -399,6 +404,19 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       formData.append("imageCover", coverImage[0]);
     }
 
+    // Dimensions visualization picture: a file when one was picked, else the
+    // kept URL. On edit it is sent even when empty, so clearing it reaches the
+    // server (empty switches the storefront back to the automatic drawing).
+    const dimensionsVisual = dimensionsImage[0];
+    if (dimensionsVisual instanceof File) {
+      formData.append("dimensionsImage", dimensionsVisual);
+    } else if (typeof dimensionsVisual === "string" || isEdit) {
+      formData.append(
+        "dimensionsImage",
+        typeof dimensionsVisual === "string" ? dimensionsVisual : "",
+      );
+    }
+
     // Gallery Images
     // Existing images are sent as an ordered JSON list the backend keeps; new
     // files are uploaded and appended. Sending the list even when empty is what
@@ -623,6 +641,17 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             </div>
            </div>
            {errors.dimensions && <p className="text-red-500 text-xs">All dimensions are required</p>}
+
+           {/* Dimensions visualization picture (optional) */}
+           <ImageUpload
+             images={dimensionsImage}
+             onImagesChange={setDimensionsImage}
+             maxImages={1}
+             showImageNumbers={false}
+             title="Dimensions Visualization Picture (optional)"
+             uploadLabel="Upload Picture"
+             hint="Shown in the product page's 'Dimensions Visualization' section. Leave empty to keep the automatic drawing for the product's category. When set, your picture replaces it and the FT labels are not overlaid — include them in the picture if you want them. Square images work best (shown in a 380 x 380 box)."
+           />
 
            {/* Internal size — not shown to customers */}
            <div className="flex flex-col gap-[6px]">

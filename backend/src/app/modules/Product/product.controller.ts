@@ -489,6 +489,14 @@ export const createProduct = asyncHandler(
       );
     }
 
+    // Optional custom picture for the "Dimensions Visualization" section.
+    if (files?.["dimensionsImage"]?.[0]) {
+      productData.dimensionsImage = await uploadToCloudinary(
+        files["dimensionsImage"][0].buffer,
+        "products/dimensions",
+      );
+    }
+
     // Gallery images: upload any new files, in order.
     const createGalleryFiles = collectGalleryFiles(files);
     if (createGalleryFiles.length > 0) {
@@ -583,6 +591,14 @@ export const updateProduct = asyncHandler(
       updateData.imageCover = await uploadToCloudinary(
         files["imageCover"][0].buffer,
         "products/covers",
+      );
+    }
+
+    // Optional custom picture for the "Dimensions Visualization" section.
+    if (files?.["dimensionsImage"]?.[0]) {
+      updateData.dimensionsImage = await uploadToCloudinary(
+        files["dimensionsImage"][0].buffer,
+        "products/dimensions",
       );
     }
 

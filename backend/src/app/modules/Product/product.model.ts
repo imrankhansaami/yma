@@ -65,6 +65,14 @@ const productSchema: Schema = new Schema(
 
     images: [String], // Already exists - this is the array of images
 
+    /**
+     * Optional custom picture for the product page's "Dimensions
+     * Visualization" section. When set it replaces the automatic drawing for
+     * the product's category, and the FT labels are NOT overlaid on it — the
+     * picture should carry its own. Empty keeps the automatic behaviour.
+     */
+    dimensionsImage: { type: String, default: "" },
+
     bookedDates: [
       {
         startDate: {

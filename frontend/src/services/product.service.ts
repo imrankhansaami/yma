@@ -64,6 +64,8 @@ export interface ApiProduct {
   discount?: number | null;
   images?: string[];
   imageCover?: string;
+  /** Optional custom picture for the "Dimensions Visualization" section. */
+  dimensionsImage?: string;
   certificates?: string[];
   categories?: Array<string | ApiCategoryRef>;
   duration?: number | string;

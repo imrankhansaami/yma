@@ -437,6 +437,12 @@ export default function ProductClient({
   const dimensionSummary = hasDimensions
     ? `${dimensions.width} ft (Width) x ${dimensions.length} ft (Length) x ${dimensions.height} ft (Height)`
     : null;
+  // A picture uploaded for this product replaces the automatic category drawing
+  // and is shown without the FT labels — the picture carries its own.
+  const customDimensionsImage = product?.dimensionsImage || "";
+  const visualizationImage = customDimensionsImage || visualization?.image || "";
+  const showDimensionsVisualization =
+    hasDimensions && Boolean(visualizationImage);
   const coverImageAltText =
     product?.imageCoverAltText || product?.imageAltText || product?.name || "Product image";
   const galleryImageAltTexts = product?.imageAltTexts || [];
@@ -1052,7 +1058,7 @@ export default function ProductClient({
 
           </section>
 
-          {visualization && hasDimensions ? (
+          {showDimensionsVisualization ? (
             <section className="mt-12 border-t border-brand-gray-150 pt-8">
               <h3 className="text-brand-ink-900 text-[19px] font-semibold tracking-tight">
                 Dimensions Visualization
@@ -1064,7 +1070,7 @@ export default function ProductClient({
               <div className="flex justify-start overflow-x-auto">
                 <div className="relative h-[280px] w-[280px] sm:h-[380px] sm:w-[380px] flex-shrink-0">
                   <Image
-                    src={visualization.image}
+                    src={visualizationImage}
                     alt="Dimensions visualization"
                     fill
                     sizes="(max-width: 640px) 280px, 380px"
@@ -1072,15 +1078,22 @@ export default function ProductClient({
                     priority={false}
                   />
 
-                  <div className="absolute right-[8%] sm:right-[8.2%] top-[37.5%] sm:top-[39%] text-[10px] sm:text-xs text-brand-slate-950 font-semibold">
-                    {dimensions.height} FT
-                  </div>
-                  <div className="absolute left-[20%] sm:left-[21%] bottom-[13%] sm:bottom-[15%] text-[10px] sm:text-xs text-brand-slate-950 rotate-[10deg] font-semibold">
-                    {dimensions.width} FT
-                  </div>
-                  <div className="absolute right-[18%] sm:right-[19%] bottom-[26%] sm:bottom-[27%] text-[10px] sm:text-xs text-brand-slate-950 rotate-[-50deg] font-semibold">
-                    {dimensions.length} FT
-                  </div>
+                  {/* The FT labels sit over the automatic drawings only — a
+                      custom picture carries its own labels, so nothing is
+                      overlaid on it. */}
+                  {!customDimensionsImage && visualization ? (
+                    <>
+                      <div className="absolute right-[8%] sm:right-[8.2%] top-[37.5%] sm:top-[39%] text-[10px] sm:text-xs text-brand-slate-950 font-semibold">
+                        {dimensions.height} FT
+                      </div>
+                      <div className="absolute left-[20%] sm:left-[21%] bottom-[13%] sm:bottom-[15%] text-[10px] sm:text-xs text-brand-slate-950 rotate-[10deg] font-semibold">
+                        {dimensions.width} FT
+                      </div>
+                      <div className="absolute right-[18%] sm:right-[19%] bottom-[26%] sm:bottom-[27%] text-[10px] sm:text-xs text-brand-slate-950 rotate-[-50deg] font-semibold">
+                        {dimensions.length} FT
+                      </div>
+                    </>
+                  ) : null}
                 </div>
               </div>
             </section>

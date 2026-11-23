@@ -65,6 +65,7 @@ router.post(
     { name: "imageCover[]", maxCount: 1 },
     { name: "images", maxCount: 5 },
     { name: "images[]", maxCount: 5 },
+    { name: "dimensionsImage", maxCount: 1 },
     // নতুন যুক্ত করা হলো: সার্টিফিকেট (PDF বা Image)
     { name: "certificates", maxCount: 5 },
   ]),
@@ -78,6 +79,7 @@ router.patch(
     { name: "imageCover[]", maxCount: 1 },
     { name: "images", maxCount: 5 },
     { name: "images[]", maxCount: 5 },
+    { name: "dimensionsImage", maxCount: 1 },
     // নতুন যুক্ত করা হলো: সার্টিফিকেট (PDF বা Image)
     { name: "certificates", maxCount: 5 },
   ]),

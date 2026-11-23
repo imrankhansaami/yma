@@ -10,7 +10,14 @@ interface ImageUploadProps {
   maxImages?: number;
   title?: string;
   showImageNumbers?: boolean;
+  /** Helper line under the title; defaults to the product-gallery wording. */
+  hint?: string;
+  /** Label on the empty slot; defaults to Add Image / Upload Cover. */
+  uploadLabel?: string;
 }
+
+const DEFAULT_HINT =
+  "Landscape 4:3 fills the frame best — around 1600 x 1200 px, under 10 MB. Portrait or square photos are shown in full, with white space beside them.";
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
   images,
@@ -18,6 +25,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   maxImages = 5,
   title = "Add Product Images",
   showImageNumbers = true,
+  hint = DEFAULT_HINT,
+  uploadLabel,
 }) => {
   const [previews, setPreviews] = useState<string[]>([]);
 
@@ -106,7 +115,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               <ImagePlus className="w-[32px] h-[32px] text-brand-gray-500" />
               <div className="bg-brand-indigo-50 px-[8px] py-[1.5px] rounded-[6px]">
                 <span className="text-[12px] font-medium leading-[1.6] text-brand-blue-500">
-                  {maxImages > 1 ? "Add Image" : "Upload Cover"}
+                  {uploadLabel ?? (maxImages > 1 ? "Add Image" : "Upload Cover")}
                 </span>
               </div>
             </div>
@@ -122,8 +131,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         {title}
       </p>
       <p className="text-[12px] leading-[1.5] text-brand-gray-500">
-        Landscape 4:3 fills the frame best — around 1600 x 1200 px, under 10 MB.
-        Portrait or square photos are shown in full, with white space beside them.
+        {hint}
       </p>
 
       <div className="flex gap-[8px] w-full overflow-x-auto">
