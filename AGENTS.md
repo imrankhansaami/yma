@@ -31,6 +31,24 @@ deploy setup, and traps that have already bitten once.
 - GitHub pushes from the original Windows machine needed WARP; on macOS that
   was not required.
 
+## Working from more than one machine
+
+The site is developed from two checkouts — the original Windows machine
+(OpenChamber) and the user's MacBook (Cursor). Both push to `main`, which
+deploys live. So:
+
+- **Pull before you start** (`git pull`) and again right before pushing
+  (`git pull --rebase`), so you never fight a push.
+- Prefer a **branch + PR** for anything beyond a small fix; merges to `main`
+  deploy within minutes.
+- One machine at a time on the same area — overlapping edits to the same files
+  cause merge conflicts.
+- Uncommitted changes and `.env` files do **not** travel between machines;
+  each checkout keeps its own. A new env var must be added to both local
+  `.env` files and to Hostinger's app settings.
+- Decisions and rules belong in this file (or `docs/`) so both machines and
+  every agent read the same thing.
+
 ## Invoice rules
 
 Single source of truth: `backend/src/app/modules/Order/invoice.renderer.ts`.
