@@ -360,12 +360,22 @@ export const renderInvoiceBodyHtml = (order: IOrderDocument): string => {
   const totalRow = (
     label: string,
     value: string,
-    options: { strong?: boolean; tone?: string } = {},
-  ) => `
+    options: { strong?: boolean; tone?: string; first?: boolean } = {},
+  ) => {
+    // Bold black with the old invoice's rules: a hairline between rows, and a
+    // thick rule above and below the Total.
+    const rules = options.strong
+      ? `font-size:15px;border-top:2px solid ${INK};border-bottom:2px solid ${INK};padding-top:8px;`
+      : options.first
+        ? ""
+        : `border-top:1px solid ${BORDER};`;
+    const ink = `font-weight:700;color:${options.tone || INK};`;
+    return `
     <tr>
-      <td class="total-label" style="${options.strong ? `color:${INK};font-weight:700;font-size:15px;` : ""}${options.tone ? `color:${options.tone};` : ""}">${esc(label)}</td>
-      <td class="total-value" style="${options.strong ? `color:${INK};font-weight:700;font-size:15px;` : ""}${options.tone ? `color:${options.tone};` : ""}">${esc(value)}</td>
+      <td class="total-label" style="${ink}${rules}">${esc(label)}</td>
+      <td class="total-value" style="${ink}${rules}">${esc(value)}</td>
     </tr>`;
+  };
 
   return `<div class="wrap">
   <div class="card">
@@ -450,12 +460,11 @@ export const renderInvoiceBodyHtml = (order: IOrderDocument): string => {
           <td width="52%"></td>
           <td width="48%">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-              ${totalRow("Shipping", "Free shipping")}
+              ${totalRow("Shipping", "Free shipping", { first: true })}
               ${m.feeRows.map((row) => totalRow(row.label, money(row.amount))).join("\n              ")}
               ${m.totals.placement > 0 ? totalRow("Outdoor placement", money(m.totals.placement)) : ""}
               ${m.totals.overnight > 0 ? totalRow("Overnight keeping", money(m.totals.overnight)) : ""}
               ${m.totals.discount > 0 ? totalRow(m.promoCode ? `Discount (${m.promoCode})` : "Discount", `-${money(m.totals.discount)}`, { tone: "#DC2626" }) : ""}
-              <tr><td colspan="2" style="border-top:2px solid ${BORDER};padding-top:8px;"></td></tr>
               ${totalRow("Total", money(m.totals.total), { strong: true })}
             </table>
           </td>
@@ -827,11 +836,19 @@ export const renderInvoicePdf = async (
   const totalLine = (
     label: string,
     value: string,
-    options: { bold?: boolean; color?: [number, number, number] } = {},
+    options: {
+      strong?: boolean;
+      hairline?: boolean;
+      color?: [number, number, number];
+    } = {},
   ) => {
-    doc.setFont("helvetica", options.bold ? "bold" : "normal");
-    doc.setFontSize(options.bold ? 11.5 : 10);
-    const [r, g, b] = options.color || [51, 65, 85];
+    // Every row prints bold black, as the old invoice did. The thick rule
+    // above the Total stands in for the last row's hairline, so that one is
+    // skipped to avoid a double line.
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(options.strong ? 11.5 : 10);
+    const [r, g, b] = options.color || [15, 23, 42];
+    doc.setTextColor(r, g, b);
     const labelWrapped = doc.splitTextToSize(
       label,
       totalsValueX - totalsLabelX - 26,
@@ -840,38 +857,50 @@ export const renderInvoicePdf = async (
     doc.text(value, totalsValueX, y, { align: "right" });
     y += labelWrapped.length * 5.2;
 
-    if (!options.bold) {
+    if (!options.strong && options.hairline) {
       doc.setDrawColor(226, 232, 240);
       doc.setLineWidth(0.2);
       doc.line(totalsLabelX, y - 4.6, totalsValueX, y - 4.6);
     }
   };
 
-  doc.setTextColor(BODY);
   // Standard-window delivery and collection are free; any charge for a
   // specific window rides on its own line below, so the two never double up.
-  totalLine("Shipping", "Free shipping");
-  m.feeRows.forEach((row) =>
-    totalLine(row.label, money(row.amount)),
-  );
+  const rows: {
+    label: string;
+    value: string;
+    color?: [number, number, number];
+  }[] = [
+    { label: "Shipping", value: "Free shipping" },
+    ...m.feeRows.map((row) => ({ label: row.label, value: money(row.amount) })),
+  ];
   if (m.totals.placement > 0) {
-    totalLine("Outdoor placement", money(m.totals.placement));
+    rows.push({ label: "Outdoor placement", value: money(m.totals.placement) });
   }
   if (m.totals.overnight > 0) {
-    totalLine("Overnight keeping", money(m.totals.overnight));
+    rows.push({ label: "Overnight keeping", value: money(m.totals.overnight) });
   }
   if (m.totals.discount > 0) {
-    totalLine(
-      m.promoCode ? `Discount (${m.promoCode})` : "Discount",
-      `-${money(m.totals.discount)}`,
-      { color: [220, 38, 38] },
-    );
+    rows.push({
+      label: m.promoCode ? `Discount (${m.promoCode})` : "Discount",
+      value: `-${money(m.totals.discount)}`,
+      color: [220, 38, 38],
+    });
   }
+
+  rows.forEach((row, index) =>
+    totalLine(row.label, row.value, {
+      color: row.color,
+      // The thick rule above the Total replaces the last row's hairline.
+      hairline: index < rows.length - 1,
+    }),
+  );
 
   doc.setDrawColor(15, 23, 42);
   doc.setLineWidth(0.5);
   doc.line(totalsLabelX, y - 3, totalsValueX, y - 3);
-  totalLine("Total", money(m.totals.total), { bold: true, color: [15, 23, 42] });
+  totalLine("Total", money(m.totals.total), { strong: true });
+  doc.line(totalsLabelX, y - 3.2, totalsValueX, y - 3.2);
 
   // ── Payment details footer ─────────────────────────────────────────────
   const footerTop = Math.max(y + 12, pageHeight - 34);
