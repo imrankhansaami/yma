@@ -1,8 +1,7 @@
 /**
  * Automatic customer emails.
  *
- * Three daily jobs, all in UK time:
- *   07:00  reminder on the morning of the delivery
+ * Two daily jobs, all in UK time:
  *   09:00  reminder the day before the delivery
  *   10:00  thank-you (with a review request) the day after the hire
  *
@@ -114,9 +113,6 @@ const ordersFinishedOn = async (day: string): Promise<IOrderDocument[]> => {
 export const sendDayBeforeReminders = () =>
   runReminderFor(ukDayOffset(1), "deliveryReminderDayBeforeSentAt", "day before");
 
-export const sendMorningReminders = () =>
-  runReminderFor(ukDayOffset(0), "deliveryReminderMorningSentAt", "morning of");
-
 export const sendThankYous = async (): Promise<number> => {
   const orders = await ordersFinishedOn(ukDayOffset(-1));
   let sent = 0;
@@ -148,11 +144,6 @@ export const startCustomerEmailJobs = (): void => {
 
   tasks = [
     cron.schedule(
-      "0 7 * * *",
-      () => void safely("morning reminder", sendMorningReminders),
-      { timezone: TIMEZONE },
-    ),
-    cron.schedule(
       "0 9 * * *",
       () => void safely("day-before reminder", sendDayBeforeReminders),
       { timezone: TIMEZONE },
@@ -165,7 +156,7 @@ export const startCustomerEmailJobs = (): void => {
   ];
 
   console.log(
-    "[CustomerEmailJob] scheduled: 07:00 morning reminder, 09:00 day-before reminder, 10:00 thank-you (Europe/London)",
+    "[CustomerEmailJob] scheduled: 09:00 day-before reminder, 10:00 thank-you (Europe/London)",
   );
 };
 

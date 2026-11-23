@@ -264,10 +264,6 @@ export const sendInvoiceEmail = async (
   order: IOrderDocument,
 ): Promise<boolean> => {
   try {
-    const adminEmail =
-      process.env.ADMIN_EMAIL ||
-      process.env.EMAIL_USER ||
-      "admin@ymabouncycastles.uk";
     const invoiceNumber = invoiceNumberFor(order);
 
     let attachments: { filename: string; content: string }[] | undefined;
@@ -286,7 +282,6 @@ export const sendInvoiceEmail = async (
 
     await sendEmail({
       to: order.shippingAddress.email,
-      bcc: adminEmail,
       subject: `🧾 Invoice ${invoiceNumber} — YMA Bouncy Castle`,
       html: renderInvoiceHtml(order),
       text: `Thanks for your order #${order.orderNumber}. Your invoice ${invoiceNumber} totals £${Number(

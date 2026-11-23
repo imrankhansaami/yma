@@ -960,10 +960,9 @@ export const updateOrder = async (
       try {
         switch (updateData.status) {
           case ORDER_STATUS.CONFIRMED:
-            // The customer already received the order confirmation and the
-            // invoice at checkout; accepting the order sends the invoice again
-            // so they have the accepted copy.
-            await sendInvoiceEmail(populatedOrder);
+            // The customer already has the confirmation and the invoice from
+            // checkout; accepting the order sends nothing (the invoice can be
+            // re-sent from the dashboard and is always downloadable).
             break;
           case ORDER_STATUS.SHIPPED:
             // Delivery reminders are sent automatically by the daily customer
@@ -1045,9 +1044,8 @@ export const updateOrderStatus = async (
       try {
         switch (status) {
           case ORDER_STATUS.CONFIRMED:
-            // See above: the confirmation goes out at checkout, so accepting the
-            // order sends the invoice again rather than a second confirmation.
-            await sendInvoiceEmail(populated);
+            // See above: the customer already has the confirmation and the
+            // invoice from checkout; accepting the order sends nothing.
             break;
           case ORDER_STATUS.SHIPPED:
             // Handled by the automatic customer email job.

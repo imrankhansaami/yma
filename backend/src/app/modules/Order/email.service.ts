@@ -1167,7 +1167,6 @@ export const sendOrderReceivedEmail = async (
 
     await sendEmail({
       to: order.shippingAddress.email,
-      bcc: emailConfig.adminEmail,
       subject: `🎉 Order Confirmation #${order.orderNumber} - YMA Bouncy Castle`,
       html,
       text: `Thank you for your order ${order.orderNumber}. We've received your booking. Contact: 07951 431111`,
@@ -1212,7 +1211,6 @@ export const sendOrderConfirmedEmail = async (
 
     await sendEmail({
       to: order.shippingAddress.email,
-      bcc: emailConfig.adminEmail,
       subject: `✅ Order Confirmation #${order.orderNumber} - YMA Bouncy Castle`,
       html,
       text: `Your order ${order.orderNumber} has been received. Delivery on schedule. Contact: 07951 431111`,
@@ -1236,7 +1234,6 @@ export const sendThankYouEmail = async (
 
     await sendEmail({
       to: order.shippingAddress.email,
-      bcc: emailConfig.adminEmail,
       subject: `🙏 Thank you from YMA Bouncy Castle - order #${order.orderNumber}`,
       html,
       text: `Thank you for choosing us. If you have a moment, a short Google review really helps a small local business. The invoice for order ${order.orderNumber} is attached.`,
@@ -1257,7 +1254,6 @@ export const sendDeliveryReminderEmail = async (
 
     await sendEmail({
       to: order.shippingAddress.email,
-      bcc: emailConfig.adminEmail,
       subject: `📦 Ready to be Delivered #${order.orderNumber} - YMA Bouncy Castle`,
       html,
       text: `Ready to be delivered tomorrow: your order ${order.orderNumber} is scheduled for ${order.shippingAddress.deliveryTime}. Contact: 07951 431111`,
@@ -1280,7 +1276,6 @@ export const sendOrderCancelledEmail = async (
 
     await sendEmail({
       to: order.shippingAddress.email,
-      bcc: emailConfig.adminEmail,
       subject: `❌ Order Cancelled #${order.orderNumber} - YMA Bouncy Castle`,
       html,
       text: `Your order ${order.orderNumber} has been cancelled. Contact us at 07951 431111 if you wish to rebook.`,
@@ -1316,7 +1311,6 @@ export const sendInvoiceEmail = async (
 
     await sendEmail({
       to: order.shippingAddress.email,
-      bcc: emailConfig.adminEmail,
       subject: `🧾 Invoice ${invoiceNumber} - YMA Bouncy Castle`,
       html: renderInvoiceHtml(order),
       text: `Invoice ${invoiceNumber} for order ${order.orderNumber}. Total: £${order.totalAmount}.`,
@@ -1354,6 +1348,7 @@ ACTION REQUIRED: Review and confirm order
       to: emailConfig.adminEmail,
       subject: `🚨 NEW ORDER: ${order.orderNumber} - £${order.totalAmount} - ${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
       text: orderDetails,
+      attachments: await invoiceAttachment(order),
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #dc3545; text-align: center;">🚨 NEW ORDER RECEIVED</h2>

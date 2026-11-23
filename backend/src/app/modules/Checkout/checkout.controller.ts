@@ -20,8 +20,13 @@ import {
   sendDeliveryReminderEmail,
 } from "./email.service";
 // The order confirmation is the rich template in the Order module: the customer
-// receives it as soon as the order is placed, together with the invoice.
-import { sendOrderConfirmedEmail as sendOrderConfirmationEmail } from "../Order/email.service";
+// receives it as soon as the order is placed, together with the invoice. The
+// admin gets one email per order (the "new order" alert, with the invoice
+// attached) instead of a BCC of every customer email.
+import {
+  notifyAdminNewOrder,
+  sendOrderConfirmedEmail as sendOrderConfirmationEmail,
+} from "../Order/email.service";
 
 // Import cart store
 import { cartStore } from "../Cart/cart.store";
@@ -1203,13 +1208,18 @@ export const quickCheckout = asyncHandler(
       }
 
       // The order confirmation and the invoice both go out now (invoice PDF
-      // attached to each).
+      // attached to each). The admin gets one email per order — the customer
+      // emails are no longer BCC'd to them.
       sendOrderConfirmationEmail(order).catch((err) =>
         console.error("Order Confirmation Email Failed", err),
       );
 
       sendInvoiceEmail(order).catch((err) =>
         console.error("Invoice Email Failed", err),
+      );
+
+      notifyAdminNewOrder(order).catch((err) =>
+        console.error("Admin Notification Email Failed", err),
       );
 
       //       // Send emails (non-critical, won't fail the response)
