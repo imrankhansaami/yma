@@ -548,7 +548,7 @@ ${INVOICE_STYLES}
 </head>
 <body>
 <div class="print-bar">
-  <span>${orders.length} invoice${orders.length === 1 ? "" : "s"} ready — use Print, then choose “Save as PDF” to keep a copy.</span>
+  <span>${orders.length} invoice${orders.length === 1 ? "" : "s"} ready — tap Print to print, or “Save as PDF” to keep a copy. On a phone: Share → Print or Save to Files.</span>
   <button type="button" onclick="window.print()">Print</button>
 </div>
 ${pages}
@@ -561,26 +561,31 @@ ${
 </html>`;
 };
 
+// Cached: a bulk PDF would otherwise re-fetch the same logo once per invoice.
+let logoDataUrlCache: string | null = null;
 const loadLogoDataUrl = async (): Promise<string | null> => {
+  if (logoDataUrlCache) return logoDataUrlCache;
   try {
     const response = await fetch(LOGO_URL);
     if (!response.ok) return null;
     const buffer = Buffer.from(await response.arrayBuffer());
-    return `data:image/png;base64,${buffer.toString("base64")}`;
+    logoDataUrlCache = `data:image/png;base64,${buffer.toString("base64")}`;
+    return logoDataUrlCache;
   } catch {
     return null;
   }
 };
 
 /**
- * The invoice as a PDF, for attaching to the email and for the customer /
- * admin download. Mirrors the layout the business already sends out.
+ * Draws one invoice onto the current page of `doc`. Mirrors the layout the
+ * business already sends out — shared by the single-invoice PDF and the bulk
+ * "download every invoice as one PDF" document.
  */
-export const renderInvoicePdf = async (
+const drawInvoice = async (
+  doc: jsPDF,
   order: IOrderDocument,
-): Promise<Buffer> => {
+): Promise<void> => {
   const m = buildInvoiceModel(order);
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -938,6 +943,26 @@ export const renderInvoicePdf = async (
     { align: "center" },
   );
 
-  const output = doc.output("arraybuffer");
-  return Buffer.from(output);
+};
+
+/** The invoice as a PDF, for attaching to the email and for the customer /
+ *  admin download. */
+export const renderInvoicePdf = async (
+  order: IOrderDocument,
+): Promise<Buffer> => renderInvoicesPdf([order]);
+
+/**
+ * Every invoice as ONE PDF — each invoice starts on its own page (a long
+ * booking still flows onto further pages). Powers the admin's bulk
+ * "Download PDF" action.
+ */
+export const renderInvoicesPdf = async (
+  orders: IOrderDocument[],
+): Promise<Buffer> => {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  for (let index = 0; index < orders.length; index += 1) {
+    if (index > 0) doc.addPage();
+    await drawInvoice(doc, orders[index]);
+  }
+  return Buffer.from(doc.output("arraybuffer"));
 };

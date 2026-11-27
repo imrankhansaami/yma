@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { downloadInvoice } from "@/lib/downloadInvoice";
+import { downloadInvoiceAdmin } from "@/lib/downloadInvoice";
 import { PAYMENT_METHOD_LABELS } from "@/lib/validation/checkout-schema";
 import { cn } from "@/lib/utils";
 import { orderServices } from "@/services/order.service";
@@ -738,7 +738,7 @@ export function OrderDetailsModal({
     const orderId = orderProp.id || orderProp._id;
     if (!orderId) return;
     try {
-      await downloadInvoice(orderId, orderProp.orderNumber);
+      await downloadInvoiceAdmin(orderId);
     } catch {
       notify({
         title: "Invoice download failed",

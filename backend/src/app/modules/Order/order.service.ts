@@ -23,7 +23,8 @@ import {
   sendInvoiceEmail,
   notifyAdminNewOrder,
 } from "./email.service";
-import { renderInvoiceHtml, renderInvoicePdf, renderInvoiceBatchHtml } from "./invoice.renderer";
+import { renderInvoiceHtml, renderInvoicePdf, renderInvoiceBatchHtml, renderInvoicesPdf } from "./invoice.renderer";
+import jwt from "jsonwebtoken";
 import { PromoService } from "../promos/promos.service";
 import {
   PRODUCTS_TAG,
@@ -1321,14 +1322,18 @@ export const previewInvoice = async (
  * One printable document holding the invoices for the given orders, oldest
  * first. Used by the admin's bulk "print invoices" action.
  */
-export const printInvoices = async (
-  orderIds: string[],
-): Promise<{ html: string; count: number }> => {
-  const ids = (orderIds || [])
+/** The ids a print/download run accepts: real ObjectIds, capped at 200. */
+const invoiceIdsFor = (orderIds: string[]): string[] =>
+  (orderIds || [])
     .map((id) => String(id || "").trim())
     .filter((id) => mongoose.Types.ObjectId.isValid(id))
     // A generous ceiling: a print run past this is almost certainly a mistake.
     .slice(0, 200);
+
+export const printInvoices = async (
+  orderIds: string[],
+): Promise<{ html: string; count: number }> => {
+  const ids = invoiceIdsFor(orderIds);
 
   if (!ids.length) {
     throw new ApiError("Select at least one order to print", 400);
@@ -1346,6 +1351,57 @@ export const printInvoices = async (
     html: renderInvoiceBatchHtml(orders as unknown as IOrderDocument[]),
     count: orders.length,
   };
+};
+
+/** The same selection as `printInvoices`, but as ONE PDF file. */
+export const printInvoicesPdf = async (
+  orderIds: string[],
+): Promise<{ pdf: Buffer; count: number; firstOrderNumber: string }> => {
+  const ids = invoiceIdsFor(orderIds);
+
+  if (!ids.length) {
+    throw new ApiError("Select at least one order to download", 400);
+  }
+
+  const orders = await Order.find({ _id: { $in: ids } }).sort({
+    createdAt: 1,
+  });
+
+  if (!orders.length) {
+    throw new ApiError("No invoices found for those orders", 404);
+  }
+
+  const pdf = await renderInvoicesPdf(orders as unknown as IOrderDocument[]);
+
+  return {
+    pdf,
+    count: orders.length,
+    firstOrderNumber: String(orders[0].orderNumber || ""),
+  };
+};
+
+/**
+ * A short-lived link token for the invoice documents. The phone opens them as
+ * plain links — iPhone browsers block blob-URL tabs and pop-ups opened after
+ * an await — and the token is scoped to exactly the orders it was signed for.
+ */
+export const signInvoiceLinks = async (
+  orderIds: string[],
+  by: string,
+): Promise<{ ids: string[]; token: string }> => {
+  const ids = invoiceIdsFor(orderIds);
+
+  if (!ids.length) {
+    throw new ApiError("Select at least one order", 400);
+  }
+
+  const token = jwt.sign(
+    { scope: "invoice-links", ids, by, role: "admin" },
+    process.env.JWT_SECRET as string,
+    { expiresIn: "30m" },
+  );
+
+  return { ids, token };
 };
 
 const generateInvoiceHtml = (order: IOrderDocument): string => {

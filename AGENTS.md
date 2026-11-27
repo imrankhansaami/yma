@@ -138,6 +138,11 @@ real order number.
 - For email tests without sending: stub `sendEmail` on the compiled
   `utils/resendEmail.service.js` before requiring the email service, then
   inspect the captured message.
+- Invoice documents (the bulk print page, the bulk PDF and the single-order
+  download) are opened through short-lived signed links minted by
+  `/orders/admin/invoices/links` — iPhone browsers block blob-URL tabs and
+  pop-ups raised after an await. Keep new invoice actions on that pattern;
+  `invoiceLinkAuth` is the middleware that accepts the scoped `?token=`.
 
 ## Docs
 

@@ -18,12 +18,33 @@ import {
   downloadInvoiceHandler,
   previewInvoiceHandler,
   printInvoicesHandler,
+  printInvoicesPdfHandler,
+  invoiceLinksHandler,
 } from "./order.controller";
 import { protectRoute } from "../../middlewares/auth.middleware";
 import { isAdmin } from "../../middlewares/role.middleware";
 import { restrictTo } from "../../middlewares/authorization.middleware";
+import { invoiceLinkAuth } from "../../middlewares/invoiceLink.middleware";
 
 const router = express.Router();
+
+// ==================== INVOICE DOCUMENTS (link-friendly) ====================
+// These are opened as plain links (a new tab or a phone download), so they
+// accept a short-lived scoped token in ?token= as well as normal Bearer auth —
+// iPhone browsers cannot load blob: tabs or pop-ups raised after an await.
+router.get(
+  "/admin/invoices/print",
+  invoiceLinkAuth,
+  isAdmin,
+  printInvoicesHandler,
+); // One printable document, many invoices
+router.get(
+  "/admin/invoices/pdf",
+  invoiceLinkAuth,
+  isAdmin,
+  printInvoicesPdfHandler,
+); // One PDF, many invoices
+router.get("/:orderId/invoice/download", invoiceLinkAuth, downloadInvoiceHandler);
 
 // ==================== USER ROUTES ====================
 router.use(protectRoute);
@@ -39,12 +60,11 @@ router.delete("/:id", deleteOrderHandler); // Delete order
 
 // Invoice operations
 router.post("/:orderId/invoice/send", generateInvoiceHandler);
-router.get("/:orderId/invoice/download", downloadInvoiceHandler);
 router.get("/:orderId/invoice/preview", previewInvoiceHandler);
 
 // ==================== ADMIN ROUTES ====================
 router.get("/admin/all", isAdmin, getAllOrdersHandler); // Get all orders with filters
-router.get("/admin/invoices/print", isAdmin, printInvoicesHandler); // One document, many invoices
+router.get("/admin/invoices/links", isAdmin, invoiceLinksHandler); // Signed links for print/pdf
 router.get("/admin/stats", isAdmin, getOrderStatsHandler); // Get order statistics
 router.get("/admin/dashboard-stats", isAdmin, getDashboardStatsHandler); // Get dashboard stats
 router.get("/admin/revenue/over-time", isAdmin, getRevenueOverTimeHandler); // Revenue over time for charts

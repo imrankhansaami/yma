@@ -362,3 +362,62 @@ export const printInvoicesHandler = asyncHandler(
     res.send(html);
   },
 );
+
+/** Every selected invoice as one downloadable PDF (the bulk "Download PDF"). */
+export const printInvoicesPdfHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const ids = String(req.query.ids || "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+
+    const { pdf, count, firstOrderNumber } =
+      await orderService.printInvoicesPdf(ids);
+    const filename =
+      count === 1 && firstOrderNumber
+        ? `invoice-${firstOrderNumber}.pdf`
+        : `invoices-${count}.pdf`;
+
+    console.log(`[Invoice] pdf for ${count} invoice(s)`);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(pdf);
+  },
+);
+
+/**
+ * Fresh signed links for the invoice documents: the phone opens them directly
+ * (no blob URLs, no pop-ups after an await, both of which iOS blocks).
+ */
+export const invoiceLinksHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const ids = String(req.query.ids || "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+
+    const userId = String(
+      (req as any).user?.id || (req as any).user?._id || "",
+    );
+    const { ids: signedIds, token } = await orderService.signInvoiceLinks(
+      ids,
+      userId,
+    );
+
+    const forwardedProto = String(
+      req.headers["x-forwarded-proto"] || req.protocol,
+    ).split(",")[0];
+    const base =
+      String(process.env.API_PUBLIC_URL || "").replace(/\/+$/, "") ||
+      `${forwardedProto}://${req.get("host")}`;
+    const query = `ids=${encodeURIComponent(signedIds.join(","))}&token=${encodeURIComponent(token)}`;
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        printUrl: `${base}/api/v1/orders/admin/invoices/print?${query}`,
+        pdfUrl: `${base}/api/v1/orders/admin/invoices/pdf?${query}`,
+      },
+    });
+  },
+);

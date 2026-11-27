@@ -37,6 +37,16 @@ export const orderServices = {
 
     return { orders, total, page, limit };
   },
+  /** Short-lived direct links for the invoice documents (phone-friendly). */
+  getInvoiceLinks: async (
+    ids: string[],
+  ): Promise<{ printUrl: string; pdfUrl: string }> => {
+    const { data } = await api.get<{
+      status: string;
+      data: { printUrl: string; pdfUrl: string };
+    }>("/orders/admin/invoices/links", { params: { ids: ids.join(",") } });
+    return data.data;
+  },
   getMyOrders: async <TOrderItem = unknown>(params: {
     page: number;
     limit: number;

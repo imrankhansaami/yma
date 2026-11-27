@@ -1,6 +1,5 @@
 "use client";
 
-import api from "@/api/api";
 import { Button } from "@/components/ui/button";
 import { useAdminToast } from "@/components/ui/admin-toast";
 import {
@@ -10,8 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { isIOSDevice } from "@/lib/downloadInvoice";
 import { orderServices } from "@/services/order.service";
-import { Loader2, Printer, X } from "lucide-react";
+import { Download, Loader2, Printer, X } from "lucide-react";
 import { useState } from "react";
 
 /** The same statuses the single-order editor offers. */
@@ -25,7 +25,13 @@ const STATUS_OPTIONS = [
 
 /**
  * The bar that appears above a table once rows are ticked: print every selected
- * invoice in one document, or move every selected order to the same status.
+ * invoice in one document, download them as one PDF, or move every selected
+ * order to the same status.
+ *
+ * The invoice actions open short-lived direct links rather than fetching a blob
+ * and opening a pop-up — iPhone browsers block the latter ("Pop-ups blocked",
+ * then blob: unreachable). The window is opened synchronously in the tap so it
+ * counts as the user's gesture; on desktop the PDF downloads in place instead.
  *
  * A status change sends exactly what a single change would (confirming sends the
  * invoice, cancelling sends the cancellation email), so the loop below just
@@ -41,36 +47,58 @@ export function BulkOrderActions({
   onDone?: () => void;
 }) {
   const { notify } = useAdminToast();
-  const [printing, setPrinting] = useState(false);
+  const [busy, setBusy] = useState<"print" | "pdf" | null>(null);
   const [applying, setApplying] = useState(false);
   const [progress, setProgress] = useState("");
   const [status, setStatus] = useState("");
 
   if (!selectedIds.length) return null;
 
-  const printInvoices = async () => {
-    setPrinting(true);
+  const openInvoices = async (kind: "print" | "pdf") => {
+    // Opened synchronously so it counts as part of the tap; an async
+    // window.open is exactly what the pop-up blocker stops.
+    const targetWindow = window.open("", "_blank");
+    setBusy(kind);
     try {
-      // Fetched through the authenticated client (rather than opening the URL)
-      // so the token refresh still applies, then handed to a new tab.
-      const res = await api.get("/orders/admin/invoices/print", {
-        params: { ids: selectedIds.join(",") },
-        responseType: "text",
-      });
-      const url = URL.createObjectURL(
-        new Blob([res.data], { type: "text/html" }),
+      const { printUrl, pdfUrl } = await orderServices.getInvoiceLinks(
+        selectedIds,
       );
-      window.open(url, "_blank", "noopener");
-      // Keep the blob alive long enough for the tab to load it.
-      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+      const url = kind === "print" ? printUrl : pdfUrl;
+      const count = selectedIds.length;
+      const noun = `invoice${count === 1 ? "" : "s"}`;
+
+      if (kind === "print" || isIOSDevice()) {
+        if (targetWindow) {
+          targetWindow.location.href = url;
+        } else {
+          window.location.assign(url);
+        }
+      } else {
+        // Desktop PDF: download in place, don't leave a blank tab behind.
+        targetWindow?.close();
+        const link = document.createElement("a");
+        link.href = url;
+        link.rel = "noopener";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+
       notify({
-        title: `${selectedIds.length} invoice${selectedIds.length === 1 ? "" : "s"} ready`,
-        message: "Print them in the new tab, or choose “Save as PDF”.",
+        title:
+          kind === "print"
+            ? `${count} ${noun} ready to print`
+            : `Downloading ${count} ${noun}`,
+        message:
+          kind === "print"
+            ? "Use Print there — on a phone: Share → Print or Save to Files."
+            : "One PDF containing every selected invoice.",
         variant: "success",
       });
     } catch (error: any) {
+      targetWindow?.close();
       notify({
-        title: "Could not prepare the invoices",
+        title: "Could not open the invoices",
         message:
           error?.response?.data?.message ||
           error?.message ||
@@ -78,7 +106,7 @@ export function BulkOrderActions({
         variant: "error",
       });
     } finally {
-      setPrinting(false);
+      setBusy(null);
     }
   };
 
@@ -122,11 +150,11 @@ export function BulkOrderActions({
       <Button
         type="button"
         variant="outline"
-        onClick={printInvoices}
-        disabled={printing || applying}
+        onClick={() => void openInvoices("print")}
+        disabled={busy !== null || applying}
         className="h-9 rounded-[6px] border-slate-300 bg-white px-3 text-[13px] font-medium text-slate-800"
       >
-        {printing ? (
+        {busy === "print" ? (
           <Loader2 className="mr-1 h-4 w-4 animate-spin" />
         ) : (
           <Printer className="mr-1 h-4 w-4" />
@@ -134,11 +162,26 @@ export function BulkOrderActions({
         Print invoices
       </Button>
 
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => void openInvoices("pdf")}
+        disabled={busy !== null || applying}
+        className="h-9 rounded-[6px] border-slate-300 bg-white px-3 text-[13px] font-medium text-slate-800"
+      >
+        {busy === "pdf" ? (
+          <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+        ) : (
+          <Download className="mr-1 h-4 w-4" />
+        )}
+        Download PDF
+      </Button>
+
       <div className="flex items-center gap-2">
         <Select
           value={status}
           onValueChange={(value) => void applyStatus(value)}
-          disabled={applying || printing}
+          disabled={applying || busy !== null}
         >
           <SelectTrigger className="h-9 w-[190px] rounded-[6px] border-slate-300 bg-white text-[13px]">
             <SelectValue
@@ -164,7 +207,7 @@ export function BulkOrderActions({
         type="button"
         variant="ghost"
         onClick={onClear}
-        disabled={applying || printing}
+        disabled={applying || busy !== null}
         className="ml-auto h-9 px-3 text-[13px] text-slate-600"
       >
         <X className="mr-1 h-4 w-4" />
