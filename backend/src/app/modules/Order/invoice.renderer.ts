@@ -549,8 +549,22 @@ ${INVOICE_STYLES}
 <body>
 <div class="print-bar">
   <span>${orders.length} invoice${orders.length === 1 ? "" : "s"} ready — tap Print to print, or “Save as PDF” to keep a copy. On a phone: Share → Print or Save to Files.</span>
-  <button type="button" onclick="window.print()">Print</button>
+  <button type="button" id="invoice-print-btn" onclick="window.print()">Print</button>
 </div>
+<script>
+  // iOS Safari ignores window.print() from a page — swap the dead button for
+  // the instructions that actually work there.
+  if (/iP(hone|ad|od)/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) {
+    var btn = document.getElementById("invoice-print-btn");
+    if (btn) {
+      btn.textContent = "How to print";
+      btn.onclick = function () {
+        alert("To print on iPhone: tap the Share icon in Safari's toolbar, then choose Print. Or use the Download PDF button in the admin and print from the PDF.");
+      };
+    }
+  }
+</script>
 ${pages}
 ${
   options.autoPrint

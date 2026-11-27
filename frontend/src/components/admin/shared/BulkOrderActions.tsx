@@ -63,17 +63,15 @@ export function BulkOrderActions({
       const { printUrl, pdfUrl } = await orderServices.getInvoiceLinks(
         selectedIds,
       );
-      const url = kind === "print" ? printUrl : pdfUrl;
+      const ios = isIOSDevice();
+      // iOS Safari ignores window.print() from a web page, so the printable
+      // HTML page is a dead end there. On iPhone both buttons open the PDF —
+      // printing happens through the PDF viewer's Share → Print.
+      const url = kind === "print" && !ios ? printUrl : pdfUrl;
       const count = selectedIds.length;
       const noun = `invoice${count === 1 ? "" : "s"}`;
 
-      if (kind === "print" || isIOSDevice()) {
-        if (targetWindow) {
-          targetWindow.location.href = url;
-        } else {
-          window.location.assign(url);
-        }
-      } else {
+      if (kind === "pdf" && !ios) {
         // Desktop PDF: download in place, don't leave a blank tab behind.
         targetWindow?.close();
         const link = document.createElement("a");
@@ -82,16 +80,21 @@ export function BulkOrderActions({
         document.body.appendChild(link);
         link.click();
         link.remove();
+      } else if (targetWindow) {
+        targetWindow.location.href = url;
+      } else {
+        window.location.assign(url);
       }
 
       notify({
         title:
-          kind === "print"
+          kind === "print" && !ios
             ? `${count} ${noun} ready to print`
-            : `Downloading ${count} ${noun}`,
-        message:
-          kind === "print"
-            ? "Use Print there — on a phone: Share → Print or Save to Files."
+            : `${count} ${noun} — PDF opened`,
+        message: ios
+          ? "To print: tap Share, then Print. Or Save to Files to keep a copy."
+          : kind === "print"
+            ? "Use Print there, or choose “Save as PDF”."
             : "One PDF containing every selected invoice.",
         variant: "success",
       });
