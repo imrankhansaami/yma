@@ -127,6 +127,10 @@ real order number.
 - The CDN caches HTML for up to an hour; admin content edits can lag that
   long. A redeploy forces it. Product/order pages revalidate on save, but the
   CDN layer may still serve slightly stale copies.
+- A Hostinger frontend deploy can silently stall (backend rolls out in ~2
+  minutes, frontend never appears). If the deployed bundle has not changed
+  ~15 minutes after a push, an empty commit (`git commit --allow-empty`)
+  re-triggers the pipeline and it lands within minutes.
 - Storefront product pages render **client-side** (the visible content is in
   the RSC payload, not the static HTML) — verify in a real browser, not by
   fetching the HTML.
